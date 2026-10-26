@@ -1,0 +1,3029 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>知識大航海：五維度方舟冒險</title>
+<style>
+  :root {
+    --ink: #0f172a; --ink-soft: #475569; --card: rgba(255,255,255,0.95); --card-solid: #ffffff;
+    --line: #e2e8f0; --accent: #f97316; --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --violet: #7c3aed;
+    --page: linear-gradient(160deg, #bae6fd 0%, #e0f2fe 45%, #fef9c3 100%);
+    --sea-1: #7dd3fc; --sea-2: #38bdf8; --sea-deep: #0284c7; --foam: rgba(255,255,255,0.6);
+    --shore: rgba(254,240,138,0.8); --plank: #b45309; --plank-light: #f59e0b; --rope: #78350f;
+  }
+  body.night {
+    --ink: #f1f5f9; --ink-soft: #cbd5e1; --card: rgba(30,41,59,0.95); --card-solid: #1e293b; --line: #334155;
+    --page: linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #311042 100%);
+    --sea-1: #1e3a8a; --sea-2: #172554; --sea-deep: #0b1437; --foam: rgba(147,197,253,0.3);
+    --shore: rgba(253,230,138,0.25); --plank: #92400e; --plank-light: #b45309; --rope: #451a03;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--ink); background: var(--page);
+    font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    transition: background 0.5s, color 0.3s; overflow-x: hidden;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; border-radius: 12px; padding: 8px 14px; font-weight: 800; font-size: 0.88rem; transition: transform 0.15s, filter 0.15s; }
+  button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
+  button:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-ghost { background: transparent; color: var(--primary); border: 2px solid currentColor; }
+  body.night .btn-ghost { color: #93c5fd; }
+  [hidden] { display: none !important; }
+
+  /* ───────── 進入畫面 ───────── */
+  .splash {
+    position: fixed; inset: 0; overflow: hidden; z-index: 300;
+    background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 38%, #fde68a 62%, #fbbf24 100%);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  body.night .splash { background: linear-gradient(180deg, #020617 0%, #1e1b4b 45%, #4c1d95 70%, #7c2d12 100%); }
+  .sun {
+    position: absolute; width: 150px; height: 150px; border-radius: 50%; top: 7%; right: 12%;
+    background: radial-gradient(circle, #fff7ae 0%, #fde047 45%, rgba(253,224,71,0) 72%);
+    animation: sunPulse 5s ease-in-out infinite;
+  }
+  body.night .sun { background: radial-gradient(circle, #fefce8 0%, #e2e8f0 40%, rgba(226,232,240,0) 70%); width: 110px; height: 110px; }
+  @keyframes sunPulse { 50% { transform: scale(1.08); } }
+  .stars-bg { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s;
+    background-image: radial-gradient(2px 2px at 20% 15%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 10%, #fff, transparent),
+      radial-gradient(2px 2px at 40% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 85% 35%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 10% 40%, #fff, transparent), radial-gradient(2px 2px at 55% 8%, #fff, transparent); }
+  body.night .stars-bg { opacity: 1; }
+  .cloud {
+    position: absolute; width: 180px; height: 56px; border-radius: 60px; background: rgba(255,255,255,0.85);
+    filter: blur(1px); animation: drift linear infinite;
+  }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: inherit; border-radius: 50%; }
+  .cloud::before { width: 80px; height: 80px; top: -38px; left: 28px; }
+  .cloud::after { width: 100px; height: 100px; top: -52px; left: 74px; }
+  body.night .cloud { background: rgba(148,163,184,0.25); }
+  .c1 { top: 12%; animation-duration: 55s; animation-delay: -10s; }
+  .c2 { top: 26%; animation-duration: 75s; animation-delay: -40s; transform: scale(0.7); }
+  .c3 { top: 6%; animation-duration: 95s; animation-delay: -70s; transform: scale(0.55); }
+  @keyframes drift { from { left: -260px; } to { left: 110%; } }
+  .sea-layer { position: absolute; left: 0; width: 200%; bottom: 0; height: 34%; animation: seaMove linear infinite; }
+  .sea-layer.s1 { animation-duration: 22s; opacity: 0.55; bottom: 6%; }
+  .sea-layer.s2 { animation-duration: 15s; opacity: 0.75; bottom: 2%; }
+  .sea-layer.s3 { animation-duration: 10s; }
+  @keyframes seaMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .float-isle {
+    position: absolute; z-index: 3; width: 92px; height: 104px; display: flex; align-items: center; justify-content: center;
+    font-size: 2.3rem; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    animation: bob 4s ease-in-out infinite; filter: drop-shadow(0 10px 8px rgba(0,0,0,0.25));
+  }
+  .float-isle span { position: absolute; bottom: 14px; font-size: 0.72rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-14px) rotate(2deg); } }
+  .boat { position: absolute; bottom: 21%; font-size: 2.6rem; animation: sail 38s linear infinite, rock 3s ease-in-out infinite; }
+  @keyframes sail { from { left: -60px; } to { left: 105%; } }
+  @keyframes rock { 50% { transform: rotate(6deg) translateY(-4px); } }
+
+  .splash-card {
+    position: relative; z-index: 5; width: min(100%, 560px); max-height: calc(100vh - 32px); overflow-y: auto;
+    background: rgba(255,255,255,0.9); color: #0f172a; border-radius: 28px; padding: 26px 26px 20px;
+    box-shadow: 0 30px 60px rgba(15,23,42,0.35), inset 0 0 0 4px rgba(255,255,255,0.7);
+    backdrop-filter: blur(10px); text-align: center; animation: rise 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  body.night .splash-card { background: rgba(15,23,42,0.88); color: #f1f5f9; box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 0 0 3px rgba(148,163,184,0.25); }
+  @keyframes rise { from { transform: translateY(40px) scale(0.92); opacity: 0; } }
+  .splash-badge { display: inline-block; background: #0f172a; color: #fde047; font-weight: 900; font-size: 0.8rem; padding: 4px 14px; border-radius: 99px; letter-spacing: 2px; }
+  .splash-title {
+    margin: 10px 0 4px; font-size: clamp(2rem, 7vw, 3.1rem); font-weight: 900; line-height: 1.15; letter-spacing: 2px;
+    background: linear-gradient(90deg, #f97316, #ec4899, #8b5cf6, #2563eb, #16a34a, #f97316); background-size: 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 8s linear infinite;
+    filter: drop-shadow(0 3px 0 rgba(255,255,255,0.8));
+  }
+  body.night .splash-title { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.6)); }
+  @keyframes shine { to { background-position: 300% 0; } }
+  .splash-subtitle { display: inline-block; margin: 2px 0 8px; padding: 3px 14px; border-radius: 99px; font-weight: 900; font-size: clamp(0.95rem, 3.2vw, 1.15rem); letter-spacing: 3px; color: #fff; background: linear-gradient(90deg, #0ea5e9, #6366f1, #8b5cf6); box-shadow: 0 4px 12px rgba(99,102,241,0.35); }
+  .splash-sub { margin: 0 0 14px; font-size: 0.9rem; opacity: 0.8; }
+  .subject-chips { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .subject-chips span { font-size: 0.8rem; font-weight: 900; padding: 4px 10px; border-radius: 99px; color: #fff; }
+  .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .role-card {
+    background: linear-gradient(160deg, #fff, #f1f5f9); color: #0f172a; border: 3px solid transparent; border-radius: 20px;
+    padding: 16px 6px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    box-shadow: 0 8px 18px rgba(15,23,42,0.12);
+  }
+  body.night .role-card { background: linear-gradient(160deg, #334155, #1e293b); color: #f1f5f9; }
+  .role-card .role-emoji { font-size: 2.4rem; transition: transform 0.3s; }
+  .role-card:hover .role-emoji { transform: scale(1.2) rotate(-8deg); }
+  .role-card b { font-size: 1.05rem; }
+  .role-card small { font-size: 0.72rem; opacity: 0.7; font-weight: 700; }
+  .role-card.teacher:hover { border-color: #f59e0b; }
+  .role-card.student:hover { border-color: #2563eb; }
+  .role-card.parent:hover { border-color: #16a34a; }
+  .login-form { text-align: left; }
+  .login-form label { display: block; font-weight: 900; font-size: 0.9rem; margin: 12px 0 6px; }
+  .login-form select, .login-form input {
+    width: 100%; padding: 12px 14px; font-size: 1.05rem; border-radius: 14px; border: 2px solid #cbd5e1;
+    background: #fff; color: #0f172a; font-family: inherit; outline: none;
+  }
+  .login-form select:focus, .login-form input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
+  .role-head { display: flex; align-items: center; justify-content: space-between; }
+  .role-head .who { font-weight: 900; font-size: 1.1rem; }
+  .login-error { min-height: 1.4em; color: var(--danger); font-weight: 800; font-size: 0.86rem; margin-top: 8px; }
+  .enter-btn { width: 100%; margin-top: 6px; padding: 14px; font-size: 1.1rem; border-radius: 16px; background: linear-gradient(90deg, #f97316, #ec4899); color: #fff; box-shadow: 0 8px 18px rgba(236,72,153,0.35); }
+  .splash-foot { margin-top: 12px; font-size: 0.74rem; opacity: 0.7; }
+  .demo-note { background: #fef3c7; color: #92400e; border-radius: 12px; padding: 8px 12px; font-size: 0.8rem; font-weight: 800; margin-bottom: 12px; text-align: left; }
+
+  /* ───────── 主畫面 ───────── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between;
+    padding: 10px 18px; background: var(--card); box-shadow: 0 4px 16px rgba(0,0,0,0.08); backdrop-filter: blur(8px);
+  }
+  .brand { font-weight: 900; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+  .brand small { background: var(--accent); color: #fff; font-size: 0.72rem; padding: 3px 9px; border-radius: 99px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 99px; font-size: 0.82rem; font-weight: 800;
+    background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.25);
+  }
+  .pill.danger { background: rgba(220,38,38,0.15); border-color: var(--danger); color: var(--danger); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { transform: scale(1.06); } }
+  .banner { max-width: 1300px; margin: 10px auto 0; padding: 10px 16px; border-radius: 14px; font-weight: 800; font-size: 0.86rem; text-align: center; }
+  .banner.warn { background: linear-gradient(90deg, #991b1b, #dc2626); color: #fff; }
+  .banner.info { background: #fef3c7; color: #92400e; }
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; max-width: 1300px; margin: 12px auto 40px; padding: 0 16px; }
+  .stage > * { min-width: 0; }
+  .map-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .crumbs { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 1rem; }
+  .crumbs button { padding: 6px 12px; }
+  .search { padding: 8px 14px; border-radius: 99px; border: 2px solid #cbd5e1; font-size: 0.86rem; width: 220px; outline: none; font-family: inherit; }
+  .map-wrapper {
+    position: relative; border-radius: 26px; overflow: hidden; padding: 6px;
+    background: radial-gradient(ellipse at 50% 45%, var(--sea-1) 0%, var(--sea-2) 60%, var(--sea-deep) 100%);
+    box-shadow: inset 0 0 70px rgba(0,0,0,0.2), 0 10px 26px rgba(0,0,0,0.1);
+  }
+  .map-stage { position: relative; width: 100%; margin: 0 auto; transition: transform 0.45s ease, opacity 0.45s ease; }
+  .map-stage.leaving { transform: scale(1.25); opacity: 0; }
+  .map-stage.entering { transform: scale(0.85); opacity: 0; transition: none; }
+  #map-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .map-hint { text-align: center; font-size: 0.8rem; font-weight: 800; padding: 8px 6px 2px; color: var(--ink-soft); }
+
+  .wave { fill: none; stroke: var(--foam); stroke-width: 3; stroke-linecap: round; animation: waveDrift 6s ease-in-out infinite alternate; }
+  @keyframes waveDrift { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
+  .shore { fill: var(--shore); stroke: rgba(255,255,255,0.55); stroke-width: 2; }
+  .isle { cursor: pointer; outline: none; transition: opacity 0.3s; }
+  .isle .lift { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .isle:hover .lift, .isle:focus-visible .lift { transform: translateY(-9px); }
+  .isle:focus-visible .face { stroke: #fde047; stroke-width: 6; }
+  .face { stroke: rgba(255,255,255,0.9); stroke-width: 3; }
+  .inner-ring { fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 2; stroke-dasharray: 6 5; }
+  .isle.empty { opacity: 0.55; }
+  .isle.empty .face { filter: grayscale(0.7); }
+  .isle.locked .face { filter: grayscale(0.85); }
+  .isle.dim { opacity: 0.25; }
+  .isle.hit .face { stroke: #fde047; stroke-width: 7; }
+  .isle.hit .lift, .isle.alarm .lift { animation: hop 1.2s ease-in-out infinite; }
+  .isle.alarm .face { stroke: #fecaca; stroke-width: 6; }
+  @keyframes hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .t-text { fill: #fff; font-weight: 900; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(0,0,0,0.35); stroke-width: 3px; }
+  .t-emoji { text-anchor: middle; pointer-events: none; }
+  .banner-rect { fill: rgba(15,23,42,0.82); stroke: rgba(255,255,255,0.9); stroke-width: 2; }
+  .banner-text { fill: #fff; font-weight: 900; text-anchor: middle; pointer-events: none; }
+  .badge-dot { fill: #dc2626; stroke: #fff; stroke-width: 3; }
+  .bridge-rope { stroke: var(--rope); stroke-width: 2.5; }
+  .bridge-post { fill: var(--rope); }
+
+  #avatar-layer { position: absolute; inset: 0; pointer-events: none; z-index: 15; }
+  .avatar {
+    position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer;
+    transition-property: left, top; transition-timing-function: ease-in-out;
+  }
+  .avatar .face-av {
+    width: clamp(30px, 5.2vw, 50px); height: clamp(30px, 5.2vw, 50px); border-radius: 50%;
+    background: #fef08a; border: 3px solid #f97316; box-shadow: 0 0 16px #f97316;
+    display: flex; align-items: center; justify-content: center; font-size: clamp(1rem, 2.8vw, 1.6rem);
+    animation: bobAv 3s ease-in-out infinite;
+  }
+  .avatar.walking .face-av { animation: hopAv 0.4s ease-in-out infinite; }
+  @keyframes bobAv { 50% { transform: translateY(-3px); } }
+  @keyframes hopAv { 50% { transform: translateY(-10px); } }
+  .avatar .tag { position: absolute; top: calc(100% + 2px); left: 50%; transform: translateX(-50%); background: #ea580c; color: #fff; font-size: 0.68rem; font-weight: 900; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
+  .avatar .say { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #fff; color: #0f172a; border: 2px solid var(--accent); border-radius: 12px; padding: 4px 10px; font-size: 0.76rem; font-weight: 800; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .map-toast {
+    position: absolute; left: 50%; top: 4%; transform: translateX(-50%); z-index: 30; max-width: 90%;
+    background: var(--card-solid); color: var(--ink); border: 3px solid var(--accent); border-radius: 14px; padding: 8px 14px;
+    font-weight: 800; font-size: 0.88rem; box-shadow: 0 10px 24px rgba(0,0,0,0.25); animation: rise 0.35s ease;
+  }
+
+  .side-panel { display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--card); border-radius: 20px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .card h3 { margin: 0 0 10px; font-size: 1rem; }
+  .me-head { display: flex; gap: 12px; align-items: center; }
+  .me-emoji { width: 58px; height: 58px; border-radius: 50%; background: #fef08a; border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.9rem; flex-shrink: 0; }
+  .me-name { font-weight: 900; font-size: 1.05rem; }
+  .me-title { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; }
+  .bar { background: var(--line); height: 10px; border-radius: 99px; overflow: hidden; margin-top: 5px; }
+  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); border-radius: 99px; transition: width 0.5s; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .tile-kpi { background: rgba(37,99,235,0.07); border-radius: 14px; padding: 9px 10px; }
+  .tile-kpi b { display: block; font-size: 1.25rem; }
+  .tile-kpi span { font-size: 0.74rem; color: var(--ink-soft); font-weight: 800; }
+  .subj-row { font-size: 0.82rem; margin-bottom: 8px; }
+  .subj-row div:first-child { display: flex; justify-content: space-between; font-weight: 800; }
+  .recent { list-style: none; margin: 0; padding: 0; font-size: 0.8rem; }
+  .recent li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+
+  /* ───────── 彈出視窗、題目 ───────── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.74); display: none; align-items: center; justify-content: center; z-index: 200; padding: 14px; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal-box { position: relative; background: var(--card-solid); color: var(--ink); width: 100%; max-width: 780px; max-height: 92vh; overflow-y: auto; border-radius: 22px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+  .modal-box.wide { max-width: 980px; }
+  .close-btn { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; padding: 0; background: var(--line); color: var(--ink); }
+  .lore-box { background: rgba(249,115,22,0.1); border-left: 5px solid var(--accent); padding: 12px 15px; border-radius: 10px; margin: 10px 0; font-size: 0.92rem; line-height: 1.6; }
+  .lore-box.violet { background: rgba(124,58,237,0.08); border-left-color: var(--violet); font-size: 0.86rem; }
+  .q-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; padding-right: 40px; font-size: 0.84rem; font-weight: 800; }
+  .option-btn { display: block; width: 100%; text-align: left; padding: 12px 16px; margin: 8px 0; border-radius: 12px; border: 2px solid #cbd5e1; background: rgba(255,255,255,0.92); color: #0f172a; font-size: 0.96rem; font-weight: 600; }
+  .option-btn:hover:not(:disabled) { border-color: var(--primary); background: #eff6ff; transform: none; }
+  .option-btn.correct { background: #dcfce7 !important; border-color: #16a34a !important; color: #14532d !important; font-weight: 900; }
+  .option-btn.wrong { background: #fee2e2 !important; border-color: #dc2626 !important; color: #7f1d1d !important; }
+  .src-badge { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 1px 8px; border-radius: 99px; background: rgba(124,58,237,0.12); color: #6d28d9; border: 1px solid rgba(124,58,237,0.3); margin-left: 4px; }
+  body.night .src-badge { color: #ddd6fe; }
+  .diagram-card { background: #fff; border: 2px solid #93c5fd; border-radius: 14px; padding: 12px; margin: 10px 0; text-align: center; color: #0f172a; }
+  .diagram-title { font-size: 0.85rem; font-weight: 900; color: #1d4ed8; margin-bottom: 6px; }
+  .pts { display: inline-block; padding: 1px 10px; border-radius: 99px; font-weight: 900; margin-right: 4px; }
+  .pts.plus { background: #dcfce7; color: #15803d; }
+  .pts.minus { background: #fee2e2; color: #b91c1c; }
+  .lv-note { margin: 8px 0; padding: 10px 14px; border-radius: 12px; font-weight: 900; text-align: center; animation: rise 0.4s ease; }
+  .lv-note.up { background: linear-gradient(90deg, #fde047, #f97316); color: #7c2d12; }
+  .lv-note.down { background: #fee2e2; color: #991b1b; border: 2px dashed #dc2626; }
+  .rules { font-size: 0.8rem; line-height: 1.7; }
+  .rules summary { cursor: pointer; font-weight: 900; font-size: 0.95rem; }
+  .passage { background: rgba(254,243,199,0.6); border: 1px solid #fcd34d; border-radius: 12px; padding: 8px 12px; margin: 10px 0; font-size: 0.9rem; line-height: 1.75; }
+  body.night .passage { background: rgba(120,53,15,0.35); }
+  .passage summary { cursor: pointer; font-weight: 900; color: #92400e; }
+  body.night .passage summary { color: #fcd34d; }
+  .passage div { white-space: pre-line; max-height: 260px; overflow-y: auto; margin-top: 6px; }
+  .trial-note { font-size: 0.8rem; font-weight: 800; color: #92400e; background: #fef3c7; border-radius: 10px; padding: 6px 10px; margin-top: 8px; }
+
+  /* ───────── 後台 ───────── */
+  .dash-table-wrap { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--card-solid); z-index: 1; }
+  tr.sel td { background: rgba(249,115,22,0.12); }
+  td.num, th.num { text-align: right; }
+  .warn-num { color: var(--danger); font-weight: 900; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin: 10px 0; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 8px; }
+  .tabs button { background: var(--line); color: var(--ink); }
+  .tabs button.on { background: var(--primary); color: #fff; }
+  .q-row { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.86rem; line-height: 1.55; }
+  .q-row .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.76rem; font-weight: 800; color: var(--ink-soft); margin-bottom: 4px; }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 0.74rem; font-weight: 900; }
+  .chip.red { background: #fee2e2; color: #b91c1c; }
+  .chip.green { background: #dcfce7; color: #15803d; }
+  .chip.amber { background: #fef3c7; color: #92400e; }
+  .chip.gray { background: var(--line); color: var(--ink); }
+  .empty-note { text-align: center; padding: 20px; color: var(--ink-soft); font-weight: 800; }
+  .spinner { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--accent); animation: spin 0.8s linear infinite; margin: 16px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+
+  /* ───────── V5：交通、主題島、連線 ───────── */
+  .travel-modes { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-weight: 900; font-size: 0.82rem; }
+  .travel-modes button { background: var(--card); color: var(--ink); padding: 5px 9px; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; line-height: 1.1; font-size: 1.1rem; }
+  .travel-modes button small { font-size: 0.62rem; }
+  .travel-modes button.on { border-color: var(--accent); background: #fff7ed; color: #9a3412; }
+  .route-plane { fill: none; stroke: rgba(255,255,255,0.85); stroke-width: 3; stroke-dasharray: 2 9; stroke-linecap: round; }
+  .route-boat { fill: none; stroke: rgba(255,255,255,0.9); stroke-width: 4; stroke-dasharray: 14 10; stroke-linecap: round; }
+  .route-swim { fill: none; stroke: rgba(255,255,255,0.75); stroke-width: 3; stroke-dasharray: 1 7; stroke-linecap: round; }
+  .route-icon { opacity: 0.9; }
+  .sea-title { fill: rgba(255,255,255,0.92); font-weight: 900; font-size: 22px; paint-order: stroke; stroke: rgba(0,0,0,0.35); stroke-width: 4px; }
+  .smoke { animation: smoke 3s ease-in-out infinite; }
+  @keyframes smoke { 0% { opacity: 0; transform: translateY(6px); } 40% { opacity: 0.9; } 100% { opacity: 0; transform: translateY(-16px); } }
+  .fog { animation: fogDrift 14s ease-in-out infinite alternate; }
+  @keyframes fogDrift { to { transform: translateX(40px); } }
+  .map-wrapper[data-theme="oldmap"] { box-shadow: inset 0 0 90px rgba(120,53,15,0.45), 0 10px 26px rgba(0,0,0,0.1); }
+  .map-wrapper[data-theme="grid"] { box-shadow: inset 0 0 60px rgba(30,58,138,0.5), 0 10px 26px rgba(0,0,0,0.1); }
+
+  .avatar { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; z-index: 16; }
+  .avatar .face-slot, .avatar .face-av { transition: transform 0.2s; }
+  .avatar.me { z-index: 20; }
+  .avatar.me .face-av { border: 3px solid #f97316; box-shadow: 0 0 16px #f97316; }
+  .avatar.other .face-av { width: clamp(24px, 4vw, 38px); height: clamp(24px, 4vw, 38px); font-size: clamp(0.85rem, 2.2vw, 1.2rem); border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.3); animation: bobAv 3.4s ease-in-out infinite; }
+  .avatar.other .tag { background: rgba(15,23,42,0.85); }
+  .avatar.other.battling .face-av { border-color: #dc2626; box-shadow: 0 0 14px #dc2626; }
+  .avatar.more .face-av { background: #e2e8f0; font-size: 0.75rem; font-weight: 900; }
+  .avatar .vehicle { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: clamp(1.8rem, 5vw, 2.8rem); pointer-events: none; }
+  .avatar.traveling .vehicle { display: block; }
+  .avatar.mode-walk .face-av { animation: hopAv 0.4s ease-in-out infinite; }
+  .avatar.mode-walk .vehicle { display: none; }
+  .avatar.mode-bus .vehicle { transform: translate(-50%, -38%) scaleX(calc(var(--flip, 1) * -1)); }
+  .avatar.mode-bus .face-slot { transform: translate(0, -14px) scale(0.6); }
+  .avatar.mode-plane .vehicle { transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scale(var(--lift, 1)); filter: drop-shadow(0 14px 6px rgba(0,0,0,0.25)); }
+  .avatar.mode-plane .face-slot { transform: translate(0, -26px) scale(0.55); }
+  .avatar.mode-boat .vehicle { transform: translate(-50%, -30%) scaleX(calc(var(--flip, 1) * -1)) rotate(var(--rot, 0deg)); font-size: clamp(2rem, 5.5vw, 3rem); filter: drop-shadow(0 6px 4px rgba(0,0,0,0.25)); }
+  .avatar.mode-boat .face-slot { transform: translate(0, -24px) scale(0.55); }
+  .avatar.mode-swim .vehicle { transform: translate(-50%, -30%) scaleX(calc(var(--flip, 1) * -1)); animation: swimBob 0.6s ease-in-out infinite; }
+  .avatar.mode-swim .face-slot { transform: translate(0, -16px) scale(0.6); }
+  @keyframes swimBob { 50% { margin-top: 4px; } }
+  .avatar.traveling .tag { opacity: 0.85; }
+
+  .online-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .online-chip { background: rgba(34,197,94,0.12); color: var(--ink); border: 1px solid rgba(34,197,94,0.4); padding: 4px 10px; font-size: 0.8rem; }
+  .chat-list { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 6px; background: rgba(148,163,184,0.12); border-radius: 12px; }
+  .chat-msg { display: flex; gap: 6px; align-items: flex-start; font-size: 0.82rem; }
+  .chat-msg.me { flex-direction: row-reverse; }
+  .chat-av { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.95rem; }
+  .chat-bubble { background: var(--card-solid); border-radius: 12px; padding: 5px 9px; max-width: 80%; box-shadow: 0 1px 3px rgba(0,0,0,0.08); word-break: break-word; }
+  .chat-msg.me .chat-bubble { background: #dbeafe; color: #0f172a; }
+  .chat-msg.teacher .chat-bubble { background: #fef3c7; color: #78350f; border: 1px solid #f59e0b; }
+  .chat-meta { display: flex; gap: 8px; justify-content: space-between; font-size: 0.68rem; color: var(--ink-soft); }
+  .chat-msg.me .chat-meta, .chat-msg.teacher .chat-meta { color: #475569; }
+  .chat-quick { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 6px; }
+  .chat-quick button { background: rgba(249,115,22,0.12); color: #c2410c; padding: 3px 8px; font-size: 0.74rem; border: 1px solid rgba(249,115,22,0.3); }
+  .chat-form { display: flex; gap: 6px; }
+  .chat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; }
+  .chat-note { font-size: 0.7rem; color: var(--ink-soft); margin-top: 6px; }
+  .peer-menu { position: absolute; z-index: 250; width: 180px; background: var(--card-solid); color: var(--ink); border-radius: 16px; padding: 10px; box-shadow: 0 14px 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 6px; border: 3px solid var(--accent); }
+  .peer-head { display: flex; align-items: center; gap: 8px; }
+  .peer-head .face-av, .picker-preview .face-av, .vs-row .face-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+  .face-av { border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .picker-preview { display: flex; gap: 12px; align-items: center; }
+  .picker-preview .face-av { width: 64px; height: 64px; font-size: 2.2rem; border: 3px solid var(--accent); }
+  .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+  .picker-grid button { font-size: 1.5rem; padding: 6px; background: var(--line); border: 3px solid transparent; }
+  .picker-grid button.on, .picker-colors button.on { border-color: var(--accent); }
+  .picker-colors { display: flex; gap: 8px; flex-wrap: wrap; }
+  .picker-colors button { width: 38px; height: 38px; border-radius: 50%; padding: 0; border: 3px solid rgba(0,0,0,0.1); }
+  .vs-row { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 10px 0; }
+  .vs-row > div { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.85rem; }
+  .vs-row .face-av { width: 56px; height: 56px; font-size: 2rem; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+  .vs { font-weight: 900; font-size: 1.6rem; color: var(--danger); font-style: italic; }
+  .battle-timer { text-align: center; font-weight: 900; font-size: 1.05rem; margin: 8px 0; color: var(--accent); }
+  .battle-box { border: 4px solid var(--accent); }
+
+  @media (max-width: 1024px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+  /* ───────── 手機版 ───────── */
+  @media (max-width: 700px) {
+    .topbar { position: sticky; top: 0; padding: 6px 10px; gap: 6px; flex-wrap: nowrap; }
+    .brand { font-size: 0.95rem; white-space: nowrap; }
+    .brand small { display: none; }
+    #pills { flex: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    #pills::-webkit-scrollbar { display: none; }
+    .pill { font-size: 0.74rem; padding: 4px 9px; white-space: nowrap; }
+    .topbar > .pills:last-child { flex-wrap: nowrap; }
+    .topbar > .pills:last-child button { padding: 6px 9px; font-size: 0.78rem; }
+    .banner { margin: 6px 10px 0; font-size: 0.76rem; padding: 7px 10px; }
+    .stage { margin-top: 8px; gap: 12px; }
+    .map-toolbar { gap: 6px; }
+    .crumbs { font-size: 0.92rem; }
+    .travel-modes { width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .travel-modes::-webkit-scrollbar { display: none; }
+    .travel-modes button { flex: 1 0 auto; padding: 4px 8px; font-size: 1.15rem; }
+    .search { width: 100%; padding: 7px 12px; }
+    .map-wrapper { border-radius: 18px; padding: 3px; }
+    .map-hint { font-size: 0.72rem; }
+    .map-toast { font-size: 0.78rem; padding: 6px 10px; top: 2%; }
+    .avatar .tag { font-size: 0.58rem; padding: 0 6px; }
+    .avatar.other .tag { display: none; }
+    .avatar .say { font-size: 0.7rem; padding: 3px 8px; }
+    .modal-overlay { padding: 8px; align-items: flex-end; }
+    .modal-box { padding: 18px 14px 16px; border-radius: 20px; max-height: 94vh; }
+    .modal-box h2 { font-size: 1.2rem; padding-right: 36px; }
+    .option-btn { padding: 11px 12px; font-size: 0.92rem; }
+    .q-head { font-size: 0.74rem; }
+    .chat-list { height: 180px; }
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .dash-table-wrap { max-height: 260px; }
+    .vs-row .face-av { width: 46px; height: 46px; font-size: 1.6rem; }
+    .float-isle:nth-of-type(n+7) { display: none; }
+    .splash-title { font-size: 2.1rem; }
+    .splash-sub { font-size: 0.82rem; }
+    .boat { font-size: 2rem; }
+  }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 6px 10px; }
+    .stage { padding: 0 10px; }
+    .role-grid { gap: 6px; }
+    .role-card { padding: 12px 4px 10px; }
+    .role-card .role-emoji { font-size: 2rem; }
+    .float-isle { width: 64px; height: 72px; font-size: 1.6rem; }
+    .float-isle span { display: none; }
+    .splash-card { padding: 20px 16px 16px; }
+    .search { width: 100%; }
+    .t-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═════════ 進入畫面 ═════════ -->
+<section class="splash" id="splash">
+  <div class="stars-bg"></div>
+  <div class="sun"></div>
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <div class="float-isle" style="left:6%; top:18%; background:linear-gradient(135deg,#fb923c,#c2410c); animation-delay:-0.5s;">📚<span>國語</span></div>
+  <div class="float-isle" style="left:14%; top:52%; background:linear-gradient(135deg,#60a5fa,#1e3a8a); animation-delay:-1.6s;">🔢<span>數學</span></div>
+  <div class="float-isle" style="right:7%; top:44%; background:linear-gradient(135deg,#f472b6,#9d174d); animation-delay:-2.4s;">🔤<span>英語</span></div>
+  <div class="float-isle" style="right:16%; top:70%; background:linear-gradient(135deg,#4ade80,#14532d); animation-delay:-3.1s;">🔬<span>自然</span></div>
+  <div class="float-isle" style="left:4%; top:76%; background:linear-gradient(135deg,#facc15,#854d0e); animation-delay:-1s;">🗺️<span>社會</span></div>
+  <svg class="sea-layer s1" viewBox="0 0 1600 200" preserveAspectRatio="none"><path d="M0,60 Q100,20 200,60 T400,60 T600,60 T800,60 T1000,60 T1200,60 T1400,60 T1600,60 V200 H0Z" fill="#0ea5e9"/></svg>
+  <svg class="sea-layer s2" viewBox="0 0 1600 200" preserveAspectRatio="none"><path d="M0,80 Q100,40 200,80 T400,80 T600,80 T800,80 T1000,80 T1200,80 T1400,80 T1600,80 V200 H0Z" fill="#0284c7"/></svg>
+  <div class="boat">⛵</div>
+  <svg class="sea-layer s3" viewBox="0 0 1600 200" preserveAspectRatio="none"><path d="M0,110 Q100,75 200,110 T400,110 T600,110 T800,110 T1000,110 T1200,110 T1400,110 T1600,110 V200 H0Z" fill="#075985"/></svg>
+
+  <div class="splash-card">
+    <span class="splash-badge">508 班 ・ 期中考特訓</span>
+    <h1 class="splash-title">知識大航海</h1>
+    <div class="splash-subtitle">⚓ 五維度方舟冒險 ⚓</div>
+    <p class="splash-sub">搭上知識方舟，航向五座學科大島，闖關收集星星，打倒錯題魔王！</p>
+    <div class="subject-chips">
+      <span style="background:#ea580c">📚 國語</span><span style="background:#2563eb">🔢 數學</span><span style="background:#db2777">🔤 英語</span><span style="background:#16a34a">🔬 自然</span><span style="background:#ca8a04">🗺️ 社會</span>
+    </div>
+    <div id="demo-note" class="demo-note" hidden></div>
+
+    <div id="step-role">
+      <div style="font-weight:900; margin-bottom:10px;">你是誰？請先選身分</div>
+      <div class="role-grid">
+        <button class="role-card teacher" onclick="chooseRole('teacher')"><span class="role-emoji">🧑‍🏫</span><b>老師</b><small>看全班後台</small></button>
+        <button class="role-card student" onclick="chooseRole('student')"><span class="role-emoji">🎒</span><b>學生</b><small>登島闖關</small></button>
+        <button class="role-card parent" onclick="chooseRole('parent')"><span class="role-emoji">👨‍👩‍👧</span><b>家長</b><small>看孩子的紀錄</small></button>
+      </div>
+    </div>
+
+    <form id="step-account" class="login-form" hidden onsubmit="event.preventDefault(); doLogin();">
+      <div class="role-head">
+        <span class="who" id="role-title"></span>
+        <button type="button" class="btn-ghost" onclick="backToRoles()">← 換身分</button>
+      </div>
+      <label for="account-select">選擇帳號</label>
+      <select id="account-select"></select>
+      <label for="password-input">輸入密碼</label>
+      <input id="password-input" type="password" inputmode="numeric" autocomplete="current-password" placeholder="請輸入密碼">
+      <div class="login-error" id="login-error" role="alert"></div>
+      <button type="submit" class="enter-btn" id="enter-btn">⚓ 啟航出發！</button>
+    </form>
+
+    <div id="splash-status" class="splash-foot"></div>
+    <div class="splash-foot"><button type="button" class="btn-ghost" style="padding:4px 10px; font-size:0.75rem;" onclick="toggleNight()">🌗 日夜切換</button></div>
+  </div>
+</section>
+
+<!-- ═════════ 主畫面 ═════════ -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand">⛵ 知識大航海 <small>五維度方舟冒險</small></div>
+    <div class="pills" id="pills"></div>
+    <div class="pills">
+      <button class="btn-accent" id="btn-dashboard" onclick="openDashboard()" hidden>📊 後台</button>
+      <button class="btn-ghost" onclick="toggleNight()">🌗</button>
+      <button class="btn-ghost" onclick="logout()">登出</button>
+    </div>
+  </header>
+  <div id="trial-banner" class="banner info" hidden></div>
+  <div id="lock-banner" class="banner warn" hidden></div>
+
+  <main class="stage">
+    <section>
+      <div class="map-toolbar">
+        <div class="crumbs" id="crumbs"></div>
+        <div class="travel-modes" id="travel-modes" role="group" aria-label="交通方式">
+          <span>交通：</span>
+          <button data-mode="walk" onclick="setTravelMode('walk')" title="沿著橋和公路走">🚶<small>走路</small></button>
+          <button data-mode="bus" onclick="setTravelMode('bus')" title="沿著公路，陸地上最快">🚌<small>遊覽車</small></button>
+          <button data-mode="plane" onclick="setTravelMode('plane')" title="直接飛過去">✈️<small>飛機</small></button>
+          <button data-mode="swim" onclick="setTravelMode('swim')" title="直接游過海">🏊<small>游泳</small></button>
+          <button data-mode="boat" onclick="setTravelMode('boat')" title="搭渡輪沿著航道過去">⛴️<small>搭船</small></button>
+          <button data-mode="random" onclick="setTravelMode('random')" title="每次隨機一種">🎲<small>隨機</small></button>
+        </div>
+        <input class="search" id="search" placeholder="🔍 搜尋單元或考點" oninput="renderMap()">
+      </div>
+      <div class="map-wrapper">
+        <div class="map-stage" id="map-stage">
+          <svg id="map-svg" role="group" aria-label="知識大航海地圖"></svg>
+          <div id="avatar-layer"></div>
+          <div id="map-toast" class="map-toast" hidden></div>
+        </div>
+      </div>
+      <div class="map-hint" id="map-hint"></div>
+    </section>
+    <aside class="side-panel" id="side-panel">
+      <div id="side-dyn" class="side-panel"></div>
+      <div class="card" id="chat-card">
+        <h3>💬 全班聊天室</h3>
+        <div class="chat-list" id="chat-list"></div>
+        <div class="chat-quick"><button type="button" onclick="sendChat('👋 嗨！')">👋 嗨！</button><button type="button" onclick="sendChat('要不要來比賽？⚔️')">要不要來比賽？⚔️</button><button type="button" onclick="sendChat('我拿三顆星了！⭐')">我拿三顆星了！⭐</button><button type="button" onclick="sendChat('錯題島見！🌋')">錯題島見！🌋</button><button type="button" onclick="sendChat('加油！💪')">加油！💪</button><button type="button" onclick="sendChat('好難喔 😵')">好難喔 😵</button></div>
+        <form class="chat-form" onsubmit="event.preventDefault(); sendChat();">
+          <input id="chat-input" maxlength="40" placeholder="說點什麼…（40 字內）" autocomplete="off">
+          <button class="btn-primary" type="submit">送出</button>
+        </form>
+        <div class="chat-note">聊天內容老師看得到，請友善發言 😊</div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<div class="modal-overlay" id="quiz-modal">
+  <div class="modal-box"><button class="close-btn" onclick="closeQuiz()" aria-label="關閉">✕</button><div id="quiz-content"></div></div>
+</div>
+<div class="modal-overlay" id="avatar-modal">
+  <div class="modal-box" style="max-width:560px"><button class="close-btn" onclick="closeModal('avatar-modal')" aria-label="關閉">✕</button><div id="avatar-content"></div></div>
+</div>
+<div class="modal-overlay" id="battle-modal">
+  <div class="modal-box battle-box" style="max-width:620px"><div id="battle-content"></div></div>
+</div>
+<div class="modal-overlay" id="dash-modal">
+  <div class="modal-box wide"><button class="close-btn" onclick="closeModal('dash-modal')" aria-label="關閉">✕</button><div id="dash-content"></div></div>
+</div>
+
+<script src="demo-bank.js"></script>
+<script>
+// =========================================================
+// 0. 設定：把 Apps Script 部署後的「網頁應用程式網址」貼在引號裡
+//    留空 = 示範模式（不驗證密碼、資料只存在這台裝置，只有內建國語題庫）
+// =========================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbxeygIpomPBcJji356Y4q8ywY-ta9UCTd70KPL88yeh7Ah5_t-aXv4S9wF22myUcMb9JA/exec";
+
+const SVG_DIAGRAMS = {
+  milk_sea: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】宜蘭龜山島「牛奶海」與海底煙囪形成剖面圖</div>
+      <svg viewBox="0 0 520 170" style="width:100%; max-width:500px; height:auto;">
+        <rect x="0" y="35" width="520" height="95" fill="#0284c7" opacity="0.25"/>
+        <ellipse cx="330" cy="40" rx="115" ry="14" fill="#f8fafc" stroke="#38bdf8" stroke-width="2"/>
+        <text x="330" y="44" font-size="12" font-weight="bold" fill="#0369a1" text-anchor="middle">🥛 乳白色與淺藍交錯的「牛奶海」</text>
+        <polygon points="60,130 150,20 230,130" fill="#15803d"/>
+        <text x="145" y="95" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">龜山島(火山島)</text>
+        <polygon points="295,130 315,85 345,85 365,130" fill="#cbd5e1" stroke="#475569" stroke-width="2"/>
+        <text x="330" y="122" font-size="11" font-weight="bold" fill="#1e293b" text-anchor="middle">海底煙囪</text>
+        <circle cx="325" cy="72" r="5" fill="#fff"/><circle cx="338" cy="58" r="6" fill="#fff"/><circle cx="320" cy="52" r="4" fill="#fff"/>
+        <rect x="0" y="130" width="520" height="40" fill="#7f1d1d"/>
+        <text x="260" y="155" font-size="13" font-weight="bold" fill="#fde047" text-anchor="middle">🔥 地底火山岩漿加熱滲入的海水 ➔ 噴出海底熱泉遇冷變白色物質</text>
+      </svg>
+    </div>`,
+
+  square_sea: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】馬祖西莒島＆金門貴山「方格海」雙向海浪交會圖</div>
+      <svg viewBox="0 0 520 165" style="width:100%; max-width:500px; height:auto;">
+        <rect x="10" y="10" width="500" height="145" rx="10" fill="#0369a1"/>
+        <g stroke="#bae6fd" stroke-width="3" opacity="0.85">
+          <line x1="160" y1="20" x2="340" y2="145"/><line x1="210" y1="20" x2="390" y2="145"/><line x1="260" y1="20" x2="440" y2="145"/>
+          <line x1="340" y1="20" x2="160" y2="145"/><line x1="390" y1="20" x2="210" y2="145"/><line x1="440" y1="20" x2="260" y2="145"/>
+        </g>
+        <circle cx="250" cy="75" r="4" fill="#38bdf8"/><circle cx="300" cy="95" r="5" fill="#7dd3fc"/><circle cx="345" cy="65" r="4" fill="#38bdf8"/>
+        <text x="90" y="55" font-size="12" font-weight="bold" fill="#fde047">↘ A方向海浪</text>
+        <text x="415" y="55" font-size="12" font-weight="bold" fill="#fde047">↙ B方向海浪</text>
+        <text x="260" y="138" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">✨ 漲潮時兩組不同方向波浪一行一列交會 ＋ 夜晚藍眼淚星羅棋布</text>
+      </svg>
+    </div>`,
+
+  view_angles: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】定點觀察視角變化：仰視 ➔ 平視 ➔ 俯視</div>
+      <svg viewBox="0 0 520 160" style="width:100%; max-width:500px; height:auto;">
+        <circle cx="95" cy="95" r="18" fill="#f97316"/>
+        <text x="95" y="132" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">觀察者(定點)</text>
+        <line x1="115" y1="85" x2="270" y2="30" stroke="#16a34a" stroke-width="3" stroke-dasharray="5,3"/>
+        <rect x="275" y="12" width="220" height="32" rx="6" fill="#dcfce7" stroke="#16a34a"/>
+        <text x="385" y="32" font-size="12" font-weight="bold" fill="#14532d" text-anchor="middle">① 仰視(抬頭)：頭頂石壁 / 榕樹冠如綠傘</text>
+        <line x1="115" y1="95" x2="270" y2="85" stroke="#2563eb" stroke-width="3"/>
+        <rect x="275" y="68" width="220" height="32" rx="6" fill="#dbeafe" stroke="#2563eb"/>
+        <text x="385" y="88" font-size="12" font-weight="bold" fill="#1e3a8a" text-anchor="middle">② 平視(看前方)：對岸峭壁 / 舞團練舞</text>
+        <line x1="115" y1="105" x2="270" y2="138" stroke="#dc2626" stroke-width="3" stroke-dasharray="5,3"/>
+        <rect x="275" y="120" width="220" height="32" rx="6" fill="#fee2e2" stroke="#dc2626"/>
+        <text x="385" y="140" font-size="12" font-weight="bold" fill="#7f1d1d" text-anchor="middle">③ 俯視(低頭)：腳下深谷溪水 / 地上螞蟻</text>
+      </svg>
+    </div>`,
+
+  sentence_logic: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】國語必考複句關係判斷圖</div>
+      <svg viewBox="0 0 520 140" style="width:100%; max-width:500px; height:auto;">
+        <rect x="15" y="15" width="235" height="110" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+        <text x="132" y="38" font-size="13" font-weight="bold" fill="#1d4ed8" text-anchor="middle">💡 假設複句（如果/即使…也…）</text>
+        <text x="132" y="68" font-size="11" fill="#1e293b" text-anchor="middle">【前句：提出假設情況】</text>
+        <text x="132" y="90" font-size="11" fill="#16a34a" font-weight="bold" text-anchor="middle">⬇ 實現後產生</text>
+        <text x="132" y="110" font-size="11" fill="#1e293b" text-anchor="middle">【後句：對應的結果】</text>
+
+        <rect x="270" y="15" width="235" height="110" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="2"/>
+        <text x="387" y="38" font-size="13" font-weight="bold" fill="#c2410c" text-anchor="middle">🔄 轉折複句（雖然…然而/卻…）</text>
+        <text x="387" y="68" font-size="11" fill="#1e293b" text-anchor="middle">【前句：原本的方向/事實】</text>
+        <text x="387" y="90" font-size="11" fill="#dc2626" font-weight="bold" text-anchor="middle">⚡ 語意急轉彎（相反相對）</text>
+        <text x="387" y="110" font-size="11" fill="#1e293b" text-anchor="middle">【後句：完全相反的結果】</text>
+      </svg>
+    </div>`,
+
+  radical_anatomy: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】常考陷阱部首與構字拆解圖</div>
+      <svg viewBox="0 0 520 130" style="width:100%; max-width:500px; height:auto;">
+        <g transform="translate(10,12)">
+          <rect width="115" height="105" rx="8" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="57" y="28" font-size="14" font-weight="bold" fill="#b45309" text-anchor="middle">「陸 / 障 / 陡」</text>
+          <text x="57" y="56" font-size="12" fill="#0f172a" text-anchor="middle">左邊「阝」是</text>
+          <text x="57" y="80" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">阜部 (非土/音)</text>
+        </g>
+        <g transform="translate(138,12)">
+          <rect width="115" height="105" rx="8" fill="#dcfce7" stroke="#16a34a"/>
+          <text x="57" y="28" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">「穩 / 秀」</text>
+          <text x="57" y="56" font-size="12" fill="#0f172a" text-anchor="middle">含「禾」部件</text>
+          <text x="57" y="80" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">禾部 (非心部)</text>
+        </g>
+        <g transform="translate(266,12)">
+          <rect width="115" height="105" rx="8" fill="#dbeafe" stroke="#2563eb"/>
+          <text x="57" y="28" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">「囪」字結構</text>
+          <text x="57" y="56" font-size="12" fill="#0f172a" text-anchor="middle">外框大「囗」</text>
+          <text x="57" y="80" font-size="13" font-weight="bold" fill="#1d4ed8" text-anchor="middle">囗部+4畫=7畫</text>
+        </g>
+        <g transform="translate(394,12)">
+          <rect width="115" height="105" rx="8" fill="#fae8ff" stroke="#9333ea"/>
+          <text x="57" y="28" font-size="14" font-weight="bold" fill="#7e22ce" text-anchor="middle">「殖 ➔ 直」</text>
+          <text x="57" y="56" font-size="12" fill="#0f172a" text-anchor="middle">去掉歹部後</text>
+          <text x="57" y="80" font-size="13" font-weight="bold" fill="#7e22ce" text-anchor="middle">皆讀「ㄓˊ」不變</text>
+        </g>
+      </svg>
+    </div>`,
+
+  crab_ecology: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】墾丁「中型仿相手蟹」護蟹路線與遠觀近察圖</div>
+      <svg viewBox="0 0 520 150" style="width:100%; max-width:500px; height:auto;">
+        <rect x="10" y="15" width="140" height="120" rx="8" fill="#15803d"/>
+        <text x="80" y="50" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">🌲 海岸林棲地</text>
+        <text x="80" y="75" font-size="11" fill="#dcfce7" text-anchor="middle">夜行性・農曆7~10月</text>
+        <text x="80" y="95" font-size="11" fill="#fde047" text-anchor="middle">🔭 遠觀：水溝紅蟹</text>
+
+        <rect x="180" y="15" width="150" height="120" rx="8" fill="#334155"/>
+        <line x1="255" y1="15" x2="255" y2="135" stroke="#fde047" stroke-width="3" stroke-dasharray="8,6"/>
+        <text x="255" y="45" font-size="12" font-weight="bold" fill="#f87171" text-anchor="middle">🚗 臺26線(鬼門關)</text>
+        <text x="255" y="75" font-size="11" fill="#fff" text-anchor="middle">志工阻斷川流車潮</text>
+        <text x="255" y="102" font-size="11" fill="#38bdf8" text-anchor="middle">🔍 近察：抱灰沙球</text>
+
+        <rect x="360" y="15" width="150" height="120" rx="8" fill="#0284c7"/>
+        <text x="435" y="50" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">🌊 海洋(育兒室)</text>
+        <text x="435" y="78" font-size="11" fill="#e0f2fe" text-anchor="middle">抖動身體釋放沙球</text>
+        <text x="435" y="102" font-size="11" fill="#fde047" text-anchor="middle">孵育蟹寶寶長大</text>
+      </svg>
+    </div>`,
+
+  jizi_chain: `
+    <div class="diagram-card">
+      <div class="diagram-title">📊 【視覺圖解】商朝箕子「見微知著」推論連鎖階梯圖</div>
+      <svg viewBox="0 0 520 120" style="width:100%; max-width:500px; height:auto;">
+        <g font-size="12" font-weight="bold" text-anchor="middle">
+          <rect x="10" y="40" width="85" height="45" rx="8" fill="#fef08a" stroke="#ca8a04"/>
+          <text x="52" y="67" fill="#854d0e">① 象牙餐具</text>
+          <text x="103" y="67" fill="#dc2626">➔</text>
+          <rect x="112" y="40" width="85" height="45" rx="8" fill="#fed7aa" stroke="#ea580c"/>
+          <text x="154" y="67" fill="#9a3412">② 山珍食物</text>
+          <text x="205" y="67" fill="#dc2626">➔</text>
+          <rect x="214" y="40" width="85" height="45" rx="8" fill="#fecdd3" stroke="#e11d48"/>
+          <text x="256" y="67" fill="#9f1239">③ 綾羅衣服</text>
+          <text x="307" y="67" fill="#dc2626">➔</text>
+          <rect x="316" y="40" width="85" height="45" rx="8" fill="#e9d5ff" stroke="#9333ea"/>
+          <text x="358" y="67" fill="#6b21a8">④ 豪華車子</text>
+          <text x="409" y="67" fill="#dc2626">➔</text>
+          <rect x="418" y="40" width="92" height="45" rx="8" fill="#fecaca" stroke="#dc2626"/>
+          <text x="464" y="67" fill="#7f1d1d">⑤ 高殿建築物</text>
+        </g>
+      </svg>
+    </div>`
+};
+
+function getLevelInfo(totalPoints) {
+  const lv = Math.min(99, Math.max(1, Math.floor(totalPoints / LEVEL_STEP) + 1));
+  const titles = [
+    [1, "初心者小書僮"], [5, "墨水村見習生"], [10, "幸福筆記收集者"],
+    [15, "漢字尋寶獵人"], [20, "井然有序小師傅"], [25, "眉清目秀書法家"],
+    [30, "修辭魔法學徒"], [35, "龜山島牛奶海探險家"], [40, "馬祖方格海觀測員"],
+    [45, "太魯閣峽谷遊俠"], [50, "池上黃金稻浪詩人"], [55, "墾丁護蟹巡守隊"],
+    [60, "複句機關破解師"], [65, "成語典故大行家"], [70, "手不釋卷大學士"],
+    [75, "有口皆碑大文豪"], [80, "五維度方舟領航員"], [85, "北辰星光榮譽狀元"],
+    [90, "無懈可擊國語宗師"], [95, "制霸期中考守護神"], [99, "508國語傳奇大文豪"]
+  ];
+  let title = "初心者小書僮";
+  for (const [minLv, t] of titles) { if (lv >= minLv) title = t; }
+  return { lv, title };
+}
+
+// 內建國語題庫（雲端試算表完全沒有國語題目時才使用）
+const ISLANDS = [
+  {
+    id: "L1", code: "01 品格島", name: "幸福筆記本島", icon: "📔",
+    pos: { x: 22, y: 26 },
+    color: "linear-gradient(135deg, #f59e0b, #ea580c)",
+    keywords: "感恩 擦痕 賠償 謹慎 疲倦 譬喻 選擇複句 遞進複句 反義詞",
+    lore: `<b>【L1 探險家秘笈：幸福筆記本】</b><br>
+      • <b>主旨</b>：「感恩」是為生活帶來幸福的魔法，有如腦袋中的聚光燈。<br>
+      • <b>三大幸福事件</b>：①年邁父親健步如飛；②孩子一擁而上擁抱分享；③停車擦撞車主寬容不索賠還分享停車技巧（心情由<b>焦急➔感謝</b>）。`,
+    questions: [
+      { id:"q101", unit:"第一課：幸福筆記本", type:"字詞義與語詞", q:"「擦」有兩物相摩、塗抹、貼近等解釋。哪一個句子中的「擦」字是「兩物相摩」的意思？", opts:["①被送到保健室「擦」藥","②用板「擦」將黑板擦乾淨","③讓機會「擦」身而過","④汽車不小心「擦」撞到前方的貨車"], ans:3, exp:"①塗抹；②擦抹的用具；③貼近、靠近；④兩物相摩（兩車摩擦碰撞）。" },
+      { id:"q102", unit:"第一課：幸福筆記本", type:"字詞義與語詞", q:"下列哪一個字是指「牽拉，一般指拉著較重的物體」的意思？", opts:["①「焦」急","②「遇」上","③「拖」著","④「擦」痕"], ans:2, exp:"「拖」著疲累沉重的腳步，指牽拉較重物體。" },
+      { id:"q103", unit:"第一課：幸福筆記本", type:"句型與修辭", diagram:"sentence_logic", q:"「假設複句」為前一個句子提出假設，後一個句子說明結果，請問下列何者為假設複句？", opts:["①我的父親已經七十多歲，仍然健步如飛","②即使遇上不好的事，也能有機會感受幸福","③車主沒有責怪我，也沒有索取賠償","④在充滿焦急的等待過程中，我忍不住對自己生氣"], ans:1, exp:"「即使…也…」前句提出假設情況，後句說明結果，屬於假設複句。" },
+      { id:"q104", unit:"第一課：幸福筆記本", type:"字音字形", diagram:"radical_anatomy", q:"下列部首何者正確？", opts:["①償：貝部","②恩：心部","③痕：广部","④擦：宀部"], ans:1, exp:"①償：人部；②恩：心部（正確）；③痕：疒部；④擦：手部。" },
+      { id:"q105", unit:"第一課：幸福筆記本", type:"課文文意", q:"在《幸福筆記本》一文中，「交通事故」這一段敘述，作者的通知對象與心情變化為何？", opts:["①通知車主／焦急➔期待","②通知村長／生氣➔痛苦","③通知交通大隊／焦急➔感謝","④通知親友／期待➔感謝"], ans:2, exp:"作者通知了交通大隊，心情從等待時的「焦急」轉為對車主寬容的「感謝」。" },
+      { id:"q106", unit:"第一課：幸福筆記本", type:"句型與修辭", q:"「感恩是為我帶來幸福的魔法。」使用了譬喻修辭，下列何者也使用了譬喻修辭？", opts:["①文章是案頭之山水，山水是地上之文章","②當自己越常留意那些美好時刻，美好時刻也越容易被發現","③有我驚嘆不已的美好星空，有我與家人一起淨灘時的喜悅","④一頭斑白的髮，直挺挺的身子"], ans:0, exp:"①將文章比喻為山水（暗喻），與題幹「感恩是魔法」同為譬喻修辭。" }
+    ]
+  },
+  {
+    id: "L2", code: "02 職人島", name: "做人做事島", icon: "🛠️",
+    pos: { x: 50, y: 24 },
+    color: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+    keywords: "小師傅 井然有序 耳目一新 服務 釘牆 連貫複句 條件複句 對偶",
+    lore: `<b>【L2 探險家秘笈：做人做事做長久】</b><br>
+      • <b>人物特質推論</b>：小師傅按順序排好工具（<b>井然有序➔嚴謹</b>）、自備小掃把掃地與抹布擦牆（<b>頭尾顧到➔負責敬業</b>）。`,
+    questions: [
+      { id:"q201", unit:"第二課：做人做事做長久", type:"字詞義與語詞", q:"「她擁有一顆熱愛『服務』他人的心，因此在這間機構『服務』已經超過三十年了。」兩次「服務」意思依序是？", opts:["①任職／任職","②為別人做事／為別人做事","③任職／為別人做事","④為社會、別人做事／任職"], ans:3, exp:"第一個服務是「為社會、別人做事」；第二個在機構服務是指「任職」。" },
+      { id:"q202", unit:"第二課：做人做事做長久", type:"字詞義與語詞", q:"下列「 」中的字，哪一個不是「功業、成果」的意思？", opts:["①成「績」","②紡「績」","③功「績」","④戰「績」"], ans:1, exp:"②紡「績」是指將麻或纖維搓成細線，引申為紡織。" },
+      { id:"q203", unit:"第二課：做人做事做長久", type:"字音字形", q:"下列「 」中的字，哪一個讀音和「壁虎釘」的「釘」相同？", opts:["①「釦」子","②西門「町」","③藥「錠」","④「訂」正"], ans:1, exp:"壁虎釘的釘（名詞）讀作「ㄉㄧㄥ」，與西門「町」(ㄉㄧㄥ)相同；釘牆(動詞)、藥錠、訂正讀「ㄉㄧㄥˋ」。" },
+      { id:"q204", unit:"第二課：做人做事做長久", type:"字音字形", diagram:"radical_anatomy", q:"下列哪一個字的部首及部首外的筆畫數正確？", opts:["①熟：手部／十畫","②障：音部／七畫","③涵：水部／八畫","④掃：手部／九畫"], ans:2, exp:"①熟：火(灬)部11畫；②障：阜部11畫；③涵：水部8畫(正確)；④掃：手部8畫。" },
+      { id:"q205", unit:"第二課：做人做事做長久", type:"課文文意", q:"《做人做事做長久》一文中，作者端來什麼飲品讓小師傅解渴？小師傅又拿什麼清掃地板？", opts:["①蘋果汁／吸塵器","②冰開水／小掃把","③鮮奶茶／拖把","④熱牛奶／抹布"], ans:1, exp:"作者端冰開水讓小師傅解渴，小師傅以自備的小掃把清掃地板、拿抹布清潔牆壁。" },
+      { id:"q206", unit:"第二課：做人做事做長久", type:"句型與修辭", q:"(1)做事只做一次，做人只見一面。(2)對比資深師傅「技高人散漫」與小師傅「耳目一新」。以上兩句運用的修辭依序為何？", opts:["①設問、映襯","②對偶、排比","③映襯、類疊","④對偶、映襯"], ans:3, exp:"(1)字數相等結構相同為「對偶」；(2)將兩種相反工作態度並列對比為「映襯」。" }
+    ]
+  },
+  {
+    id: "L3", code: "03 友愛島", name: "孔雀錯了島", icon: "🦚",
+    pos: { x: 78, y: 26 },
+    color: "linear-gradient(135deg, #9333ea, #7e22ce)",
+    keywords: "曹萱玲 張燈結綵 眉清目秀 妒忌 假設句 手不釋卷 擬人",
+    lore: `<b>【L3 探險家秘笈：孔雀錯了】</b><br>
+      • <b>課文脈絡</b>：作者擅長作文（常拿大大的「甲」字），同學曹萱玲擅長英文（考卷<b>眉清目秀</b>，作者塗改如<b>張燈結綵</b>）。老師以孔雀互啄（兩敗俱傷）啟發良性競爭。`,
+    questions: [
+      { id:"q301", unit:"第三課：孔雀錯了", type:"字詞義與語詞", q:"「卷」字有數個意思，下列哪一個選項中的「卷」字為「書籍」的意思？", opts:["①讀書破萬「卷」","②手不釋「卷」","③「卷」宗","④考「卷」"], ans:1, exp:"手不釋「卷」指手裡總是拿著書本，形容勤奮好學。" },
+      { id:"q302", unit:"第三課：孔雀錯了", type:"句型與修辭", diagram:"sentence_logic", q:"先說明假設的情況，再說出假設狀況實現後的結果，是「假設句」。下列哪一個選項是假設句？", opts:["①即使文法不錯，拼音不錯，看上去總沒她的卷子眉清目秀","②可是輪到英文課呢！她的考卷分數就總比我高一點了","③如果同伴的羽毛沒有自己的美麗，自己不就是第一美了嗎","④牠們應當好好愛惜自己的羽毛，努力把尾巴張得漂漂亮亮"], ans:2, exp:"「如果…不就是…」先提出假設再說明結果，為典型假設句。" },
+      { id:"q303", unit:"第三課：孔雀錯了", type:"字音字形", diagram:"radical_anatomy", q:"下列哪一個字的部首及部首外的筆畫數正確？", opts:["①卷：卩部／八畫","②妒：戶部／三畫","③愧：心部／十畫","④秀：禾部／四畫"], ans:2, exp:"①卷：卩部6畫；②妒：女部4畫；③愧：心部10畫(正確)；④秀：禾部2畫。" },
+      { id:"q304", unit:"第三課：孔雀錯了", type:"課文文意", q:"在《孔雀錯了》課文中，作者為什麼會用「張燈結綵」來形容自己的英文考卷？", opts:["①因為塗改的地方很多，東一團墨水、西一堆橡皮擦痕，看起來很凌亂","②因為被老師畫了連排的紅圈圈","③因為分數很高，值得大肆慶祝","④因為墨汁沾染導致整張考卷變紅色"], ans:0, exp:"張燈結綵原指喜慶裝飾，本課形容考卷塗塗改改、不整潔。" },
+      { id:"q305", unit:"第三課：孔雀錯了", type:"句型與修辭", q:"請問下列何者使用了「擬人」修辭？", opts:["①如果她的英文沒有這樣好，那麼我不就是全班第一個「文學家」了嗎","②我的呢？總少個「very」","③尤其是那個大大的「甲」字，好像張著四四方方的嘴在對我笑","④我們一定是一對友愛的孔雀，在亮麗的陽光下努力開屏"], ans:2, exp:"把「甲」字當作人一樣「張著嘴在對我笑」，屬於擬人修辭。" },
+      { id:"q306", unit:"第三課：孔雀錯了", type:"字詞義與語詞", q:"「樂善好施的陳奶奶是一位□□的長者，因此大家都十分敬愛她。」□中最不適合填入哪一個語詞？", opts:["①慈藹","②慈祥","③家慈","④仁慈"], ans:2, exp:"「家慈」是對別人稱呼自己母親的謙稱，不能用來形容陳奶奶。" }
+    ]
+  },
+  {
+    id: "L4", code: "04 海洋島", name: "特別的海島", icon: "🌊",
+    pos: { x: 20, y: 68 },
+    color: "linear-gradient(135deg, #0284c7, #0369a1)",
+    keywords: "龜山島 牛奶海 海底熱泉 馬祖西莒島 金門貴山 方格海 藍眼淚 星羅棋布",
+    lore: `<b>【L4 探險家秘笈：特別的海】</b><br>
+      • <b>龜山島「牛奶海」</b>：海底火山熱泉遇相對低溫海水產生白色物質。<br>
+      • <b>馬祖西莒島＆金門貴山「方格海」</b>：地形與海流使兩組不同方向海浪交會成格子。`,
+    questions: [
+      { id:"q401", unit:"第四課：特別的海", type:"字詞義與語詞", diagram:"square_sea", q:"下列何者最適合用「星羅棋布」來形容？", opts:["①整齊排列在書櫃上的參考書","②一棵矗立在岩壁上的松樹","③安裝在客廳牆上的電視機","④散落在沙灘上的貝殼"], ans:3, exp:"星羅棋布形容數量繁多、分布廣泛如星星與棋子（如散落沙灘的貝殼或方格海上的藍眼淚）。" },
+      { id:"q402", unit:"第四課：特別的海", type:"字詞義與語詞", diagram:"milk_sea", q:"「相對低溫的海水」的「相對」與「滲入」的「滲」分別是什麼意思？", opts:["①比較的／液體慢慢浸入或漏出","②面對面／汁液被蒸發","③等同／物體前後擺動","④低於平均值／物品消失快速"], ans:0, exp:"相對指「比較的」；滲指「液體慢慢的浸入或漏出」。" },
+      { id:"q403", unit:"第四課：特別的海", type:"課文文意", diagram:"milk_sea", q:"在《特別的海》一文中，「牛奶海」與「方格海」的成因分別為何？", opts:["①皆為不同方向的海流交會","②牛奶海：海底熱泉遇相對低溫海水產生白色物質／方格海：不同方向的海流交會","③牛奶海：海洋受汙染／方格海：退潮痕跡","④牛奶海：燕鷗覓食／方格海：海底火山噴發"], ans:1, exp:"請看下方圖解：龜山島牛奶海源於火山熱泉遇冷；西莒島與金門貴山方格海源於地形與不同方向海浪交會。" },
+      { id:"q404", unit:"第四課：特別的海", type:"字音字形", diagram:"radical_anatomy", q:"下列哪一個字的部首與其他三者不同？且「囪」的部首與總筆畫數為何？", opts:["①渲（囪：囗部7畫）","②泉（囪：心部8畫）","③係（囪：囗部7畫）","④漿（囪：皿部6畫）"], ans:2, exp:"渲、泉、漿皆為「水部」，唯有「係」是「人部」；「囪」為囗部、部首外4畫、總筆畫7畫。" },
+      { id:"q405", unit:"第四課：特別的海", type:"句型與修辭", diagram:"square_sea", q:"「入夜以後，藍眼淚星羅棋布，整片方格海閃耀著亮藍色的螢光，讓人目眩神迷。」使用「視覺摹寫」修辭有什麼效果？", opts:["①強調內心的驚訝情緒","②加強語氣與節奏感","③把對事物的觀察及感受真實呈現出來","④表達同範圍同性質的意念"], ans:2, exp:"摹寫修辭能將感官對事物的觀察與感受真實呈現。" },
+      { id:"q406", unit:"第四課：特別的海", type:"句型與修辭", q:"下列「 」中的疊字，何者為「量詞」？", opts:["①臺灣擁有「大大小小」的島","②擊打沿岸的「道道」白浪","③染出「淺淺」的藍","④「源源」不絕的熱泉"], ans:1, exp:"一道白浪、道道白浪，「道道」為重疊量詞。" }
+    ]
+  },
+  {
+    id: "L5", code: "05 山海島", name: "漫遊花東島", icon: "🏞️",
+    pos: { x: 45, y: 68 },
+    color: "linear-gradient(135deg, #16a34a, #15803d)",
+    keywords: "清水斷崖 太魯閣 燕子口 花東縱谷 池上 定點觀察 擬人 搖曳 嘩啦嘩啦",
+    lore: `<b>【L5 探險家秘笈：漫遊花東】</b><br>
+      • <b>Day1</b>：蘇花公路➔清水斷崖（藍裙子＝海水、碎花蕾絲＝浪花）➔太魯閣燕子口（<b>定點觀察</b>，只有開洞處有光）。<br>
+      • <b>Day2</b>：花蓮臨海旅社➔花東縱谷（綠巨人＝山）➔池上稻浪（隨風擺頭＝擬人）。`,
+    questions: [
+      { id:"q501", unit:"第五課：漫遊花東", type:"字詞義與語詞", q:"「搖曳」的「曳」與「悄然」分別是什麼意思？", opts:["①顯露／疲累的樣子","②鬆脫／感興趣的樣子","③飄搖／寂靜無聲的樣子","④放下／活潑可愛的樣子"], ans:2, exp:"搖曳的「曳」是飄搖；「悄然」是寂靜無聲的樣子。" },
+      { id:"q502", unit:"第五課：漫遊花東", type:"句型與修辭", q:"「狀聲詞」為模擬聲音的詞。下列哪一個句子「 」中的詞語是狀聲詞？", opts:["①一路上，我驚嘆「連連」","②「綠油油」的初夏，「黃澄澄」的金秋","③" +
+      "陣陣" + "海風吹皺太平洋的藍裙子","④滾滾溪水奔流，發出「嘩啦嘩啦」的聲音"], ans:3, exp:"「嘩啦嘩啦」是模擬溪水奔流的狀聲詞。" },
+      { id:"q503", unit:"第五課：漫遊花東", type:"課文文意", diagram:"view_angles", q:"關於《漫遊花東》一文的敘述，下列何者錯誤？", opts:["①第一天路線為：蘇花公路➔清水斷崖➔太魯閣國家公園","②燕子口步道處處有光照進來，是作者最難忘的景點","③「藍裙子」與「小白碎花蕾絲」分別形容海水與岸邊浪花","④「太平洋上的金光喚醒大家」的金光指早晨的陽光"], ans:1, exp:"②錯誤，燕子口步道「只有開洞處有光」，神祕的黑布滿各處。" },
+      { id:"q504", unit:"第五課：漫遊花東", type:"句型與修辭", q:"「太平洋上的金光喚醒大家」把陽光當成人。下列哪個選項也同樣用了「擬人法」？", opts:["①滾滾溪水奔流，在石頭上激起雪白的水花","②綠色水稻迎風搖曳，隨著風向擺頭","③放眼望去，稻田成了一大片的海","④鹹鹹海風也轉為田野味道"], ans:1, exp:"「隨著風向擺頭」賦予水稻人的動作，屬於擬人修辭（③為譬喻）。" },
+      { id:"q505", unit:"第五課：漫遊花東", type:"字音字形", diagram:"radical_anatomy", q:"下列「 」中的字，哪一個不是「山勢險峻」的意思？且「凹」與哪一個字部首相同？", opts:["①陡「峭」（與「冒」同部首）","②料「峭」（與「出」同為凵部）","③峻「峭」（與「再」同部首）","④" +
+      "峭" + "壁（與「互」同部首）"], ans:1, exp:"春寒料「峭」的峭指「寒冷」；凹與「出」皆屬於「凵部」。" },
+      { id:"q506", unit:"第五課：漫遊花東", type:"字詞義與語詞", q:"下列哪一個選項和「直挺挺的身子」結構不同？", opts:["①水汪汪的眼睛","②黑漆漆的房間","③硬邦邦的麵包","④慢悠悠的走著"], ans:3, exp:"題幹與①②③皆為「ABB形容詞＋的＋名詞」，唯有④是「ABB副詞＋的＋動詞」。" }
+    ]
+  },
+  {
+    id: "L6", code: "06 生態島", name: "護送陸蟹島", icon: "🦀",
+    pos: { x: 70, y: 68 },
+    color: "linear-gradient(135deg, #dc2626, #b91c1c)",
+    keywords: "墾丁 臺二十六線 中型仿相手蟹 孵育 阻斷 轉折複句 遠觀近察 鬼門關",
+    lore: `<b>【L6 探險家秘笈：護送螃蟹過馬路】</b><br>
+      • <b>生態背景</b>：墾丁<b>中型仿相手蟹</b>（鮮紅色、<b>夜行性</b>）。志工在<b>（臺二十六線）</b>阻斷車潮護蟹過馬路。`,
+    questions: [
+      { id:"q601", unit:"第六課：護送螃蟹過馬路", type:"字詞義與語詞", q:"「阻斷」與「目不暇給」的「暇」分別是什麼意思？", opts:["①預防阻止／沒有問題","②因阻礙而中斷／空閒、有空閒","③破除阻礙／瑕疵紕漏","④銜接斷裂處／優勢優點"], ans:1, exp:"阻斷是「因阻礙而中斷」；目不暇給的暇是「空閒」。" },
+      { id:"q602", unit:"第六課：護送螃蟹過馬路", type:"句型與修辭", diagram:"sentence_logic", q:"「轉折複句」前後分句意思相反或相對。下列哪一個選項是轉折複句？", opts:["①螃蟹寶寶們經過幾次脫殼後，就會變成小螃蟹，然後自行回到父母生活的地方","②讓許多使命未達的螃蟹命喪輪底，也讓數十萬個小生命，再也無法長大","③這裡的陸蟹都是沿著同一路線去繁殖後代，然而這條路如今卻變得愈加漫長","④有些螃蟹繼續向前，快步走入水中，有些則在沙石灘上停下了腳步"], ans:2, exp:"「然而…卻…」表示前後語意相反，為轉折複句。" },
+      { id:"q603", unit:"第六課：護送螃蟹過馬路", type:"課文文意", diagram:"crab_ecology", q:"根據《護送螃蟹過馬路》課文，有關“中型仿相手蟹”與護蟹行動的敘述，何者錯誤？", opts:["①身體為鮮紅色，主要棲息在近海、河川下游河岸及海岸林下","②人類在螃蟹家門前開的路是「臺二十六線」（標點符號用括號補充說明）","③志工護送螃蟹的方式是幫忙阻斷川流的車潮","④中型仿相手蟹是日行性生物"], ans:3, exp:"請看下方生態圖解：④錯誤，中型仿相手蟹是「夜行性生物」。" },
+      { id:"q604", unit:"第六課：護送螃蟹過馬路", type:"字音字形", diagram:"radical_anatomy", q:"下列「 」中的字，哪一個去掉部首後，讀音不變？", opts:["①" +
+      "綻" + "放","②" +
+      "蹲" + "坐","③" +
+      "殖" + "民","④" +
+      "悲" + "傷"], ans:2, exp:"「殖」(ㄓˊ)去掉歹部後變成“直”(ㄓˊ)，讀音完全不變！" },
+      { id:"q605", unit:"第六課：護送螃蟹過馬路", type:"字音字形", diagram:"radical_anatomy", q:"下列哪一個字的部首及筆畫數錯誤？", opts:["①陸：土部／九畫","②殖：歹部／八畫","③悲：心部／八畫","④顯：頁部／十四畫"], ans:0, exp:"①「陸」是「阜部（左耳旁）」、部首外8畫，不是土部！" },
+      { id:"q606", unit:"第六課：護送螃蟹過馬路", type:"句型與修辭", diagram:"crab_ecology", q:"“嬌小的牠們在巨輪前來來回回、四處爬行，現場險象環生。”這句話以“嬌小”對比“巨輪”，運用了哪種修辭？", opts:["①對偶","②映襯","③排比","④引用"], ans:1, exp:"以「嬌小的螃蟹」對比「巨大的車輪」，凸顯危險感，為映襯修辭。" }
+    ]
+  },
+  {
+    id: "L7", code: "07 素養島", name: "成語與閱讀秘境", icon: "📜",
+    pos: { x: 86, y: 55 },
+    color: "linear-gradient(135deg, #0d9488, #0f766e)",
+    keywords: "手不釋卷 有口皆碑 道貌岸然 醉生夢死 如願以償 悲天憫人 管寧割席 箕子見微知著",
+    lore: `<b>【07 探險家秘笈：成語典故與閱讀素養】</b><br>
+      • 曹操曹丕<b>“手不釋卷”</b>；名廚江振誠<b>“有口皆碑”</b>；管寧華歆<b>“割席絕交”</b>；箕子見象牙筷<b>“見微知著”</b>。`,
+    questions: [
+      { id:"q701", unit:"成語與閱讀素養", type:"成語與閱讀", diagram:"jizi_chain", q:"商朝大臣箕子看到帝辛使用“象牙筷子”，便推論國家將腐敗滅亡。箕子的思考方式可用哪一個成語表示？其推論順序為何？", opts:["①杞人憂天（食物➔餐具➔衣服➔車子➔建築）","②見微知著（餐具➔食物➔衣服➔車子➔建築物）","③禍福相倚（衣服➔車子➔餐具➔食物➔建築物）","④無妄之災（餐具➔食物➔車子➔衣服➔建築物）"], ans:1, exp:"請看下方階梯圖解：由象牙筷子小事推知大局演變為「見微知著」，順序為：餐具➔食物➔衣服➔車子➔建築物。" },
+      { id:"q702", unit:"成語與閱讀素養", type:"成語與閱讀", q:"《世說新語》中，管寧與華歆除草見金、讀書見華美車轎，最後管寧“割席”分坐。由此可知管寧為人如何？“割席”又是什麼意思？", opts:["①胸懷大志／互相欽慕","②淡泊名利／絕交","③知書達禮／一日不見如隔三秋","④曠達不羈／食之無味"], ans:1, exp:"管寧不慕榮利（淡泊名利），與貪慕名利的華歆割席「絕交」。" },
+      { id:"q703", unit:"成語與閱讀素養", type:"成語與閱讀", diagram:"view_angles", q:"喜歡寫生的小璇坐在公園樹下：先仰頭看榕樹像綠雨傘，接著看前方舞團練舞，最後低頭拿畫筆發現螞蟻。她的視線角度依序是？", opts:["①平視➔俯視➔仰視","②俯視➔平視➔仰視","③仰視➔俯視➔平視","④仰視➔平視➔俯視"], ans:3, exp:"請看下方視角圖解：仰頭看樹（仰視）➔看前方舞團（平視）➔低頭看地上的螞蟻（俯視）。" },
+      { id:"q704", unit:"成語與閱讀素養", type:"成語與閱讀", q:"“□然紙上”、“紙□金迷”、“班門弄□”、“懸□勒馬”□中應分別填入哪些字？", opts:["①耀／醉／釜／涯","②躍／粹／釜／崖","③躍／醉／斧／崖","④耀／粹／斧／涯"], ans:2, exp:"躍然紙上（形容生動逼真）、紙醉金迷、班門弄斧、懸崖勒馬。" },
+      { id:"q705", unit:"成語與閱讀素養", type:"成語與閱讀", q:"下列成語配對何者錯誤？", opts:["①手不釋卷：形容勤奮好學（近義：孜孜不倦）","②道貌岸然：形容外表故作正經，心中其實不是如此","③悲天憫人：比喻因同類的不幸遭遇而感到悲傷","④殊途同歸：比喻採取的方法雖不同，所得的結果卻相同"], ans:2, exp:"③「比喻因同類的不幸遭遇而感到悲傷」是「兔死狐悲」；悲天憫人是憂傷時局、哀憐百姓疾苦（近義：民胞物與）。" },
+      { id:"q706", unit:"成語與閱讀素養", type:"成語與閱讀", q:"“昔日人來人往、門庭若市的商店街，如今卻□□□□，盛況不再。”與“他自己都□□□□了，怎有空幫你？”依序應填入？", opts:["①門可羅雀／自顧不暇","②星羅棋布／好整以暇","③包羅萬象／應接不暇","④自投羅網／席不暇暖"], ans:0, exp:"門可羅雀形容生意冷清；自顧不暇指自身難保、無餘力助人。" }
+    ]
+  }
+];
+
+// =========================================================
+// 1. 基本設定：五維度學科大島（每座島都有自己的主題風格）
+// =========================================================
+const DEMO = !API_URL;
+const SUBJECTS = [
+  { key: "國語", name: "國語文豪島", icon: "📚", title: "水墨書院海", pattern: "ink",
+    land: ["#fdba74", "#c2410c"], sand: "#fef3c7", sea: ["#99f6e4", "#14b8a6", "#134e4a"], banner: "#7c2d12",
+    shape: { points: 15, wobble: 0.3 }, deco: ["🏯", "🎋", "📜", "🖌️", "🌸", "🏮"],
+    palette: ["#fb923c", "#f97316", "#ea580c", "#f59e0b", "#dc2626", "#d97706", "#fdba74", "#c2410c", "#e11d48"],
+    unitIcons: ["📔", "🛠️", "🦚", "🌊", "🏞️", "🦀", "📜", "✏️", "🏮"] },
+  { key: "數學", name: "數學幾何島", icon: "🔢", title: "幾何群島", pattern: "grid",
+    land: ["#93c5fd", "#1d4ed8"], sand: "#e0f2fe", sea: ["#bfdbfe", "#3b82f6", "#172554"], banner: "#1e3a8a",
+    shape: { points: 6, wobble: 0.35, sharp: true }, deco: ["📐", "🔺", "🧮", "📏", "➗", "🎲"],
+    palette: ["#60a5fa", "#3b82f6", "#6366f1", "#0ea5e9", "#2563eb", "#818cf8", "#38bdf8"],
+    unitIcons: ["🧮", "📐", "➗", "📏", "🔺", "📊", "⏰", "💰", "🔷"] },
+  { key: "英語", name: "英倫探險島", icon: "🔤", title: "英倫霧港", pattern: "fog",
+    land: ["#f9a8d4", "#be185d"], sand: "#fce7f3", sea: ["#e9d5ff", "#a855f7", "#3b0764"], banner: "#831843",
+    shape: { points: 16, wobble: 0.2 }, deco: ["🏰", "🎡", "💂", "☕", "🎧", "🔠"],
+    palette: ["#f472b6", "#ec4899", "#d946ef", "#c084fc", "#db2777", "#e879f9"],
+    unitIcons: ["🔤", "🎧", "🍎", "🐶", "🏫", "🎵", "🌈", "✈️", "📮"] },
+  { key: "自然", name: "自然雨林島", icon: "🔬", title: "熱帶雨林潟湖", pattern: "leaf",
+    land: ["#86efac", "#15803d"], sand: "#fef9c3", sea: ["#a7f3d0", "#10b981", "#022c22"], banner: "#14532d",
+    shape: { points: 18, wobble: 0.34 }, deco: ["🌴", "🌋", "🦜", "🍄", "🦋", "🐢"],
+    palette: ["#4ade80", "#22c55e", "#16a34a", "#84cc16", "#10b981", "#65a30d"],
+    unitIcons: ["🌱", "🧪", "🔭", "🦋", "🌋", "🧲", "💧", "☀️", "🐞"] },
+  { key: "社會", name: "社會古城島", icon: "🗺️", title: "古地圖之海", pattern: "oldmap",
+    land: ["#fde68a", "#a16207"], sand: "#fef3c7", sea: ["#fef3c7", "#d6a85b", "#78350f"], banner: "#713f12",
+    shape: { points: 12, wobble: 0.18 }, deco: ["🏛️", "⛩️", "🚂", "🧭", "🏘️", "⚖️"],
+    palette: ["#facc15", "#eab308", "#ca8a04", "#d97706", "#a16207", "#f59e0b"],
+    unitIcons: ["🏘️", "🗺️", "🏛️", "🚂", "⚖️", "🧭", "🌾", "🏮", "⛩️"] }
+];
+const SUBJECT_ALIASES = { "國文": "國語", "英文": "英語", "社會科": "社會", "自然科學": "自然", "自然與生活科技": "自然" };
+const SEAT_EMOJI = ["🦁", "🐰", "🦊", "🐼", "🐯", "🐨", "🐸", "🦄", "🦖", "🐱", "🐶", "🐹", "🦉", "🦋", "🐧", "🐬", "🐿️", "🦅", "🦩", "🐳", "🦌", "🐢"];
+// 可以換的頭像與底色
+const AVATAR_CHOICES = ["🦁", "🐰", "🦊", "🐼", "🐯", "🐨", "🐸", "🦄", "🦖", "🐱", "🐶", "🐹", "🦉", "🐧", "🐬", "🐳", "🦈", "🐙", "🦋", "🐞",
+  "🦕", "🐲", "🦩", "🦜", "🐻", "🐮", "🐷", "🐵", "🤖", "👽", "🧙", "🧚", "🦸", "🥷", "🧑‍🚀", "🧑‍🎨", "⚽", "🎸", "🍩", "🌈"];
+const AVATAR_COLORS = ["#fef08a", "#fecaca", "#bfdbfe", "#bbf7d0", "#e9d5ff", "#fed7aa", "#a5f3fc", "#f5f5f4"];
+const ROLE_INFO = {
+  teacher: { title: "🧑‍🏫 老師登入", label: "老師", icon: "🧑‍🏫" },
+  student: { title: "🎒 學生登入", label: "學生", icon: "🎒" },
+  parent: { title: "👨‍👩‍👧 家長登入", label: "家長", icon: "👨‍👩‍👧" }
+};
+const SESSION_SIZE = 10, MAX_BANK_PER_SESSION = 7, MAX_GEN_PER_SESSION = 3, LOCK_LIMIT = 10;
+const CIRCLED = ["①", "②", "③", "④"];
+const SESSION_KEY = "508_SESSION_V4", NIGHT_KEY = "508_NIGHT", TRAVEL_KEY = "508_TRAVEL";
+
+// 計分規則：答對加分、答錯扣分，一錯再錯扣更多；總分最低 0，每 100 分一級，分數掉了等級也會降
+const LEVEL_STEP = 100;
+const SCORE_RULES = {
+  correct: 10, comboBonus: 2, comboMax: 10,   // 答對 +10，連續答對每多一題再 +2（最多再 +10）
+  wrongFirst: -6, wrongAgain: -10,            // 第一次答錯 −6；這題以前就錯過 −10
+  fixOk: 8, fixWrong: -8,                     // 錯題重考：答對 +8、又錯 −8
+  reviewOk: 5, reviewWrong: -5,               // 歷史錯題複習：答對 +5、又錯 −5（又會回到錯題本）
+  battleOk: 12, battleWrong: -8,              // 相遇對戰：答對的人 +12，答錯的人 −8
+  perfect: 30, good: 15, poor: -15            // 一場結束：全對 +30、正確率 80% 以上 +15、不到 40% −15
+};
+function answerPoints(q, ok, mode, combo) {
+  const R = SCORE_RULES;
+  if (mode === "訂正") return ok ? R.fixOk : R.fixWrong;
+  if (mode === "複習") return ok ? R.reviewOk : R.reviewWrong;
+  if (ok) return R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus);
+  const before = stats.byId[q.id];
+  return before && before.wrong > 0 ? R.wrongAgain : R.wrongFirst;
+}
+function sessionBonus(correct, total) {
+  if (!total) return 0;
+  const acc = correct / total;
+  return acc === 1 ? SCORE_RULES.perfect : acc >= 0.8 ? SCORE_RULES.good : acc < 0.4 ? SCORE_RULES.poor : 0;
+}
+function fmtPts(n) { return (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n); }
+
+let session = null;            // { token, user: { role, name, seat, child } }
+let profile = { emoji: "", color: "" };   // 自己選的頭像
+let rosterList = [];           // [{ role, seat, name }]
+let BANK = [];                 // 全部題目
+let WORLD = [];                // 有題目的科目與單元
+let myRows = [], mySessions = [];
+let stats = emptyStats();
+let view = { level: "world", subject: null };
+let pos = { world: "BOSS", unit: {} };
+let quizState = null;
+let walking = false;
+
+// =========================================================
+// 2. 小工具
+// =========================================================
+function escapeHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function nowStr() {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+function stripNum(s) { return String(s).replace(/^\s*[①②③④]\s*/, ""); }
+function unitKey(subject, unit) { return subject + "｜" + unit; }
+function splitUnit(unit) {
+  const m = String(unit).split(/[：:]/);
+  return m.length > 1 ? [m[0], m.slice(1).join("：")] : ["", unit];
+}
+function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function seatEmoji(seat) { const n = parseInt(seat, 10); return n ? SEAT_EMOJI[(n - 1) % SEAT_EMOJI.length] : "🧑‍🏫"; }
+function shortName(name) { return String(name).replace(/^508/, ""); }
+
+async function api(action, data = {}) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ action, token: session && session.token }, data))
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || "雲端回應錯誤");
+  return json;
+}
+
+// =========================================================
+// 3. 進入畫面與登入
+// =========================================================
+const DEMO_ROSTER = [
+  { role: "teacher", seat: "", name: "508老師" },
+  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "student", seat: String(i + 1).padStart(2, "0"), name: "508" + n })),
+  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "parent", seat: String(i + 1).padStart(2, "0"), name: "508" + n + "家長" }))
+];
+
+async function boot() {
+  if (load(NIGHT_KEY, false)) document.body.classList.add("night");
+  if (DEMO) {
+    const note = document.getElementById("demo-note");
+    note.hidden = false;
+    note.innerHTML = `🧪 <b>示範模式</b>：還沒連上雲端，密碼隨便輸入就能進去，紀錄只存在這台裝置。${Array.isArray(window.DEMO_BANK) ? `題庫：五科 ${window.DEMO_BANK.length} 題。` : "只有內建國語題庫。"}`;
+    rosterList = DEMO_ROSTER;
+  } else {
+    setStatus("正在連線雲端…");
+    try {
+      rosterList = (await api("roster")).accounts;
+      setStatus("");
+    } catch (err) {
+      setStatus("⚠️ 連不上雲端：" + escapeHtml(err.message) + "（請稍後重新整理）");
+    }
+  }
+  const saved = (() => { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { return null; } })();
+  if (saved && saved.user) { session = saved; await enterApp(); }
+}
+
+function setStatus(html) { document.getElementById("splash-status").innerHTML = html; }
+
+function chooseRole(role) {
+  const list = rosterList.filter(a => a.role === role);
+  const sel = document.getElementById("account-select");
+  sel.innerHTML = list.length
+    ? list.map(a => `<option value="${escapeHtml(a.name)}">${a.seat ? a.seat + " 號　" : ""}${escapeHtml(a.name)}</option>`).join("")
+    : `<option value="">（名冊還沒載入）</option>`;
+  document.getElementById("role-title").textContent = ROLE_INFO[role].title;
+  document.getElementById("step-account").dataset.role = role;
+  document.getElementById("step-role").hidden = true;
+  document.getElementById("step-account").hidden = false;
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("password-input").value = "";
+  setTimeout(() => (list.length === 1 ? document.getElementById("password-input") : sel).focus(), 50);
+}
+
+function backToRoles() {
+  document.getElementById("step-account").hidden = true;
+  document.getElementById("step-role").hidden = false;
+}
+
+async function doLogin() {
+  const role = document.getElementById("step-account").dataset.role;
+  const name = document.getElementById("account-select").value;
+  const password = document.getElementById("password-input").value.trim();
+  const err = document.getElementById("login-error");
+  const btn = document.getElementById("enter-btn");
+  if (!name) { err.textContent = "請先選擇帳號"; return; }
+  if (!password) { err.textContent = "請輸入密碼"; return; }
+  err.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "⏳ 驗證中…";
+  try {
+    if (DEMO) {
+      const acc = rosterList.find(a => a.name === name);
+      session = { token: "demo", user: { role, name, seat: acc.seat, child: role === "parent" ? name.replace(/家長$/, "") : role === "student" ? name : "" } };
+    } else {
+      session = await api("login", { role, name, password });
+    }
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+    await enterApp();
+  } catch (e) {
+    err.textContent = "❌ " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚓ 啟航出發！";
+  }
+}
+
+async function enterApp() {
+  setStatus(`<div class="spinner"></div>正在搬運題庫與冒險紀錄…`);
+  try {
+    await loadData();
+  } catch (e) {
+    session = null;
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (er) {}
+    setStatus("⚠️ " + escapeHtml(e.message));
+    backToRoles();
+    return;
+  }
+  setStatus("");
+  document.getElementById("splash").hidden = true;
+  document.getElementById("app").hidden = false;
+  view = { level: "world", subject: null };
+  pos = { world: "BOSS", unit: {} };
+  setTravelMode(travelMode());
+  renderAll();
+  net.start();
+  toast(session.user.role === "student" ? `歡迎登島，${shortName(session.user.name)}！先選交通方式，再點一座大島出發 ✈️🚌🏊🚶` : "歡迎！可以先逛逛島嶼，或按右上角「📊 後台」看紀錄。");
+}
+
+function logout() {
+  net.stop();
+  closePeerMenu();
+  closeModal("battle-modal");
+  if (!DEMO && session) api("logout").catch(() => {});
+  session = null;
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  document.getElementById("app").hidden = true;
+  document.getElementById("splash").hidden = false;
+  closeModal("quiz-modal");
+  closeModal("dash-modal");
+  backToRoles();
+}
+
+function toggleNight() {
+  document.body.classList.toggle("night");
+  store(NIGHT_KEY, document.body.classList.contains("night"));
+}
+
+// =========================================================
+// 4. 題庫與冒險紀錄
+// =========================================================
+function builtinQuestions() {
+  return ISLANDS.flatMap(isl => isl.questions.map(q => ({
+    id: q.id, subject: "國語", unit: q.unit, type: q.type, q: q.q,
+    opts: q.opts.map(stripNum), ans: q.ans, exp: q.exp, diagram: q.diagram || "", src: "builtin"
+  })));
+}
+
+async function loadData() {
+  let cloud = [];
+  // 示範模式：有 demo-bank.js 就用它（五科題庫）；沒有的話只用內建國語題庫
+  if (DEMO && Array.isArray(window.DEMO_BANK)) cloud = window.DEMO_BANK.map(q => Object.assign({}, q, { src: "cloud" }));
+  if (!DEMO) cloud = (await api("questions")).questions.map(q => Object.assign(q, { src: "cloud", subject: SUBJECT_ALIASES[q.subject] || q.subject }));
+  // 內建國語題庫：雲端已經有同名單元時就用雲端的，沒有的單元才補上內建題目
+  const hasChinese = cloud.some(q => q.subject === "國語");
+  BANK = hasChinese ? cloud : [...builtinQuestions(), ...cloud];
+  buildWorld();
+
+  myRows = []; mySessions = [];
+  if (session.user.role === "student") {
+    if (DEMO) {
+      const d = load("508_DEMO_DATA_" + session.user.name, { answers: [], sessions: [] });
+      myRows = d.answers; mySessions = d.sessions;
+    } else {
+      const d = await api("myData");
+      myRows = d.answers; mySessions = d.sessions;
+      const q = queue();
+      const known = new Set(myRows.map(r => r.uid));
+      myRows.push(...q.answers.filter(a => !known.has(a.uid)));
+      mySessions.push(...q.sessions);
+      flushQueue();
+    }
+  }
+  stats = aggregate(myRows, mySessions);
+  profile = { emoji: "", color: "" };
+  try { const r = await net.loadProfile(); if (r && r.profile) profile = r.profile; } catch (e) {}
+}
+
+function buildWorld() {
+  const order = [...SUBJECTS.map(s => s.key)];
+  BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
+  WORLD = order.slice(0, 7).map((key, i) => {
+    const base = SUBJECTS.find(s => s.key === key) || {
+      key, name: key + "島", icon: "⭐", colors: [["#a78bfa", "#5b21b6"], ["#2dd4bf", "#115e59"]][i % 2],
+      terrain: ["⭐", "📘", "🌟", "📗", "✨", "📙"], unitIcons: ["⭐", "🌟", "✨", "💫"]
+    };
+    const units = [];
+    BANK.filter(q => q.subject === key).forEach(q => {
+      let u = units.find(x => x.unit === q.unit);
+      if (!u) {
+        const isl = key === "國語" ? ISLANDS.find(x => x.questions[0].unit === q.unit) : null;
+        u = { key: unitKey(key, q.unit), subject: key, unit: q.unit, questions: [],
+          icon: isl ? isl.icon : base.unitIcons[units.length % base.unitIcons.length],
+          lore: isl ? isl.lore : "", keywords: isl ? isl.keywords : "" };
+        units.push(u);
+      }
+      u.questions.push(q);
+    });
+    VIRTUAL_UNITS.filter(v => v.subject === key).forEach(v => {
+      let u = units.find(x => x.unit === v.unit);
+      if (!u) {
+        u = { key: unitKey(key, v.unit), subject: key, unit: v.unit, questions: [], icon: v.icon, lore: v.lore || "", keywords: "" };
+        if (v.unit === IDIOM_UNIT) units.unshift(u); else units.push(u);
+      } else if (v.icon) u.icon = v.icon;
+      u.virtual = v;
+      if (v.lore && !u.lore) u.lore = v.lore;
+    });
+    return Object.assign({}, base, { units });
+  });
+}
+
+function findQuestion(id) { return BANK.find(q => q.id === id); }
+
+/** 統計一位學生：每題答幾次、錯幾次、訂正幾次、目前是否還沒訂正好（Apps Script 端有一份一樣的） */
+function aggregate(rows, sessions) {
+  const byQ = {}, units = {};
+  let attempts = 0, correct = 0;
+  rows.forEach(r => {
+    const s = byQ[r.qId] || (byQ[r.qId] = {
+      qId: r.qId, subject: r.subject, unit: r.unit, q: r.q, opts: r.opts, correctText: r.correctText, exp: r.exp,
+      attempts: 0, correct: 0, wrong: 0, fixTries: 0, fixes: 0, last: null, lastTime: "", wrongAnswers: []
+    });
+    s.attempts++; attempts++;
+    if (r.ok) { s.correct++; correct++; } else { s.wrong++; if (!s.wrongAnswers.includes(r.chosen) && s.wrongAnswers.length < 3) s.wrongAnswers.push(r.chosen); }
+    if (r.mode === "訂正") { s.fixTries++; if (r.ok) s.fixes++; }
+    Object.assign(s, { last: r.ok, lastTime: r.t, q: r.q, opts: r.opts, correctText: r.correctText, exp: r.exp });
+    const uk = unitKey(r.subject, r.unit);
+    const u = units[uk] || (units[uk] = { subject: r.subject, unit: r.unit, total: 0, correct: 0 });
+    u.total++; if (r.ok) u.correct++;
+  });
+  const stars = {};
+  // 每題的加減分與每場的結算分，依時間順序累加，總分不會低於 0
+  const events = [...rows.map(r => ({ t: r.t, pts: Number(r.pts) || 0 })), ...sessions.map(x => ({ t: x.t, pts: Number(x.score) || 0 }))]
+    .sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
+  let score = 0;
+  events.forEach(e => { score = Math.max(0, score + e.pts); });
+  sessions.forEach(x => {
+    if (x.total && x.unit !== "錯題本" && x.unit !== "混合練習") {
+      const acc = x.correct / x.total, uk = unitKey(x.subject, x.unit);
+      stars[uk] = Math.max(stars[uk] || 0, acc === 1 ? 3 : acc >= 0.7 ? 2 : acc >= 0.4 ? 1 : 0);
+    }
+  });
+  const qs = Object.values(byQ);
+  const lastA = rows.length ? rows[rows.length - 1].t : "", lastS = sessions.length ? sessions[sessions.length - 1].t : "";
+  return {
+    attempts, correct, score, stars, units: Object.values(units), questions: qs, byId: byQ,
+    pending: qs.filter(q => q.last === false), repeated: qs.filter(q => q.wrong >= 2), wrongEver: qs.filter(q => q.wrong > 0),
+    lastActive: lastA > lastS ? lastA : lastS
+  };
+}
+function emptyStats() { return aggregate([], []); }
+
+// 送出佇列：沒網路時先存在這台裝置，連上後補送
+function queueKey() { return "508_QUEUE_" + session.user.name; }
+function queue() { return load(queueKey(), { answers: [], sessions: [] }); }
+let flushing = false;
+async function flushQueue() {
+  if (DEMO || flushing || !session) return;
+  const q = queue();
+  if (!q.answers.length && !q.sessions.length) return;
+  flushing = true;
+  try {
+    await api("record", { answers: q.answers, sessions: q.sessions });
+    const latest = queue();
+    const sentA = new Set(q.answers.map(a => a.uid)), sentS = new Set(q.sessions.map(s => s.sid));
+    store(queueKey(), { answers: latest.answers.filter(a => !sentA.has(a.uid)), sessions: latest.sessions.filter(s => !sentS.has(s.sid)) });
+  } catch (e) {
+    if (/登入已過期/.test(e.message)) toast("⚠️ 登入已過期，答題紀錄先存在這台裝置，請重新登入後會自動補送");
+  } finally {
+    flushing = false;
+  }
+}
+setInterval(flushQueue, 30000);
+
+function saveRecord(answerRow, sessionRow) {
+  if (!session || session.user.role !== "student") return;   // 老師、家長試玩不列入紀錄
+  if (answerRow) myRows.push(answerRow);
+  if (sessionRow) mySessions.push(sessionRow);
+  stats = aggregate(myRows, mySessions);
+  if (DEMO) {
+    store("508_DEMO_DATA_" + session.user.name, { answers: myRows, sessions: mySessions });
+    return;
+  }
+  const q = queue();
+  if (answerRow) q.answers.push(answerRow);
+  if (sessionRow) q.sessions.push(sessionRow);
+  store(queueKey(), q);
+  flushQueue();
+}
+
+// =========================================================
+// 5. 地圖：大小、形狀、位置都不一樣的島，用橋、公路、航線、泳道相連
+// =========================================================
+// ── 有種子的亂數：同一座島每次畫出來形狀都一樣，但每座島都不同 ──
+function seeded(str) {
+  let h = 2166136261;
+  for (const c of String(str)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); }
+  return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; };
+}
+const f1 = n => n.toFixed(1);
+
+/** 不規則的島嶼輪廓：sharp=true 是有稜有角的幾何島（數學），否則是圓滑的自然島 */
+function blobPath(cx, cy, r, seed, shape = {}) {
+  const rnd = seeded(seed), n = shape.points || 14, wob = shape.wobble == null ? 0.25 : shape.wobble;
+  const sy = shape.sy || 0.8, rot = rnd() * Math.PI * 2;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = rot + i / n * Math.PI * 2, rr = r * (1 - wob / 2 + rnd() * wob);
+    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * sy]);
+  }
+  if (shape.sharp) return "M" + pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(" L") + "Z";
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const m0 = mid(pts[n - 1], pts[0]);
+  let d = `M${f1(m0[0])},${f1(m0[1])}`;
+  for (let i = 0; i < n; i++) { const q = mid(pts[i], pts[(i + 1) % n]); d += ` Q${f1(pts[i][0])},${f1(pts[i][1])} ${f1(q[0])},${f1(q[1])}`; }
+  return d + "Z";
+}
+
+function gradient(id, colors) {
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${colors[0]}"/><stop offset="1" stop-color="${colors[1]}"/></linearGradient>`;
+}
+
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v + amt * 255))));
+  return "#" + c.map(v => v.toString(16).padStart(2, "0")).join("");
+}
+
+/** 一座島：淺灘、沙灘、厚度、陸地、亮面、裝飾、主圖示、招牌 */
+function islandSvg(o) {
+  const { id, x, y, r, seed, land, sand, shape, deco = [], icon, label, sub, cls = "", badge = 0, aria, smoke } = o;
+  const gid = "g-" + seed.replace(/[^\w]/g, "") + Math.round(x);
+  const rnd = seeded(seed + "deco");
+  const decoSvg = deco.slice(0, r > 70 ? 4 : 3).map((e, i) => {
+    const a = rnd() * Math.PI * 2, d = r * (0.42 + rnd() * 0.2);
+    return `<text class="t-emoji" x="${f1(x + Math.cos(a) * d)}" y="${f1(y + Math.sin(a) * d * 0.7 + r * 0.08)}" font-size="${f1(r * 0.26)}">${e}</text>`;
+  }).join("");
+  const ts = textScale();
+  const bw = Math.min(r * 2.6, Math.max(label.length * r * 0.2 * ts, (sub || "").length * r * 0.13 * ts) + r * 0.36);
+  const by = y + r * 0.5;
+  return `
+    <g class="isle ${cls}" data-id="${escapeHtml(id)}" tabindex="0" role="button" aria-label="${escapeHtml(aria || label)}">
+      <defs>${gradient(gid, land)}</defs>
+      <path d="${blobPath(x, y + 5, r * 1.3, seed + "h", shape)}" fill="rgba(255,255,255,0.2)"/>
+      <path d="${blobPath(x, y + 3, r * 1.1, seed + "s", shape)}" fill="${sand}"/>
+      <g class="lift">
+        <path d="${blobPath(x, y + r * 0.13, r, seed, shape)}" fill="${land[1]}"/>
+        <path d="${blobPath(x, y + r * 0.13, r, seed, shape)}" fill="rgba(0,0,0,0.25)"/>
+        <path class="face" d="${blobPath(x, y, r, seed, shape)}" fill="url(#${gid})"/>
+        <path d="${blobPath(x - r * 0.12, y - r * 0.14, r * 0.55, seed + "t", shape)}" fill="rgba(255,255,255,0.16)"/>
+        ${decoSvg}
+        ${smoke ? `<text class="t-emoji smoke" x="${f1(x + r * 0.05)}" y="${f1(y - r * 0.45)}" font-size="${f1(r * 0.3)}">💨</text>` : ""}
+        <text class="t-emoji" x="${f1(x)}" y="${f1(y + r * 0.12)}" font-size="${f1(r * 0.5)}">${icon}</text>
+        <rect class="banner-rect" x="${f1(x - bw / 2)}" y="${f1(by)}" width="${f1(bw)}" height="${f1((sub ? r * 0.48 : r * 0.3) * ts)}" rx="${f1(r * 0.12)}"/>
+        <text class="banner-text" x="${f1(x)}" y="${f1(by + r * 0.21 * ts)}" font-size="${f1(r * 0.19 * ts)}">${escapeHtml(label)}</text>
+        ${sub ? `<text class="banner-text" x="${f1(x)}" y="${f1(by + r * 0.41 * ts)}" font-size="${f1(r * 0.13 * ts)}" opacity="0.88">${escapeHtml(sub)}</text>` : ""}
+        ${badge ? `<circle class="badge-dot" cx="${f1(x + r * 0.55)}" cy="${f1(y - r * 0.45)}" r="${f1(Math.max(11, r * 0.17))}"/><text class="banner-text" x="${f1(x + r * 0.55)}" y="${f1(y - r * 0.39)}" font-size="${f1(Math.max(11, r * 0.17))}">${badge}</text>` : ""}
+      </g>
+    </g>`;
+}
+
+// ── 四種路線：🚶木橋、🚌公路、✈️航線、🏊泳道 ──
+const MODES = {
+  walk: { icon: "🚶", label: "走路", arrive: "走過橋，到了！" },
+  bus: { icon: "🚌", label: "遊覽車", arrive: "遊覽車到站囉！" },
+  plane: { icon: "✈️", label: "飛機", arrive: "飛機降落！歡迎光臨" },
+  swim: { icon: "🏊", label: "游泳", arrive: "游上岸了，好涼快！" },
+  boat: { icon: "⛴️", label: "搭船", arrive: "船靠岸了，請小心下船！" }
+};
+
+function routeSvg(a, b, mode, seed) {
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  const ux = dx / len, uy = dy / len;
+  const s = { x: a.x + ux * a.r * 0.85, y: a.y + uy * a.r * 0.7 }, e = { x: b.x - ux * b.r * 0.85, y: b.y - uy * b.r * 0.7 };
+  const L = Math.hypot(e.x - s.x, e.y - s.y), ang = Math.atan2(e.y - s.y, e.x - s.x) * 180 / Math.PI;
+  if (mode === "plane") {
+    const cx = (a.x + b.x) / 2 - uy * len * 0.18, cy = (a.y + b.y) / 2 - Math.abs(ux) * len * 0.28 - 20;
+    const mx = (a.x + 2 * cx + b.x) / 4, my = (a.y + 2 * cy + b.y) / 4;
+    return `<path class="route-plane" d="M${f1(a.x)},${f1(a.y)} Q${f1(cx)},${f1(cy)} ${f1(b.x)},${f1(b.y)}"/>
+      <text class="t-emoji route-icon" x="${f1(mx)}" y="${f1(my)}" font-size="20">✈️</text>`;
+  }
+  if (mode === "boat") {
+    const bend = Math.min(80, len * 0.25) * (a.x < b.x ? 1 : -1);
+    const cx = (s.x + e.x) / 2 + uy * bend, cy = (s.y + e.y) / 2 - ux * bend;
+    return `<path class="route-boat" d="M${f1(s.x)},${f1(s.y)} Q${f1(cx)},${f1(cy)} ${f1(e.x)},${f1(e.y)}"/>
+      <text class="t-emoji route-icon" x="${f1((s.x + 2 * cx + e.x) / 4)}" y="${f1((s.y + 2 * cy + e.y) / 4 + 7)}" font-size="20">⛴️</text>`;
+  }
+  if (mode === "swim") {
+    const rnd = seeded(seed);
+    let d = `M${f1(s.x)},${f1(s.y)}`;
+    const steps = Math.max(4, Math.round(L / 28));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps, px = s.x + (e.x - s.x) * t, py = s.y + (e.y - s.y) * t, w = (i % 2 ? 1 : -1) * (6 + rnd() * 4);
+      d += ` Q${f1(px - uy * w - ux * L / steps / 2)},${f1(py + ux * w - uy * L / steps / 2)} ${f1(px)},${f1(py)}`;
+    }
+    return `<path class="route-swim" d="${d}"/>
+      <text class="t-emoji route-icon" x="${f1((s.x + e.x) / 2)}" y="${f1((s.y + e.y) / 2 + 6)}" font-size="18">🛟</text>`;
+  }
+  const deck = mode === "bus"
+    ? `<rect x="0" y="-11" width="${f1(L)}" height="22" rx="4" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
+       <line x1="6" y1="0" x2="${f1(L - 6)}" y2="0" stroke="#fde047" stroke-width="2.5" stroke-dasharray="10 8"/>
+       ${Array.from({ length: Math.max(1, Math.floor(L / 60)) }, (_, i) => `<rect x="${f1((i + 0.5) * L / Math.max(1, Math.floor(L / 60)) - 3)}" y="11" width="6" height="10" fill="#334155"/>`).join("")}`
+    : `<rect x="0" y="-9" width="${f1(L)}" height="18" rx="3" fill="url(#planks)" stroke="var(--rope)" stroke-width="1.5"/>
+       <line class="bridge-rope" x1="0" y1="-11" x2="${f1(L)}" y2="-11"/><line class="bridge-rope" x1="0" y1="11" x2="${f1(L)}" y2="11"/>
+       <circle class="bridge-post" cx="0" cy="-11" r="3.5"/><circle class="bridge-post" cx="0" cy="11" r="3.5"/>
+       <circle class="bridge-post" cx="${f1(L)}" cy="-11" r="3.5"/><circle class="bridge-post" cx="${f1(L)}" cy="11" r="3.5"/>`;
+  return `<g transform="translate(${f1(s.x)},${f1(s.y)}) rotate(${f1(ang)})">${deck}</g>`;
+}
+
+const SHARED_DEFS = `
+  <pattern id="planks" width="9" height="20" patternUnits="userSpaceOnUse">
+    <rect width="9" height="20" fill="var(--plank-light)"/><rect x="7" width="2" height="20" fill="var(--plank)"/>
+  </pattern>
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M40,0 L0,0 0,40" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.2"/>
+  </pattern>
+  <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>`;
+
+/** 每座科目大島的海面都有自己的風格 */
+function themeBackdrop(pattern, vb, seedKey) {
+  const rnd = seeded(seedKey + "bg");
+  const R = () => ({ x: vb.x + rnd() * vb.w, y: vb.y + rnd() * vb.h });
+  if (pattern === "grid") return `<rect x="${vb.x}" y="${vb.y}" width="${vb.w}" height="${vb.h}" fill="url(#grid)"/>`;
+  if (pattern === "ink") return Array.from({ length: 5 }, () => { const p = R(); return `<ellipse cx="${f1(p.x)}" cy="${f1(p.y)}" rx="${f1(80 + rnd() * 90)}" ry="${f1(40 + rnd() * 40)}" fill="rgba(15,23,42,0.12)" filter="url(#soft)"/>`; }).join("")
+    + `<path d="M${vb.x},${vb.y + 70} q80,-60 160,-10 q60,-50 140,0 q70,-40 150,5" fill="none" stroke="rgba(15,23,42,0.18)" stroke-width="3"/>`;
+  if (pattern === "fog") return Array.from({ length: 6 }, () => { const p = R(); return `<ellipse class="fog" cx="${f1(p.x)}" cy="${f1(p.y)}" rx="${f1(120 + rnd() * 120)}" ry="${f1(30 + rnd() * 30)}" fill="rgba(255,255,255,0.35)" filter="url(#soft)"/>`; }).join("");
+  if (pattern === "leaf") return Array.from({ length: 12 }, () => { const p = R(); return `<text class="t-emoji" x="${f1(p.x)}" y="${f1(p.y)}" font-size="${f1(16 + rnd() * 14)}" opacity="0.45" transform="rotate(${f1(rnd() * 60 - 30)} ${f1(p.x)} ${f1(p.y)})">${rnd() > 0.5 ? "🌿" : "🍃"}</text>`; }).join("");
+  if (pattern === "oldmap") return Array.from({ length: 4 }, (_, i) => `<line x1="${vb.x}" y1="${f1(vb.y + (i + 1) * vb.h / 5)}" x2="${vb.x + vb.w}" y2="${f1(vb.y + (i + 1) * vb.h / 5)}" stroke="rgba(120,53,15,0.25)" stroke-dasharray="6 6"/>`).join("")
+    + `<text class="t-emoji" x="${f1(vb.x + vb.w - 70)}" y="${f1(vb.y + vb.h - 40)}" font-size="70" opacity="0.4">🧭</text><text class="t-emoji" x="${f1(vb.x + 70)}" y="${f1(vb.y + 70)}" font-size="34" opacity="0.5">⛵</text>`;
+  return "";
+}
+
+function wavesSvg(vb, avoid, count = 22) {
+  const out = [];
+  for (let i = 0; i < 90 && out.length < count; i++) {
+    const x = vb.x + 20 + ((i * 137.5) % (vb.w - 40)), y = vb.y + 16 + ((i * 89.3 + 23) % (vb.h - 32));
+    if (avoid.some(p => Math.hypot(p.x - x, p.y - y) < p.r * 1.35 + 16)) continue;
+    out.push(`<path class="wave" style="animation-delay:${-(i % 6)}s" d="M${(x - 16).toFixed(0)},${y.toFixed(0)} q8,-8 16,0 t16,0"/>`);
+  }
+  return out.join("");
+}
+
+// ── 世界地圖：五座大島像真的群島一樣散落在海上，大小也不一樣 ──
+// 手機直式畫面改用直向的群島，島才不會被壓得太小
+function isPortrait() { return window.innerWidth < 700; }
+function textScale() { return isPortrait() ? 1.35 : 1; }
+const LAYOUTS = {
+  wide: {
+    vb: { x: 0, y: 0, w: 1000, h: 700 },
+    spots: { "國語": { x: 215, y: 210, r: 112 }, "數學": { x: 650, y: 128, r: 80 }, "英語": { x: 858, y: 372, r: 92 },
+      "自然": { x: 572, y: 548, r: 118 }, "社會": { x: 178, y: 530, r: 96 }, BOSS: { x: 428, y: 330, r: 62 } },
+    extra: [{ x: 830, y: 610, r: 64 }, { x: 420, y: 92, r: 58 }],
+    reefs: [[330, 600, 26], [930, 160, 22], [60, 330, 20], [760, 250, 16], [320, 80, 18], [700, 360, 14]]
+  },
+  tall: {
+    vb: { x: 0, y: 0, w: 700, h: 1010 },
+    spots: { "國語": { x: 200, y: 185, r: 118 }, "數學": { x: 545, y: 160, r: 88 }, "英語": { x: 565, y: 575, r: 100 },
+      "自然": { x: 400, y: 845, r: 118 }, "社會": { x: 160, y: 620, r: 102 }, BOSS: { x: 365, y: 410, r: 70 } },
+    extra: [{ x: 600, y: 940, r: 60 }, { x: 120, y: 900, r: 56 }],
+    reefs: [[640, 360, 22], [60, 420, 20], [630, 760, 18], [110, 960, 20], [380, 70, 18], [250, 380, 14]]
+  }
+};
+function layout() { return isPortrait() ? LAYOUTS.tall : LAYOUTS.wide; }
+function worldVB() { return layout().vb; }
+const WORLD_ROUTES = [
+  ["國語", "BOSS", "walk"], ["國語", "社會", "bus"], ["社會", "自然", "walk"], ["自然", "BOSS", "bus"],
+  ["自然", "英語", "walk"], ["英語", "數學", "bus"], ["數學", "BOSS", "walk"],
+  ["國語", "數學", "plane"], ["社會", "BOSS", "swim"], ["英語", "BOSS", "plane"], ["數學", "自然", "boat"]
+];
+function worldNodes() {
+  const nodes = WORLD.map((s, i) => {
+    const L = layout();
+    const spot = L.spots[s.key] || L.extra[(i - 5) % L.extra.length] || L.extra[0];
+    return Object.assign({ id: s.key, subject: s }, spot);
+  });
+  nodes.push(Object.assign({ id: "BOSS" }, layout().spots.BOSS));
+  return nodes;
+}
+function worldRoutes() {
+  const keys = WORLD.map(s => s.key);
+  const r = WORLD_ROUTES.filter(([a, b]) => (a === "BOSS" || keys.includes(a)) && (b === "BOSS" || keys.includes(b)));
+  keys.filter(k => !LAYOUTS.wide.spots[k]).forEach(k => r.push([k, "BOSS", "walk"]));
+  return r;
+}
+function landNeighbors(routes) {
+  return id => routes.filter(([a, b, m]) => (m === "walk" || m === "bus") && (a === id || b === id)).map(([a, b]) => (a === id ? b : a));
+}
+function bfs(from, to, neighbors) {
+  const prev = { [from]: null }, q = [from];
+  while (q.length) {
+    const cur = q.shift();
+    if (cur === to) break;
+    for (const nb of neighbors(cur)) if (!(nb in prev)) { prev[nb] = cur; q.push(nb); }
+  }
+  if (!(to in prev)) return null;
+  const path = [];
+  for (let c = to; c != null && c !== from; c = prev[c]) path.unshift(c);
+  return path;
+}
+
+function subjectProgress(s) {
+  const got = s.units.reduce((t, u) => t + (stats.stars[u.key] || 0), 0);
+  return { got, max: s.units.length * 3 };
+}
+function pendingCount(filterFn) { return stats.pending.filter(filterFn).length; }
+
+function renderWorld(kw) {
+  const nodes = worldNodes(), routes = worldRoutes();
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const pend = stats.pending.length;
+  const isles = nodes.map(n => {
+    if (n.id === "BOSS") {
+      const hot = pend >= LOCK_LIMIT;
+      return islandSvg({ id: "BOSS", x: n.x, y: n.y, r: n.r, seed: "boss-volcano", land: hot ? ["#f87171", "#7f1d1d"] : ["#78716c", "#1c1917"],
+        sand: "#a8a29e", shape: { points: 9, wobble: 0.4 }, deco: ["🔥", "🪨", "💀"], icon: hot ? "🔥" : "🌋", smoke: true,
+        label: "錯題島", sub: `待訂正 ${pend}・歷史 ${stats.wrongEver.length}`, cls: (hot ? "alarm" : "") + (kw && !"錯題島".includes(kw) ? " dim" : ""),
+        aria: `錯題島，待訂正 ${pend} 題` });
+    }
+    const s = n.subject, empty = !s.units.length;
+    const matches = kw && s.units.some(u => u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
+    const prog = subjectProgress(s);
+    return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "world-" + s.key, land: s.land, sand: s.sand, shape: s.shape, deco: s.deco,
+      icon: s.icon, label: s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}`,
+      badge: pendingCount(q => q.subject === s.key), cls: (empty ? "empty" : "") + (kw ? (matches ? " hit" : " dim") : "") });
+  });
+  const reefs = layout().reefs
+    .map(([x, y, r], i) => `<path d="${blobPath(x, y, r, "reef" + i, { points: 8, wobble: 0.5 })}" fill="var(--shore)" opacity="0.8"/><text class="t-emoji" x="${x}" y="${y + 6}" font-size="${r * 0.9}">${["🌴", "🪨", "🐚", "🐋", "🏝️", "⛵"][i]}</text>`).join("");
+  setMapSvg(worldVB(), `
+    <defs>${SHARED_DEFS}</defs>
+    <g>${wavesSvg(worldVB(), nodes, 26)}</g>
+    <g>${reefs}</g>
+    <g>${routes.map(([a, b, m], i) => routeSvg(byId[a], byId[b], m, "wr" + i)).join("")}</g>
+    <g>${isles.join("")}</g>`, null);
+  document.querySelectorAll("#map-svg .isle[data-id]").forEach(g => bindActivate(g, () => onIslandClick(g.dataset.id)));
+  renderAvatars();
+}
+
+// ── 科目地圖：單元小島沿著自然的海岸線散布，大小依題目多寡而不同 ──
+const UNIT_ANCHORS = [[110, 600], [270, 470], [195, 255], [385, 135], [478, 358], [650, 228], [828, 132], [885, 372], [705, 478], [548, 618], [828, 620], [372, 598], [606, 86]];
+function subjectLayout(s) {
+  const rnd = seeded("layout-" + s.key);
+  const flip = rnd() > 0.5;
+  const nodes = [{ id: "DOCK@" + s.key, dock: true }, ...s.units.map(u => ({ id: u.key, unitObj: u }))];
+  nodes.forEach((n, i) => {
+    let [ax, ay] = i < UNIT_ANCHORS.length ? UNIT_ANCHORS[i] : [130 + ((i - UNIT_ANCHORS.length) % 5) * 190, 760 + Math.floor((i - UNIT_ANCHORS.length) / 5) * 180];
+    if (flip) ax = 1000 - ax;
+    if (isPortrait()) [ax, ay] = [ay, ax];   // 手機直式：整張圖轉成直向
+    n.x = ax + (rnd() - 0.5) * 50;
+    n.y = ay + (rnd() - 0.5) * 40;
+    n.r = (n.dock ? 48 : 48 + Math.min(24, n.unitObj.questions.length / 3) + rnd() * 6) * (isPortrait() ? 1.12 : 1);
+    n.idx = i;
+  });
+  const maxY = Math.max(...nodes.map(n => n.y + n.r));
+  // 地圖高度跟著島的數量走，單元少的科目不會空出一大片海
+  const vb = isPortrait()
+    ? { x: 0, y: 30, w: 720, h: Math.max(640, maxY + 60) - 30 }
+    : { x: 0, y: 20, w: 1000, h: Math.max(560, maxY + 50) - 20 };
+  // 相鄰單元之間：大多是橋或公路；另外加幾條航線、泳道當捷徑
+  const routes = [];
+  for (let i = 1; i < nodes.length; i++) routes.push([nodes[i - 1].id, nodes[i].id, rnd() < 0.7 ? "walk" : "bus"]);
+  for (let k = 0; k < Math.min(3, Math.floor(nodes.length / 3)); k++) {
+    const a = 1 + Math.floor(rnd() * (nodes.length - 3)), b = Math.min(nodes.length - 1, a + 2 + Math.floor(rnd() * 2));
+    routes.push([nodes[a].id, nodes[b].id, ["swim", "plane", "boat"][k % 3]]);
+  }
+  return { nodes, vb, routes };
+}
+
+function renderSubject(kw) {
+  const s = WORLD.find(x => x.key === view.subject);
+  const { nodes, vb, routes } = subjectLayout(s);
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const locked = stats.pending.length >= LOCK_LIMIT;
+  const isles = nodes.map((n, i) => {
+    if (n.dock) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "dock" + s.key, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
+      shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🪵"], icon: "⛵", label: "碼頭", sub: "回世界地圖" });
+    const u = n.unitObj, st = stats.stars[u.key] || 0;
+    const color = s.palette[(i - 1) % s.palette.length];
+    const [l1, l2] = splitUnit(u.unit);
+    const maxLen = isPortrait() ? 6 : 8;
+    const name = l2.length > maxLen ? l2.slice(0, maxLen) + "…" : l2;
+    const matches = kw && (u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
+    return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: s.sand,
+      shape: Object.assign({}, s.shape, { points: s.shape.sharp ? 5 + (i % 3) : s.shape.points }), deco: shuffleSeeded(s.deco, u.key),
+      icon: locked ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
+      sub: `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${isPortrait() ? "" : `　${u.questions.length} 題`}`,
+      badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (kw ? (matches ? " hit" : " dim") : ""),
+      aria: `${u.unit}，${st} 顆星` });
+  });
+  setMapSvg(vb, `
+    <defs>${SHARED_DEFS}</defs>
+    <g>${themeBackdrop(s.pattern, vb, s.key)}</g>
+    <g>${wavesSvg(vb, nodes, 18)}</g>
+    <g>${routes.map(([a, b, m], i) => routeSvg(byId[a], byId[b], m, s.key + i)).join("")}</g>
+    <g>${isles.join("")}</g>
+    <text x="${vb.x + vb.w - 20}" y="${vb.y + 34}" text-anchor="end" class="sea-title" font-size="${22 * textScale()}">${s.icon} ${escapeHtml(s.title)}</text>`, s);
+  document.querySelectorAll("#map-svg .isle[data-id]").forEach(g => bindActivate(g, () => onIslandClick(g.dataset.id)));
+  renderAvatars();
+}
+function shuffleSeeded(arr, seed) { const rnd = seeded(seed); return [...arr].sort(() => rnd() - 0.5); }
+
+let currentVB = LAYOUTS.wide.vb;
+function setMapSvg(vb, inner, subject) {
+  currentVB = vb;
+  const svg = document.getElementById("map-svg");
+  svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  document.getElementById("map-stage").style.aspectRatio = `${vb.w} / ${vb.h}`;
+  const wrap = document.querySelector(".map-wrapper");
+  wrap.style.background = subject && !document.body.classList.contains("night")
+    ? `radial-gradient(ellipse at 50% 40%, ${subject.sea[0]} 0%, ${subject.sea[1]} 65%, ${subject.sea[2]} 100%)` : "";
+  wrap.dataset.theme = subject ? subject.pattern : "world";
+  svg.innerHTML = inner;
+}
+
+function bindActivate(el, fn) {
+  el.addEventListener("click", fn);
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fn(); } });
+}
+
+// ── 小人偶：自己的、還有同一張地圖上的同學 ──
+function currentNodes() {
+  if (view.level === "world") return { nodes: worldNodes(), routes: worldRoutes(), vb: worldVB() };
+  return subjectLayout(WORLD.find(x => x.key === view.subject));
+}
+function myPlaceId() { return view.level === "world" ? pos.world : (pos.unit[view.subject] || "DOCK@" + view.subject); }
+function myPlace() { return (view.level === "world" ? "W:" : "U:") + myPlaceId(); }
+function spotOf(n, k = -1) {
+  if (k < 0) return { x: n.x - n.r * 0.72, y: n.y - n.r * 0.3 };   // 自己站在島的左上角，不擋住圖示和招牌
+  const a = -Math.PI * 0.42 + k * 0.55;   // 同學沿著島的右上方排開
+  return { x: n.x + Math.cos(a) * n.r * 0.72, y: n.y + Math.sin(a) * n.r * 0.6 };
+}
+function toPct(p, vb) { return { left: (p.x - vb.x) / vb.w * 100, top: (p.y - vb.y) / vb.h * 100 }; }
+function setPos(el, p, vb) { const q = toPct(p, vb); el.style.left = q.left + "%"; el.style.top = q.top + "%"; }
+
+function avatarFace(emoji, color) { return `<div class="face-av" style="background:${color || "#fef08a"}">${emoji}</div>`; }
+function myEmoji() { return profile.emoji || (session.user.role === "student" ? seatEmoji(session.user.seat) : ROLE_INFO[session.user.role].icon); }
+function myColor() { return profile.color || "#fef08a"; }
+
+/** 其他同學在這張地圖上要站在哪座島（在世界地圖上，人在某科小島裡就顯示在那座大島） */
+function placeOnThisMap(place) {
+  if (!place) return null;
+  const [kind, id] = [place.slice(0, 2), place.slice(2)];
+  if (view.level === "world") {
+    if (kind === "W:") return id;
+    const subj = id.startsWith("DOCK@") ? id.slice(5) : id.split("｜")[0];
+    return subj;
+  }
+  if (kind === "U:") {
+    const subj = id.startsWith("DOCK@") ? id.slice(5) : id.split("｜")[0];
+    return subj === view.subject ? id : null;
+  }
+  return null;
+}
+
+function renderAvatars() {
+  const layer = document.getElementById("avatar-layer");
+  const { nodes, vb } = currentNodes();
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  let me = layer.querySelector(".avatar.me");
+  if (!me) {
+    me = document.createElement("div");
+    me.className = "avatar me";
+    me.innerHTML = `<div class="vehicle"></div><div class="face-slot"></div><div class="tag"></div>`;
+    me.onclick = () => say(["加油！錯題清光光 💪", "要搭飛機還是游泳過去呢？", "星星收集中 ⭐"][Math.floor(Math.random() * 3)]);
+    layer.appendChild(me);
+  }
+  me.querySelector(".face-slot").innerHTML = avatarFace(myEmoji(), myColor());
+  me.querySelector(".tag").textContent = (session.user.role === "student" ? "⭐ " : "") + shortName(session.user.name);
+  const here = byId[myPlaceId()] || nodes[nodes.length - 1];
+  if (!walking) setPos(me, spotOf(here), vb);
+
+  layer.querySelectorAll(".avatar.other").forEach(el => el.remove());
+  const groups = {};
+  (net.others || []).forEach(o => { const id = placeOnThisMap(o.place); if (id && byId[id]) (groups[id] = groups[id] || []).push(o); });
+  Object.entries(groups).forEach(([id, list]) => {
+    list.slice(0, 6).forEach((o, k) => {
+      const el = document.createElement("div");
+      el.className = "avatar other" + (net.battle && [net.battle.a, net.battle.b].includes(o.name) ? " battling" : "");
+      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
+      el.title = shortName(o.name);
+      el.onclick = (e) => { e.stopPropagation(); openPeerMenu(o, el); };
+      setPos(el, spotOf(byId[id], k), vb);
+      layer.appendChild(el);
+    });
+    if (list.length > 6) {
+      const more = document.createElement("div");
+      more.className = "avatar other more";
+      more.innerHTML = `<div class="face-av">+${list.length - 6}</div>`;
+      setPos(more, spotOf(byId[id], 6), vb);
+      layer.appendChild(more);
+    }
+  });
+}
+
+function say(text) {
+  const av = document.querySelector("#avatar-layer .avatar.me");
+  if (!av) return;
+  let b = av.querySelector(".say");
+  if (!b) { b = document.createElement("div"); b.className = "say"; av.appendChild(b); }
+  b.textContent = text;
+  clearTimeout(say.t);
+  say.t = setTimeout(() => b.remove(), 3500);
+}
+
+function toast(text, ms = 3200) {
+  const t = document.getElementById("map-toast");
+  t.textContent = text;
+  t.hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; }, ms);
+}
+
+// ── 交通方式：走路、遊覽車沿著橋和公路走；飛機、游泳直接過去 ──
+function travelMode() { return load(TRAVEL_KEY, "walk"); }
+function setTravelMode(m) {
+  store(TRAVEL_KEY, m);
+  document.querySelectorAll("#travel-modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
+}
+function animate(duration, step) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const frame = now => { const t = Math.min(1, (now - t0) / duration); step(t); if (t < 1) requestAnimationFrame(frame); else res(); };
+    requestAnimationFrame(frame);
+  });
+}
+const ease = t => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+
+async function travelTo(targetId) {
+  const { nodes, routes, vb } = currentNodes();
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+  const fromId = myPlaceId();
+  if (fromId === targetId) return "here";
+  let mode = travelMode();
+  if (mode === "random") mode = pickRandom(["walk", "bus", "plane", "swim", "boat"]);
+  const me = document.querySelector("#avatar-layer .avatar.me");
+  const from = spotOf(byId[fromId] || nodes[0]), to = spotOf(byId[targetId]);
+  me.className = "avatar me traveling mode-" + mode;
+  me.querySelector(".vehicle").textContent = MODES[mode].icon;
+  walking = true;
+  if (mode === "walk" || mode === "bus") {
+    const path = bfs(fromId, targetId, landNeighbors(routes)) || [targetId];
+    const pts = [from, ...path.map(id => spotOf(byId[id]))];
+    const segs = pts.slice(1).map((p, i) => Math.hypot(p.x - pts[i].x, p.y - pts[i].y));
+    const total = segs.reduce((a, b) => a + b, 0);
+    await animate(total * (mode === "bus" ? 1.7 : 4.2) + 200, t => {
+      let d = ease(t) * total, i = 0;
+      while (i < segs.length - 1 && d > segs[i]) { d -= segs[i]; i++; }
+      const k = segs[i] ? d / segs[i] : 1, a = pts[i], b = pts[i + 1];
+      setPos(me, { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }, vb);
+      me.style.setProperty("--flip", b.x < a.x ? -1 : 1);
+    });
+  } else if (mode === "plane") {
+    const len = Math.hypot(to.x - from.x, to.y - from.y);
+    const c = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - len * 0.35 - 30 };
+    await animate(1500, t0 => {
+      const t = ease(t0), u = 1 - t;
+      const p = { x: u * u * from.x + 2 * u * t * c.x + t * t * to.x, y: u * u * from.y + 2 * u * t * c.y + t * t * to.y };
+      const dx = 2 * u * (c.x - from.x) + 2 * t * (to.x - c.x), dy = 2 * u * (c.y - from.y) + 2 * t * (to.y - c.y);
+      setPos(me, p, vb);
+      me.style.setProperty("--rot", (Math.atan2(dy, dx) * 180 / Math.PI + 45) + "deg");
+      me.style.setProperty("--lift", (1 + Math.sin(t0 * Math.PI) * 0.6).toFixed(2));
+    });
+  } else if (mode === "boat") {
+    // 渡輪沿著一條彎彎的航道開過去，船身會隨著浪上下搖晃
+    const len = Math.hypot(to.x - from.x, to.y - from.y), ux = (to.x - from.x) / len, uy = (to.y - from.y) / len;
+    const bend = Math.min(90, len * 0.3) * (from.x < to.x ? 1 : -1);
+    const c = { x: (from.x + to.x) / 2 + uy * bend, y: (from.y + to.y) / 2 - ux * bend };
+    await animate(len * 2.8 + 500, t0 => {
+      const t = ease(t0), u = 1 - t;
+      const p = { x: u * u * from.x + 2 * u * t * c.x + t * t * to.x, y: u * u * from.y + 2 * u * t * c.y + t * t * to.y + Math.sin(t0 * Math.PI * 6) * 3 };
+      setPos(me, p, vb);
+      me.style.setProperty("--flip", to.x < from.x ? -1 : 1);
+      me.style.setProperty("--rot", (Math.sin(t0 * Math.PI * 6) * 6).toFixed(1) + "deg");
+    });
+  } else {
+    const len = Math.hypot(to.x - from.x, to.y - from.y), ux = (to.x - from.x) / len, uy = (to.y - from.y) / len;
+    await animate(len * 4.5 + 300, t0 => {
+      const t = ease(t0), w = Math.sin(t0 * Math.PI * 8) * 7;
+      setPos(me, { x: from.x + (to.x - from.x) * t - uy * w, y: from.y + (to.y - from.y) * t + ux * w }, vb);
+      me.style.setProperty("--flip", ux < 0 ? -1 : 1);
+    });
+  }
+  walking = false;
+  me.className = "avatar me";
+  ["--rot", "--lift", "--flip"].forEach(v => me.style.removeProperty(v));
+  return mode;
+}
+
+async function onIslandClick(id) {
+  if (walking || !session) return;
+  if (view.level === "world") {
+    const s = WORLD.find(x => x.key === id);
+    if (s && !s.units.length) { toast(`${s.name}的題目還在準備中，敬請期待！`); return; }
+    const mode = await travelTo(id);
+    pos.world = id;
+    afterArrive(mode);
+    if (id === "BOSS") openMistakeBook();
+    else enterSubject(id);
+  } else {
+    const mode = await travelTo(id);
+    pos.unit[view.subject] = id;
+    afterArrive(mode);
+    if (id.startsWith("DOCK@")) backToWorld();
+    else openUnitModal(id);
+  }
+}
+
+function afterArrive(mode) {
+  if (mode && mode !== "here") say(MODES[mode].arrive);
+  net.heartbeat();
+  const met = (net.others || []).filter(o => o.place === myPlace());
+  if (met.length) toast(`👋 你在這裡遇到了 ${met.map(o => shortName(o.name)).join("、")}！點他們的頭像可以比賽或聊天`, 4500);
+}
+
+async function switchView(apply) {
+  const stage = document.getElementById("map-stage");
+  stage.classList.add("leaving");
+  await sleep(380);
+  apply();
+  document.getElementById("search").value = "";
+  stage.classList.remove("leaving");
+  stage.classList.add("entering");
+  renderAll();
+  void stage.offsetWidth;
+  stage.classList.remove("entering");
+}
+async function enterSubject(key) {
+  await switchView(() => { view = { level: "subject", subject: key }; pos.unit[key] = pos.unit[key] || "DOCK@" + key; });
+  const s = WORLD.find(x => x.key === key);
+  toast(`${s.icon} 歡迎來到「${s.title}」！選好交通方式，點單元小島出發`);
+  net.heartbeat();
+}
+async function backToWorld() {
+  await switchView(() => { view = { level: "world", subject: null }; });
+  net.heartbeat();
+}
+
+// =========================================================
+// 6. 畫面組裝：上方狀態列、側邊面板、麵包屑
+// =========================================================
+function renderAll() {
+  if (!session) return;
+  renderPills();
+  renderSide();
+  renderCrumbs();
+  renderMap();
+  renderChat();
+}
+
+function renderMap() {
+  const kw = document.getElementById("search").value.trim();
+  if (view.level === "world") renderWorld(kw);
+  else renderSubject(kw);
+}
+
+function renderPills() {
+  const u = session.user;
+  const pills = document.getElementById("pills");
+  let html = `<span class="pill" style="cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()} ${ROLE_INFO[u.role].icon} ${escapeHtml(u.name)} ✏️</span>`;
+  if (u.role === "student") {
+    const lv = getLevelInfo(stats.score);
+    const p = stats.pending.length;
+    html += `<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
+      <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>`;
+  }
+  pills.innerHTML = html;
+  document.getElementById("btn-dashboard").hidden = u.role === "student";
+  const trial = document.getElementById("trial-banner");
+  trial.hidden = u.role === "student" && !DEMO;
+  trial.innerHTML = DEMO
+    ? "🧪 示範模式：還沒連上雲端，紀錄只存在這台裝置；地圖上的「示範同學」是電腦扮演的，用來試玩對戰和聊天。"
+    : "👀 試玩模式：老師、家長可以自由逛島和答題，但不會列入任何紀錄。";
+  const lock = document.getElementById("lock-banner");
+  lock.hidden = !(u.role === "student" && stats.pending.length >= LOCK_LIMIT);
+  lock.innerHTML = `⚠️ 錯題封印警報！待訂正的錯題已達 ${stats.pending.length} 題，單元小島暫時鎖住，請先到「🌋 錯題島」看詳解並答對消滅錯題。`;
+}
+
+function renderCrumbs() {
+  const c = document.getElementById("crumbs");
+  const hint = document.getElementById("map-hint");
+  if (view.level === "world") {
+    c.innerHTML = `🌏 世界地圖`;
+    hint.textContent = "👆 先選交通方式，再點一座大島出發；🌋 錯題島可以訂正和複習所有錯過的題目";
+  } else {
+    const s = WORLD.find(x => x.key === view.subject);
+    c.innerHTML = `<button class="btn-ghost" onclick="backToWorld()">← 世界地圖</button> ${s.icon} ${escapeHtml(s.name)}`;
+    hint.textContent = "👆 點單元小島出發；⛵ 碼頭回世界地圖；遇到同學可以點他的頭像比賽或聊天";
+  }
+}
+
+function renderSide() {
+  const u = session.user;
+  const side = document.getElementById("side-dyn");
+  const online = (net.others || []).length;
+  const onlineCard = `<div class="card"><h3>🟢 島上同學（${online} 位在線）</h3>
+    ${online ? `<div class="online-list">${net.others.map(o => `<button class="online-chip" onclick='openPeerMenu(${JSON.stringify({ name: o.name, emoji: o.emoji, color: o.color, seat: o.seat, place: o.place }).replace(/'/g, "&#39;")})'>${o.emoji || seatEmoji(o.seat)} ${escapeHtml(shortName(o.name))}</button>`).join("")}</div>`
+      : `<div class="empty-note" style="padding:6px">目前沒有其他同學在線上</div>`}</div>`;
+  const subjRows = WORLD.map(s => {
+    if (!s.units.length) return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span style="opacity:.6">準備中</span></div><div class="bar"><i style="width:0"></i></div></div>`;
+    const p = subjectProgress(s);
+    return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span>⭐ ${p.got}/${p.max}</span></div><div class="bar"><i style="width:${p.max ? Math.round(p.got / p.max * 100) : 0}%"></i></div></div>`;
+  }).join("");
+
+  if (u.role !== "student") {
+    side.innerHTML = `
+      <div class="card">
+        <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
+          <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
+        <button class="btn-accent" style="width:100%; margin-top:12px; padding:12px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
+        <div class="trial-note">👀 試玩模式：答題不列入紀錄</div>
+      </div>
+      ${onlineCard}
+      <div class="card"><h3>📚 題庫概況（共 ${BANK.length} 題）</h3>
+        ${WORLD.map(s => `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span>${s.units.length} 單元・${s.units.reduce((t, x) => t + x.questions.length, 0)} 題</span></div></div>`).join("")}
+      </div>`;
+    return;
+  }
+
+  const lv = getLevelInfo(stats.score);
+  const floor = (lv.lv - 1) * LEVEL_STEP, nextAt = lv.lv * LEVEL_STEP;
+  const pct = lv.lv >= 99 ? 100 : Math.round((stats.score - floor) / (nextAt - floor) * 100);
+  const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0;
+  const starsTotal = Object.values(stats.stars).reduce((a, b) => a + b, 0);
+  const recent = mySessions.slice(-4).reverse();
+  side.innerHTML = `
+    <div class="card">
+      <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
+        <div style="flex:1"><div class="me-name">${escapeHtml(shortName(u.name))} <button class="btn-ghost" style="padding:2px 8px; font-size:.72rem" onclick="openAvatarPicker()">換頭像</button></div>
+        <div class="me-title">Lv.${lv.lv} ${lv.title}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div><div class="me-title" style="font-size:.72rem">${lv.lv >= 99 ? "已達最高等級！" : `再 ${nextAt - stats.score} 分升級`}</div></div></div>
+      <div class="tiles">
+        <div class="tile-kpi"><b>⭐ ${starsTotal}</b><span>收集的星星</span></div>
+        <div class="tile-kpi"><b>🎯 ${acc}%</b><span>總正確率</span></div>
+        <div class="tile-kpi" style="cursor:pointer" onclick="openMistakeBook()"><b style="color:${stats.pending.length ? "var(--danger)" : "inherit"}">👾 ${stats.pending.length}</b><span>待訂正錯題</span></div>
+        <div class="tile-kpi" style="cursor:pointer" onclick="openMistakeBook('history')"><b>📚 ${stats.wrongEver.length}</b><span>歷史錯題</span></div>
+      </div>
+    </div>
+    ${onlineCard}
+    <div class="card"><h3>🏝️ 各科大島進度</h3>${subjRows}</div>
+    <div class="card rules"><details><summary>📏 計分規則（會扣分喔！）</summary>
+      ✅ 答對 +${SCORE_RULES.correct}，連續答對每多一題再 +${SCORE_RULES.comboBonus}<br>
+      ❌ 第一次答錯 ${SCORE_RULES.wrongFirst}；以前錯過又錯 ${SCORE_RULES.wrongAgain}<br>
+      👾 錯題訂正：答對 +${SCORE_RULES.fixOk}，又錯 ${SCORE_RULES.fixWrong}<br>
+      📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong}<br>
+      ⚔️ 相遇對戰：答對 +${SCORE_RULES.battleOk}，答錯 ${SCORE_RULES.battleWrong}<br>
+      🏁 一場結束：全對 +${SCORE_RULES.perfect}，80% 以上 +${SCORE_RULES.good}，不到 40% ${SCORE_RULES.poor}<br>
+      📉 每 ${LEVEL_STEP} 分一級，分數掉下來等級也會降；總分最低 0 分</details></div>
+    <div class="card"><h3>🕒 最近闖關</h3>
+      ${recent.length ? `<ul class="recent">${recent.map(r => `<li><span>${escapeHtml(r.subject)}・${escapeHtml(splitUnit(r.unit)[1] || r.unit)}</span><b>${r.correct}/${r.total}</b></li>`).join("")}</ul>` : `<div class="empty-note" style="padding:8px">還沒有闖關紀錄，快去登島吧！</div>`}
+    </div>`;
+}
+
+// =========================================================
+// 7. 題目引擎：每次登島隨機 10 題
+//   ① 本單元題庫依「做過次數少的優先」抽，最多 7 題
+//   ② 國語部首／筆畫「隨機生成題」最多 3 題（只用查證過的字表）
+//   ③ 還不夠就從同一座大島「橋連著的單元」抽跨單元複習
+//   ④ 選項順序每次洗牌（詳解寫了 ①②③④ 編號的題目維持原順序）
+// =========================================================
+const CHAR_FACTS = [
+  { ch: "償", rad: "人", island: "L1", wrong: ["貝", "口"] }, { ch: "恩", rad: "心", island: "L1", wrong: ["口", "大"] },
+  { ch: "痕", rad: "疒", island: "L1", wrong: ["广", "艮"] }, { ch: "擦", rad: "手", island: "L1", wrong: ["宀", "示"] },
+  { ch: "熟", rad: "火", extra: 11, island: "L2", wrong: ["子", "土"] }, { ch: "障", rad: "阜", extra: 11, island: "L2", wrong: ["音", "立"] },
+  { ch: "涵", rad: "水", extra: 8, island: "L2", wrong: ["凵", "子"] }, { ch: "掃", rad: "手", extra: 8, island: "L2", wrong: ["巾", "彐"] },
+  { ch: "卷", rad: "卩", extra: 6, island: "L3", wrong: ["己", "大"] }, { ch: "妒", rad: "女", extra: 4, island: "L3", wrong: ["戶"] },
+  { ch: "愧", rad: "心", extra: 10, island: "L3", wrong: ["鬼"] }, { ch: "秀", rad: "禾", extra: 2, island: "L3", wrong: ["乃"] },
+  { ch: "渲", rad: "水", island: "L4", wrong: ["宀", "日"] }, { ch: "泉", rad: "水", island: "L4", wrong: ["白"] },
+  { ch: "漿", rad: "水", island: "L4", wrong: ["爿", "木"] }, { ch: "係", rad: "人", island: "L4", wrong: ["糸"] },
+  { ch: "囪", rad: "囗", extra: 4, island: "L4", wrong: ["夕", "儿"] }, { ch: "凹", rad: "凵", island: "L5", wrong: ["口", "一"] },
+  { ch: "出", rad: "凵", island: "L5", wrong: ["山"] }, { ch: "陸", rad: "阜", extra: 8, island: "L6", wrong: ["土"] },
+  { ch: "殖", rad: "歹", extra: 8, island: "L6", wrong: ["目", "十"] }, { ch: "悲", rad: "心", extra: 8, island: "L6", wrong: ["非"] },
+  { ch: "顯", rad: "頁", extra: 14, island: "L6", wrong: ["日", "糸"] }
+].map(f => Object.assign(f, { unit: ISLANDS.find(i => i.id === f.island).questions[0].unit }));
+const RAD_LABEL = { "人": "人部（亻）", "心": "心部（忄）", "手": "手部（扌）", "水": "水部（氵）", "火": "火部（灬）", "阜": "阜部（阝）" };
+function radText(r) { return RAD_LABEL[r] || `${r}部`; }
+
+function prepareQuestion(q, extra = {}) {
+  const plain = q.opts.map(stripNum);
+  const keepOrder = /[①②③④]/.test(q.exp || "") || plain.length === 2;   // 是非題固定「對／錯」順序
+  const idx = plain.map((_, i) => i);
+  const order = keepOrder ? idx : shuffle(idx);
+  return Object.assign({}, q, extra, { opts: order.map((oi, i) => CIRCLED[i] + plain[oi]), ans: order.indexOf(q.ans) });
+}
+
+function pickLeastSeen(list, n, used) {
+  if (n <= 0) return [];
+  const seen = id => (stats.byId[id] ? stats.byId[id].attempts : 0);
+  return shuffle(list.filter(q => !used.has(q.id))).sort((a, b) => seen(a.id) - seen(b.id)).slice(0, n);
+}
+
+function buildSession(unit) {
+  const s = WORLD.find(x => x.key === unit.subject);
+  const picked = [], used = new Set();
+  const take = (qs, extra = {}) => qs.forEach(q => { if (picked.length < SESSION_SIZE && !used.has(q.id)) { used.add(q.id); picked.push(prepareQuestion(q, extra)); } });
+  if (unit.virtual && unit.virtual.only) {
+    // 這座島的題目全部由程式重新產生；以前錯過的題目也放一兩題進來複習
+    const wrongHere = stats.questions.filter(x => unitKey(x.subject, x.unit) === unit.key && x.wrong > 0);
+    take(questionObjects(shuffle(wrongHere).slice(0, 2)));
+    take(generateVirtual(unit.virtual, SESSION_SIZE - picked.length, used));
+    return shuffle(picked);
+  }
+  take(pickLeastSeen(unit.questions, MAX_BANK_PER_SESSION, used));
+  take(generateQuestions(unit, Math.min(MAX_GEN_PER_SESSION, SESSION_SIZE - picked.length), used));
+  take(pickLeastSeen(unit.questions, SESSION_SIZE - picked.length, used));
+  if (picked.length < SESSION_SIZE) {
+    const i = s.units.indexOf(unit);
+    const near = [s.units[i - 1], s.units[i + 1]].filter(Boolean);
+    const far = s.units.filter(u => u !== unit && !near.includes(u));
+    for (const group of [near, far]) {
+      pickLeastSeen(group.flatMap(u => u.questions), SESSION_SIZE - picked.length, used)
+        .forEach(q => take([q], { crossFrom: splitUnit(q.unit)[1] || q.unit }));
+    }
+  }
+  take(generateQuestions(unit, SESSION_SIZE - picked.length, used));
+  return shuffle(picked);
+}
+
+function makeGenQ(id, unit, q, opts, ans, exp) {
+  return { id, subject: "國語", unit, type: "字音字形", q, opts, ans, exp, diagram: "radical_anatomy", src: "gen" };
+}
+function genRadicalCorrect(lf, unit) {
+  const t = pickRandom(lf), others = shuffle(CHAR_FACTS.filter(f => f.ch !== t.ch)).slice(0, 3), all = [t, ...others];
+  return makeGenQ(`gen-rc-${all.map(f => f.ch).join("")}`, unit, "下列哪一個字的部首「正確」？",
+    [`${t.ch}：${radText(t.rad)}`, ...others.map(f => `${f.ch}：${pickRandom(f.wrong)}部`)], 0,
+    `「${t.ch}」是${radText(t.rad)}。四個字的正確部首：${all.map(f => `${f.ch}→${radText(f.rad)}`).join("；")}。`);
+}
+function genRadicalWrong(lf, unit) {
+  const t = pickRandom(lf), others = shuffle(CHAR_FACTS.filter(f => f.ch !== t.ch)).slice(0, 3), wrong = pickRandom(t.wrong);
+  return makeGenQ(`gen-rw-${t.ch}${wrong}${others.map(f => f.ch).join("")}`, unit, "下列哪一個字的部首「錯誤」？",
+    [`${t.ch}：${wrong}部`, ...others.map(f => `${f.ch}：${radText(f.rad)}`)], 0,
+    `「${t.ch}」的部首是${radText(t.rad)}，不是${wrong}部。其他三個都正確：${others.map(f => `${f.ch}→${radText(f.rad)}`).join("；")}。`);
+}
+function genStrokes(lf, unit) {
+  const cands = lf.filter(f => f.extra);
+  if (!cands.length) return null;
+  const t = pickRandom(cands);
+  const [w1, w2] = t.wrong.length > 1 ? shuffle(t.wrong) : [t.wrong[0], t.wrong[0]];
+  const d = pickRandom([1, 2]) * pickRandom([1, -1]);
+  let e1 = t.extra + d; if (e1 < 1) e1 = t.extra + Math.abs(d);
+  let e2 = t.extra - d; if (e2 < 1 || e2 === e1) e2 = t.extra + 3;
+  return makeGenQ(`gen-st-${t.ch}`, unit, `「${t.ch}」的部首和部首外的筆畫數，下列何者正確？`,
+    [`${radText(t.rad)}／${t.extra} 畫`, `${w1}部／${t.extra} 畫`, `${radText(t.rad)}／${e1} 畫`, `${w2}部／${e2} 畫`], 0,
+    `「${t.ch}」是${radText(t.rad)}，部首外 ${t.extra} 畫。`);
+}
+function genSameRadical(lf, unit) {
+  const groups = {};
+  CHAR_FACTS.forEach(f => (groups[f.rad] = groups[f.rad] || []).push(f));
+  const multi = Object.values(groups).filter(g => g.length >= 2);
+  const withLesson = multi.filter(g => g.some(f => lf.includes(f)));
+  const g = pickRandom(withLesson.length ? withLesson : multi);
+  const inLesson = g.filter(f => lf.includes(f));
+  const a = pickRandom(inLesson.length ? inLesson : g), b = pickRandom(g.filter(f => f !== a));
+  const usedKeys = new Set([[a.ch, b.ch].sort().join("")]), pairs = [];
+  for (let i = 0; i < 80 && pairs.length < 3; i++) {
+    const x = pickRandom(CHAR_FACTS), y = pickRandom(CHAR_FACTS), k = [x.ch, y.ch].sort().join("");
+    if (x.rad === y.rad || usedKeys.has(k)) continue;
+    usedKeys.add(k); pairs.push([x, y]);
+  }
+  if (pairs.length < 3) return null;
+  return makeGenQ(`gen-sr-${[a.ch, b.ch].sort().join("")}`, unit, "下列哪一組字的部首相同？",
+    [`${a.ch}／${b.ch}`, ...pairs.map(([x, y]) => `${x.ch}／${y.ch}`)], 0,
+    `「${a.ch}」和「${b.ch}」都是${radText(a.rad)}。其他選項：${pairs.map(([x, y]) => `${x.ch}→${radText(x.rad)}、${y.ch}→${radText(y.rad)}`).join("；")}。`);
+}
+function generateQuestions(unit, n, used) {
+  if (n <= 0) return [];
+  if (unit.virtual) return generateVirtual(unit.virtual, n, used);
+  if (unit.subject !== "國語") return [];
+  let lf = CHAR_FACTS.filter(f => f.unit === unit.unit);
+  if (!lf.length && /字音|字形|部首/.test(unit.unit)) lf = CHAR_FACTS;   // 雲端題庫的「字音字形」單元也出部首生成題
+  if (!lf.length) return [];
+  const makers = shuffle([genRadicalCorrect, genRadicalWrong, genStrokes, genSameRadical]);
+  const out = [], ids = new Set(used);
+  for (let i = 0; i < 60 && out.length < n; i++) {
+    const q = makers[i % makers.length](lf, unit.unit);
+    if (q && !ids.has(q.id)) { ids.add(q.id); out.push(q); }
+  }
+  return out;
+}
+
+// =========================================================
+// 8. 闖關、即時詳解、計分
+// =========================================================
+function isTrial() { return session.user.role !== "student"; }
+
+function openUnitModal(key) {
+  const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
+  if (!isTrial() && stats.pending.length >= LOCK_LIMIT) {
+    toast("⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 🌋 錯題島訂正！", 4500);
+    return;
+  }
+  const hasGen = !!unit.virtual || (unit.subject === "國語" && (CHAR_FACTS.some(f => f.unit === unit.unit) || /字音|字形|部首/.test(unit.unit)));
+  const genOnly = unit.virtual && unit.virtual.only;
+  const pend = pendingCount(q => unitKey(q.subject, q.unit) === key);
+  document.getElementById("quiz-content").innerHTML = `
+    <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
+    ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
+    <div class="lore-box violet">
+      🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
+      ${genOnly ? `• 這座島的題目每次都由程式重新產生，數字、句子、選項都會換<br>• 以前在這裡答錯的題目，也會挑一兩題回來複習<br>`
+        : `• 本單元題庫 ${unit.questions.length} 題，做過次數少的優先出現<br>
+      • ${hasGen ? "加上程式隨機生成的題目，" : ""}不夠 ${SESSION_SIZE} 題時從橋連著的單元抽「跨單元複習」<br>`}
+      • 選項順序每次重新洗牌${pend ? `<br>• 這個單元還有 <b style="color:var(--danger)">${pend}</b> 題錯題待訂正` : ""}
+    </div>
+    ${isTrial() ? `<div class="trial-note">👀 試玩模式：這次作答不會列入紀錄</div>` : ""}
+    <button class="btn-primary" style="width:100%; padding:14px; font-size:1.05rem; margin-top:10px;" onclick="startQuiz('${escapeHtml(key)}')">⚔️ 開始闖關</button>`;
+  openModal("quiz-modal");
+}
+
+function newQuizState(mode, subject, unit, questions) {
+  return { mode, subject, unit, questions, idx: 0, correctCount: 0, combo: 0, maxCombo: 0, startTime: Date.now(), sid: uid(), pts: 0 };
+}
+
+function startQuiz(key) {
+  const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
+  quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
+  renderQuestion();
+}
+
+function sourceBadge(q) {
+  if (q.crossFrom) return `<span class="src-badge">🔁 跨單元複習・${escapeHtml(q.crossFrom)}</span>`;
+  if (q.src === "gen") return `<span class="src-badge">🎲 隨機生成</span>`;
+  return "";
+}
+
+function renderQuestion() {
+  const q = quizState.questions[quizState.idx];
+  const total = quizState.questions.length;
+  document.getElementById("quiz-content").innerHTML = `
+    <div class="q-head">
+      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${sourceBadge(q)}</span>
+      <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
+    </div>
+    <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
+    ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
+    ${quizState.mode === "複習" ? `<div class="trial-note" style="background:#e0e7ff;color:#3730a3">📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong} 並回到待訂正</div>` : ""}
+    ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 課文（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
+    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${escapeHtml(q.q)}</h3>
+    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
+    <div id="feedback-box" style="margin-top:12px;"></div>`;
+}
+
+function submitAnswer(choice) {
+  const q = quizState.questions[quizState.idx];
+  quizState.lastPassage = q.passage || "";
+  const btns = document.querySelectorAll("#opts-box .option-btn");
+  btns.forEach(b => (b.disabled = true));
+  const ok = choice === q.ans;
+  if (ok) { quizState.correctCount++; quizState.combo++; quizState.maxCombo = Math.max(quizState.maxCombo, quizState.combo); }
+  else quizState.combo = 0;
+  const pts = answerPoints(q, ok, quizState.mode, quizState.combo);
+  const wasRepeat = !ok && quizState.mode !== "訂正" && pts === SCORE_RULES.wrongAgain;
+  quizState.pts += pts;
+  const lvBefore = getLevelInfo(stats.score).lv;
+
+  saveRecord({
+    t: nowStr(), subject: q.subject, unit: q.unit, qId: q.id, q: q.q, opts: q.opts.map(stripNum),
+    chosen: stripNum(q.opts[choice]), correctText: stripNum(q.opts[q.ans]), ok, mode: quizState.mode,
+    exp: q.exp || "", sid: quizState.sid, uid: uid(), pts
+  });
+  const lvAfter = getLevelInfo(stats.score).lv;
+  const lvNote = isTrial() || lvAfter === lvBefore ? "" : lvAfter > lvBefore
+    ? `<div class="lv-note up">🎉 升級了！現在是 Lv.${lvAfter} ${getLevelInfo(stats.score).title}</div>`
+    : `<div class="lv-note down">⚠️ 降級了…現在是 Lv.${lvAfter}，把錯題訂正好就能升回來！</div>`;
+  const ptsNote = isTrial() ? "" : `<span class="pts ${pts >= 0 ? "plus" : "minus"}">${fmtPts(pts)} 分</span>${wasRepeat ? `<span style="font-size:.8rem;">（這題以前錯過，一錯再錯扣更多）</span>` : ""}`;
+
+  btns[q.ans].classList.add("correct");
+  btns[q.ans].insertAdjacentText("beforeend", " ⬅ 正確答案");
+  if (!ok) { btns[choice].classList.add("wrong"); btns[choice].insertAdjacentText("beforeend", " ⬅ 你的選擇"); }
+  const last = quizState.idx + 1 >= quizState.questions.length;
+  document.getElementById("feedback-box").innerHTML = `
+    <div class="lore-box" style="border-left-color:${ok ? "#16a34a" : "#dc2626"}; background:${ok ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)"}">
+      <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
+      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${escapeHtml(q.exp)}</div>` : ""}
+    </div>
+    ${lvNote}
+    ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
+    <button class="btn-primary" style="width:100%; padding:12px; margin-top:6px;" onclick="nextQuestion()">${last ? "🏁 看本局成績" : "➡️ 看懂了，下一題"}</button>`;
+  renderPills();
+}
+
+function nextQuestion() {
+  if (quizState.mode === "練習" && !isTrial() && stats.pending.length >= LOCK_LIMIT) {
+    finishQuiz(true);
+    return;
+  }
+  quizState.idx++;
+  if (quizState.idx < quizState.questions.length) renderQuestion();
+  else finishQuiz(false);
+}
+
+function finishQuiz(lockedOut) {
+  const done = lockedOut ? quizState.idx + 1 : quizState.questions.length;
+  const sec = Math.max(5, Math.round((Date.now() - quizState.startTime) / 1000));
+  const acc = done ? quizState.correctCount / done : 0;
+  const bonus = sessionBonus(quizState.correctCount, done);
+  const score = bonus;
+  saveRecord(null, {
+    t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
+    total: done, correct: quizState.correctCount, score, sid: quizState.sid
+  });
+  const lv = getLevelInfo(stats.score);
+  const stars = acc === 1 ? 3 : acc >= 0.7 ? 2 : acc >= 0.4 ? 1 : 0;
+  document.getElementById("quiz-content").innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
+      <h2>${lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
+      <div class="lore-box" style="text-align:left;">
+        • 答對 <b>${quizState.correctCount} / ${done}</b> 題（正確率 ${Math.round(acc * 100)}%）<br>
+        • 作答 <b>${sec}</b> 秒・最高連擊 <b>x${quizState.maxCombo}</b><br>
+        • 每題加減分合計 <b>${fmtPts(quizState.pts)}</b>，結算${bonus > 0 ? "獎勵" : bonus < 0 ? "扣分" : ""} <b>${fmtPts(bonus)}</b><br>
+        • 本局共 <b style="color:${quizState.pts + bonus >= 0 ? "var(--accent)" : "var(--danger)"}; font-size:1.15rem;">${fmtPts(quizState.pts + bonus)} 分</b>${isTrial() ? "（試玩不列入紀錄）" : ""}
+      </div>
+      ${isTrial() ? "" : `<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:#fff; padding:16px; border-radius:16px; margin:12px 0;">
+        <div style="font-size:.85rem; opacity:.9;">目前等級</div><div style="font-size:1.6rem; font-weight:900;">⭐ Lv.${lv.lv}｜${lv.title}</div>
+        <div style="font-size:.85rem;">累計 ${stats.score} 分</div></div>`}
+      <button class="btn-primary" style="width:100%; padding:12px;" onclick="${lockedOut ? "openMistakeBook('pending')" : "closeQuiz()"}">${lockedOut ? "🌋 前往錯題島" : "🗺️ 回到地圖"}</button>
+    </div>`;
+}
+
+function closeQuiz() {
+  closeModal("quiz-modal");
+  renderAll();
+}
+
+// =========================================================
+// 9. 錯題島：待訂正（清完才能繼續冒險）＋ 歷史錯題（訂正過也會留著，隨時可以再複習）
+// =========================================================
+function questionObjects(list) {
+  return list.map(p => {
+    const q = findQuestion(p.qId);
+    if (q) return q;
+    const ans = (p.opts || []).indexOf(p.correctText);
+    return ans >= 0 ? { id: p.qId, subject: p.subject, unit: p.unit, type: "錯題", q: p.q, opts: p.opts, ans, exp: p.exp, src: "snap" } : null;
+  }).filter(Boolean);
+}
+function pendingQuestionObjects() { return questionObjects(stats.pending); }
+
+let mistakeView = { tab: "pending", subject: "全部" };
+
+function openMistakeBook(tab) {
+  if (tab) mistakeView.tab = tab;
+  const box = document.getElementById("quiz-content");
+  openModal("quiz-modal");
+  if (isTrial()) {
+    box.innerHTML = `<h2 style="margin-top:0;">🌋 錯題島</h2><div class="lore-box">錯題本是每位學生自己的。老師和家長請到「📊 後台」查看孩子哪些題目答錯、訂正了幾次、哪些一錯再錯。</div>
+      <button class="btn-accent" onclick="closeModal('quiz-modal'); openDashboard();">📊 開啟後台</button>`;
+    return;
+  }
+  const tabs = `<div class="tabs">
+    <button class="${mistakeView.tab === "pending" ? "on" : ""}" onclick="openMistakeBook('pending')">👾 待訂正（${stats.pending.length}）</button>
+    <button class="${mistakeView.tab === "history" ? "on" : ""}" onclick="openMistakeBook('history')">📚 歷史錯題（${stats.wrongEver.length}）</button></div>`;
+
+  if (mistakeView.tab === "history") {
+    const subjects = ["全部", ...new Set(stats.wrongEver.map(q => q.subject))];
+    const list = stats.wrongEver.filter(q => mistakeView.subject === "全部" || q.subject === mistakeView.subject)
+      .sort((a, b) => b.wrong - a.wrong || (a.lastTime < b.lastTime ? 1 : -1));
+    box.innerHTML = `
+      <h2 style="margin-top:0;">🌋 錯題島｜歷史錯題</h2>${tabs}
+      <p style="font-size:.86rem; margin:0 0 8px;">訂正過的題目也會一直留在這裡。錯過的題目以後還可能再錯，隨時回來複習一下！</p>
+      <div class="tabs" style="margin-top:0">${subjects.map(s => `<button class="${s === mistakeView.subject ? "on" : ""}" onclick="mistakeView.subject='${escapeHtml(s)}'; openMistakeBook();">${escapeHtml(s)}</button>`).join("")}</div>
+      ${list.length ? `<div style="max-height:360px; overflow-y:auto; padding-right:6px;">${list.map(q => `
+        <div class="q-row">
+          <div class="meta">${q.last === false ? `<span class="chip red">待訂正</span>` : `<span class="chip green">已訂正</span>`}
+            <span class="chip ${q.wrong >= 2 ? "red" : "amber"}">錯 ${q.wrong} 次</span><span>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</span></div>
+          <div>${escapeHtml(q.q)}</div>
+          <div style="color:var(--success); font-weight:800;">✔ ${escapeHtml(q.correctText)}</div>
+        </div>`).join("")}</div>
+        <button class="btn-primary" style="width:100%; padding:14px; margin-top:10px;" onclick="startReview()">🔁 複習${mistakeView.subject === "全部" ? "全部" : mistakeView.subject}錯題（隨機 ${Math.min(SESSION_SIZE, list.length)} 題，錯最多次的優先）</button>`
+        : `<div class="empty-note">這一科還沒有錯過的題目，太厲害了！</div>`}`;
+    return;
+  }
+
+  const list = pendingQuestionObjects();
+  if (!list.length) {
+    box.innerHTML = `<h2 style="margin-top:0;">🌋 錯題島</h2>${tabs}<div style="text-align:center; padding:16px;"><div style="font-size:3.2rem;">✨</div><h3>待訂正的錯題都清光了！</h3><p>所有單元都解鎖了。想再加強的話，可以到「📚 歷史錯題」複習以前錯過的題目。</p><button class="btn-primary" onclick="closeQuiz()">回地圖</button></div>`;
+    return;
+  }
+  box.innerHTML = `
+    <h2 style="margin-top:0; color:var(--danger);">🌋 錯題島｜待訂正 ${list.length} 題</h2>${tabs}
+    <p style="font-size:.88rem;">先看懂正確答案和詳解，再按下面的按鈕重考，答對就能消滅它（紀錄還是會留在歷史錯題）：</p>
+    <div style="max-height:360px; overflow-y:auto; padding-right:6px;">
+      ${list.map((q, i) => {
+        const st = stats.byId[q.id] || {};
+        return `<div class="lore-box">
+          <b>錯題 ${i + 1}【${escapeHtml(q.subject)}・${escapeHtml(q.unit)}】</b>${st.wrong >= 2 ? ` <span class="chip red">已經錯 ${st.wrong} 次</span>` : ""}<br>
+          <span style="white-space:pre-line">${escapeHtml(q.q)}</span><br>
+          <span style="color:var(--success); font-weight:900;">✔ 正確答案：${escapeHtml(stripNum(q.opts[q.ans]))}</span><br>
+          ${q.exp ? `<span style="font-size:.86rem;">💡 ${escapeHtml(q.exp)}</span>` : ""}
+          ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
+        </div>`;
+      }).join("")}
+    </div>
+    <button class="btn-danger" style="width:100%; padding:14px; font-size:1.05rem; margin-top:10px;" onclick="startMistakeRetry()">⚔️ 看懂了！開始錯題重考${list.length > SESSION_SIZE ? `（這輪 ${SESSION_SIZE} 題）` : ""}</button>`;
+}
+
+function startMistakeRetry() {
+  const list = shuffle(pendingQuestionObjects()).slice(0, SESSION_SIZE).map(q => prepareQuestion(q));
+  quizState = newQuizState("訂正", "錯題本", "錯題本", list);
+  renderQuestion();
+}
+
+function startReview() {
+  const pool = stats.wrongEver.filter(q => mistakeView.subject === "全部" || q.subject === mistakeView.subject)
+    .sort((a, b) => b.wrong - a.wrong).slice(0, SESSION_SIZE * 2);
+  const list = shuffle(questionObjects(shuffle(pool).sort((a, b) => b.wrong - a.wrong).slice(0, SESSION_SIZE))).map(q => prepareQuestion(q));
+  if (!list.length) return;
+  quizState = newQuizState("複習", "錯題本", "歷史錯題複習", list);
+  renderQuestion();
+}
+
+// =========================================================
+// 10. 後台：老師看全班、家長只看自己的孩子
+// =========================================================
+let dashState = { data: null, student: null, tab: "repeated" };
+
+async function openDashboard(student) {
+  const box = document.getElementById("dash-content");
+  openModal("dash-modal");
+  if (!dashState.data || student !== undefined) box.innerHTML = `<div class="spinner"></div><div class="empty-note">正在讀取紀錄…</div>`;
+  try {
+    dashState.data = DEMO ? demoDashboard(student) : await api("dashboard", { student: student || dashState.student || "" });
+    dashState.student = dashState.data.detail ? dashState.data.detail.name : null;
+    renderDashboard();
+  } catch (e) {
+    box.innerHTML = `<div class="empty-note">⚠️ ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function demoDashboard(student) {
+  const students = rosterList.filter(a => a.role === "student");
+  const statsOf = name => { const d = load("508_DEMO_DATA_" + name, { answers: [], sessions: [] }); return aggregate(d.answers, d.sessions); };
+  const u = session.user;
+  if (u.role === "parent") {
+    const kid = students.find(s => s.name === u.child);
+    return { scope: "parent", detail: { name: kid.name, seat: kid.seat, stats: statsOf(kid.name) } };
+  }
+  const pick = students.find(s => s.name === (student || dashState.student)) || students[0];
+  return {
+    scope: "teacher",
+    summary: students.map(s => { const st = statsOf(s.name); return { seat: s.seat, name: s.name, attempts: st.attempts, correct: st.correct, score: st.score, pending: st.pending.length, repeated: st.repeated.length, lastActive: st.lastActive }; }),
+    detail: { name: pick.name, seat: pick.seat, stats: statsOf(pick.name) }
+  };
+}
+
+function renderDashboard() {
+  const d = dashState.data;
+  const box = document.getElementById("dash-content");
+  let html = "";
+  if (d.scope === "teacher") {
+    html += `<h2 style="margin-top:0;">🧑‍🏫 508 全班後台 <button class="btn-ghost" style="font-size:.8rem; vertical-align:middle" onclick="showChatLog()">💬 全班聊天紀錄</button></h2>
+      <p style="font-size:.84rem; color:var(--ink-soft); margin-top:0;">點任一位學生，看他答對、答錯哪些題目，訂正幾次，哪些一錯再錯。</p>
+      <div class="dash-table-wrap"><table>
+        <thead><tr><th>座號</th><th>姓名</th><th class="num">作答題次</th><th class="num">正確率</th><th class="num">待訂正</th><th class="num">一錯再錯</th><th class="num">積分</th><th>最後作答</th><th></th></tr></thead>
+        <tbody>${d.summary.map(s => {
+          const acc = s.attempts ? Math.round(s.correct / s.attempts * 100) : 0;
+          return `<tr class="${s.name === dashState.student ? "sel" : ""}">
+            <td>${escapeHtml(s.seat)}</td><td><b>${escapeHtml(shortName(s.name))}</b></td>
+            <td class="num">${s.attempts}</td><td class="num">${s.attempts ? acc + "%" : "—"}</td>
+            <td class="num ${s.pending >= LOCK_LIMIT ? "warn-num" : ""}">${s.pending}</td>
+            <td class="num ${s.repeated ? "warn-num" : ""}">${s.repeated}</td><td class="num">${s.score}</td>
+            <td>${escapeHtml(s.lastActive || "—")}</td>
+            <td><button class="btn-primary" style="padding:4px 10px; font-size:.78rem;" onclick="openDashboard('${escapeHtml(s.name)}')">查看</button></td></tr>`;
+        }).join("")}</tbody></table></div>`;
+  } else {
+    html += `<h2 style="margin-top:0;">👨‍👩‍👧 孩子的學習紀錄</h2><p style="font-size:.84rem; color:var(--ink-soft); margin-top:0;">家長只能看到自己孩子的資料。</p>`;
+  }
+  html += d.detail ? detailHtml(d.detail) : `<div class="empty-note">沒有學生資料</div>`;
+  box.innerHTML = html;
+}
+
+async function showChatLog() {
+  const box = document.getElementById("dash-content");
+  box.innerHTML = `<div class="spinner"></div>`;
+  try {
+    const rows = DEMO ? net.messages.map(m => ({ t: m.t, name: m.name, text: m.text })) : (await api("chatLog")).rows;
+    box.innerHTML = `<h2 style="margin-top:0;">💬 全班聊天紀錄（最近 ${rows.length} 則）</h2>
+      <button class="btn-ghost" onclick="renderDashboard()">← 回後台</button>
+      <div class="dash-table-wrap" style="max-height:60vh; margin-top:10px;"><table><thead><tr><th>時間</th><th>誰</th><th>內容</th></tr></thead>
+      <tbody>${rows.slice().reverse().map(r => `<tr><td>${escapeHtml(r.t)}</td><td>${escapeHtml(shortName(r.name))}</td><td style="white-space:normal">${escapeHtml(r.text)}</td></tr>`).join("") || `<tr><td colspan="3">還沒有聊天紀錄</td></tr>`}</tbody></table></div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="empty-note">⚠️ ${escapeHtml(e.message)}</div><button class="btn-ghost" onclick="renderDashboard()">← 回後台</button>`;
+  }
+}
+
+const DASH_TABS = [
+  ["repeated", "🔁 一錯再錯"], ["pending", "👾 還沒訂正"], ["wrongEver", "❌ 答錯過的題目"], ["right", "✅ 答對的題目"], ["units", "📚 各科單元"]
+];
+
+function detailHtml(det) {
+  const st = det.stats;
+  const acc = st.attempts ? Math.round(st.correct / st.attempts * 100) : 0;
+  const fixTries = st.questions.reduce((t, q) => t + q.fixTries, 0), fixes = st.questions.reduce((t, q) => t + q.fixes, 0);
+  const lists = {
+    repeated: st.repeated.slice().sort((a, b) => b.wrong - a.wrong),
+    pending: st.pending,
+    wrongEver: st.questions.filter(q => q.wrong > 0).sort((a, b) => b.wrong - a.wrong),
+    right: st.questions.filter(q => q.correct > 0 && q.last === true)
+  };
+  const tab = dashState.tab;
+  let body;
+  if (tab === "units") {
+    body = st.units.length ? st.units.map(u => {
+      const p = Math.round(u.correct / u.total * 100);
+      return `<div class="subj-row"><div><span>${escapeHtml(u.subject)}・${escapeHtml(u.unit)}</span><span>${p}%（${u.correct}/${u.total}）</span></div><div class="bar"><i style="width:${p}%; background:${p < 65 ? "#dc2626" : ""}"></i></div></div>`;
+    }).join("") : `<div class="empty-note">還沒有作答紀錄</div>`;
+  } else {
+    const list = lists[tab];
+    body = list.length ? list.map(qRowHtml).join("") : `<div class="empty-note">${tab === "repeated" ? "太棒了，沒有一錯再錯的題目！" : tab === "pending" ? "錯題都訂正完了！" : "還沒有資料"}</div>`;
+  }
+  return `
+    <h3 style="margin:18px 0 4px;">📌 ${escapeHtml(det.seat)} 號 ${escapeHtml(shortName(det.name))}</h3>
+    <div class="kpis">
+      <div class="tile-kpi"><b>${st.attempts}</b><span>作答題次</span></div>
+      <div class="tile-kpi"><b>${st.attempts ? acc + "%" : "—"}</b><span>正確率</span></div>
+      <div class="tile-kpi"><b style="color:var(--danger)">${st.pending.length}</b><span>還沒訂正</span></div>
+      <div class="tile-kpi"><b style="color:var(--danger)">${st.repeated.length}</b><span>一錯再錯的題目</span></div>
+      <div class="tile-kpi"><b>${fixTries}</b><span>訂正次數（成功 ${fixes}）</span></div>
+      <div class="tile-kpi"><b>${escapeHtml(st.lastActive || "—")}</b><span>最後作答</span></div>
+    </div>
+    <div class="tabs">${DASH_TABS.map(([k, label]) => `<button class="${k === tab ? "on" : ""}" onclick="dashState.tab='${k}'; renderDashboard();">${label}${k !== "units" ? `（${lists[k].length}）` : ""}</button>`).join("")}</div>
+    <div>${body}</div>`;
+}
+
+function qRowHtml(q) {
+  const status = q.last === false ? `<span class="chip red">待訂正</span>` : q.wrong ? `<span class="chip green">已訂正</span>` : `<span class="chip green">全對</span>`;
+  return `<div class="q-row">
+    <div class="meta">${status}${q.wrong >= 2 ? `<span class="chip red">錯 ${q.wrong} 次</span>` : ""}
+      <span>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</span>
+      <span>作答 ${q.attempts} 次・對 ${q.correct}・錯 ${q.wrong}・訂正 ${q.fixTries} 次${q.fixTries ? `（成功 ${q.fixes}）` : ""}</span></div>
+    <div>${escapeHtml(q.q)}</div>
+    <div style="color:var(--success); font-weight:800;">✔ 正確答案：${escapeHtml(q.correctText)}</div>
+    ${q.wrongAnswers.length ? `<div style="color:var(--danger); font-size:.82rem;">✘ 曾經選過：${q.wrongAnswers.map(escapeHtml).join("、")}</div>` : ""}
+  </div>`;
+}
+
+// =========================================================
+// 11. 換頭像
+// =========================================================
+let pickerDraft = null;
+function openAvatarPicker() {
+  pickerDraft = { emoji: myEmoji(), color: myColor() };
+  renderAvatarPicker();
+  openModal("avatar-modal");
+}
+function renderAvatarPicker() {
+  document.getElementById("avatar-content").innerHTML = `
+    <h2 style="margin-top:0;">🎨 換一個頭像</h2>
+    <div class="picker-preview">${avatarFace(pickerDraft.emoji, pickerDraft.color)}<div><b>${escapeHtml(shortName(session.user.name))}</b><div style="font-size:.8rem; color:var(--ink-soft)">地圖上、聊天室、對戰時都會用這個頭像</div></div></div>
+    <h3 style="margin:14px 0 6px; font-size:.95rem;">選角色</h3>
+    <div class="picker-grid">${AVATAR_CHOICES.map(e => `<button class="${e === pickerDraft.emoji ? "on" : ""}" onclick="pickerDraft.emoji='${e}'; renderAvatarPicker();">${e}</button>`).join("")}</div>
+    <h3 style="margin:14px 0 6px; font-size:.95rem;">選底色</h3>
+    <div class="picker-colors">${AVATAR_COLORS.map(c => `<button class="${c === pickerDraft.color ? "on" : ""}" style="background:${c}" onclick="pickerDraft.color='${c}'; renderAvatarPicker();" aria-label="底色 ${c}"></button>`).join("")}</div>
+    <button class="btn-primary" style="width:100%; padding:12px; margin-top:16px;" onclick="saveAvatar()">💾 儲存頭像</button>`;
+}
+async function saveAvatar() {
+  profile = Object.assign({}, pickerDraft);
+  closeModal("avatar-modal");
+  renderAll();
+  try { await net.saveProfile(profile); toast("頭像換好了！"); } catch (e) { toast("⚠️ 頭像只換在這台裝置：" + e.message); }
+}
+
+// =========================================================
+// 12. 連線：島上同學、聊天室、相遇對戰
+//     正式版透過 Apps Script 每 4 秒同步一次；示範模式由「示範同學」扮演對手
+// =========================================================
+const CHAT_QUICK = ["👋 嗨！", "要不要來比賽？⚔️", "我拿三顆星了！⭐", "錯題島見！🌋", "加油！💪", "好難喔 😵"];
+
+const net = {
+  others: [], messages: [], battle: null, timer: null, sig: "",
+  start() {
+    this.stop();
+    this.others = []; this.messages = []; this.battle = null; this.sig = "";
+    this.heartbeat();
+    this.timer = setInterval(() => { if (!document.hidden) this.heartbeat(); }, 4000);
+  },
+  stop() { clearInterval(this.timer); this.timer = null; },
+  async call(action, data) { return DEMO ? demo[action](data) : api(action, data); },
+  async heartbeat() {
+    if (!session) return;
+    try {
+      const since = this.messages.length ? this.messages[this.messages.length - 1].id : 0;
+      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor() }));
+    } catch (e) { /* 網路斷掉時下次再試 */ }
+  },
+  apply(r) {
+    if (!r) return;
+    this.others = (r.others || []).filter(o => o.name !== session.user.name);
+    const known = new Set(this.messages.map(m => m.id));
+    (r.messages || []).forEach(m => { if (!known.has(m.id)) this.messages.push(m); });
+    this.messages = this.messages.slice(-40);
+    this.battle = r.battle || null;
+    const sig = this.others.map(o => o.name + o.place + o.emoji).join("|");
+    if (sig !== this.sig) { this.sig = sig; renderSide(); }
+    if (!walking) renderAvatars();
+    renderChat();
+    renderBattle();
+  },
+  async chat(text) { this.apply(await this.call("chat", { text, place: myPlace(), since: this.lastId() })); },
+  lastId() { return this.messages.length ? this.messages[this.messages.length - 1].id : 0; },
+  async battleOp(op, extra = {}) { this.apply(await this.call("battle", Object.assign({ op, place: myPlace(), since: this.lastId() }, extra))); },
+  async saveProfile(p) { return this.call("saveProfile", p); },
+  async loadProfile() { return this.call("getProfile", {}); }
+};
+
+// ── 聊天室 ──
+function renderChat() {
+  const card = document.getElementById("chat-card");
+  if (!card || !session) return;
+  card.hidden = session.user.role === "parent";
+  const list = document.getElementById("chat-list");
+  const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  list.innerHTML = net.messages.length ? net.messages.map(m => `
+    <div class="chat-msg ${m.name === session.user.name ? "me" : ""} ${m.role === "teacher" ? "teacher" : ""}">
+      <span class="chat-av" style="background:${m.color || "#fef08a"}">${m.emoji || "🙂"}</span>
+      <div class="chat-bubble"><div class="chat-meta"><b>${escapeHtml(shortName(m.name))}</b><span>${escapeHtml((m.t || "").slice(11, 16))}</span></div>${escapeHtml(m.text)}</div>
+    </div>`).join("") : `<div class="empty-note" style="padding:10px">還沒有人說話，打個招呼吧！</div>`;
+  if (atBottom) list.scrollTop = list.scrollHeight;
+}
+async function sendChat(text) {
+  const input = document.getElementById("chat-input");
+  const t = String(text || input.value).trim().slice(0, 40);
+  if (!t) return;
+  input.value = "";
+  try { await net.chat(t); } catch (e) { toast("⚠️ 訊息沒送出：" + e.message); }
+}
+
+// ── 點同學頭像：比賽或打招呼 ──
+function openPeerMenu(o, el) {
+  closePeerMenu();
+  const menu = document.createElement("div");
+  menu.className = "peer-menu";
+  menu.id = "peer-menu";
+  const sameIsland = o.place === myPlace();
+  menu.innerHTML = `
+    <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}<b>${escapeHtml(shortName(o.name))}</b></div>
+    ${session.user.role === "student" ? `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}')">⚔️ 邀請比賽</button>` : ""}
+    ${session.user.role !== "parent" ? `<button class="btn-primary" onclick="sendChat('@${escapeHtml(shortName(o.name))} 嗨！'); closePeerMenu();">💬 打招呼</button>` : ""}
+    ${sameIsland ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
+    <button class="btn-ghost" onclick="closePeerMenu()">關閉</button>`;
+  document.body.appendChild(menu);
+  const rect = (el || document.getElementById("map-stage")).getBoundingClientRect();
+  menu.style.left = Math.min(window.innerWidth - 190, Math.max(8, rect.left + rect.width / 2 - 90)) + "px";
+  menu.style.top = Math.min(window.innerHeight - 200, rect.bottom + 6) + window.scrollY + "px";
+  setTimeout(() => document.addEventListener("click", closePeerMenuOutside), 0);
+}
+function closePeerMenuOutside(e) { if (!e.target.closest("#peer-menu")) closePeerMenu(); }
+function closePeerMenu() { const m = document.getElementById("peer-menu"); if (m) m.remove(); document.removeEventListener("click", closePeerMenuOutside); }
+
+async function challengePeer(name) {
+  closePeerMenu();
+  if (net.battle && ["pending", "active"].includes(net.battle.status)) { toast("你已經在一場比賽裡了！"); return; }
+  try { await net.battleOp("challenge", { to: name, subject: view.subject || "" }); toast(`已經邀請 ${shortName(name)}，等他回應…`); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
+
+// ── 對戰畫面 ──
+const handledBattles = new Set();
+let battleTick = null;
+function renderBattle() {
+  const b = net.battle;
+  const modal = document.getElementById("battle-modal");
+  const box = document.getElementById("battle-content");
+  // 狀態沒變就不重畫（不然每 4 秒同步一次，畫面會一直跳回最上面）
+  const sig = b ? [b.id, b.status, b.myAnswered, b.oppAnswered].join("|") : "";
+  if (sig && sig === renderBattle.sig && modal.classList.contains("open")) return;
+  renderBattle.sig = sig;
+  clearInterval(battleTick);
+  if (!b) { modal.classList.remove("open"); return; }
+  const opp = b.a === session.user.name ? b.b : b.a;
+  const oppInfo = net.others.find(o => o.name === opp) || {};
+  const oppFace = avatarFace(oppInfo.emoji || "🙂", oppInfo.color);
+  const vs = `<div class="vs-row"><div>${avatarFace(myEmoji(), myColor())}<b>我</b></div><span class="vs">VS</span><div>${oppFace}<b>${escapeHtml(shortName(opp))}</b></div></div>`;
+  const countdown = (sec, id) => {
+    let left = Math.max(0, Math.round(sec));
+    const tick = () => { const el = document.getElementById(id); if (el) el.textContent = left; left = Math.max(0, left - 1); };
+    tick();
+    battleTick = setInterval(tick, 1000);
+  };
+
+  if (b.status === "pending" && b.b === session.user.name) {
+    box.innerHTML = `<h2 style="margin-top:0;">⚔️ 有人找你比賽！</h2>${vs}
+      <p><b>${escapeHtml(shortName(b.a))}</b> 邀請你來一場知識對決！答對 <b>+${SCORE_RULES.battleOk}</b>，答錯 <b>${SCORE_RULES.battleWrong}</b>。</p>
+      <div class="battle-timer">⏳ <span id="bt-left"></span> 秒內回應</div>
+      <div style="display:flex; gap:8px;"><button class="btn-success" style="flex:1; padding:12px;" onclick="net.battleOp('respond', { id: '${b.id}', accept: true })">接受挑戰！</button>
+      <button class="btn-ghost" style="flex:1;" onclick="net.battleOp('respond', { id: '${b.id}', accept: false })">下次再說</button></div>`;
+    countdown(b.left / 1000, "bt-left");
+  } else if (b.status === "pending") {
+    box.innerHTML = `<h2 style="margin-top:0;">⚔️ 等待對手接受…</h2>${vs}<div class="battle-timer">⏳ <span id="bt-left"></span> 秒</div>
+      <button class="btn-ghost" style="width:100%;" onclick="net.battleOp('cancel', { id: '${b.id}' })">取消邀請</button>`;
+    countdown(b.left / 1000, "bt-left");
+  } else if (b.status === "active") {
+    if (b.myAnswered) {
+      box.innerHTML = `<h2 style="margin-top:0;">⚔️ 已經作答！</h2>${vs}<p style="text-align:center">等 ${escapeHtml(shortName(opp))} 作答中… ${b.oppAnswered ? "（他也答完了，馬上揭曉！）" : ""}</p><div class="battle-timer">⏳ <span id="bt-left"></span> 秒</div>`;
+    } else {
+      box.innerHTML = `<h2 style="margin-top:0;">⚔️ 知識對決！</h2>${vs}
+        <div class="battle-timer">⏳ 剩 <span id="bt-left"></span> 秒 ${b.oppAnswered ? "・對手已經答完了！" : ""}</div>
+        <div style="font-size:.8rem; color:var(--ink-soft)">${escapeHtml(b.q.subject)}・${escapeHtml(b.q.unit)}</div>
+        <h3 style="white-space:pre-line; line-height:1.6;">${escapeHtml(b.q.q)}</h3>
+        ${b.q.opts.map((o, i) => `<button class="option-btn" onclick="this.disabled=true; net.battleOp('answer', { id: '${b.id}', choice: ${i} })">${CIRCLED[i]}${escapeHtml(o)}</button>`).join("")}`;
+    }
+    countdown(b.left / 1000, "bt-left");
+  } else if (b.status === "done") {
+    const me = b.a === session.user.name ? b.result.a : b.result.b;
+    const them = b.a === session.user.name ? b.result.b : b.result.a;
+    const line = (who, r) => `<div class="q-row"><b>${who}</b>：${r.choice == null ? "沒有作答" : CIRCLED[r.choice] + escapeHtml(b.q.opts[r.choice])}
+      <span class="chip ${r.ok ? "green" : "red"}">${r.ok ? "答對" : "答錯"}</span> <span class="pts ${r.pts >= 0 ? "plus" : "minus"}">${fmtPts(r.pts)}</span></div>`;
+    box.innerHTML = `<h2 style="margin-top:0;">${me.ok && them.ok ? "🤝 兩個人都答對！一起加分！" : me.ok ? "🏆 你贏了！" : them.ok ? "😵 這次輸了，下次再來！" : "😅 兩個人都答錯…"}</h2>${vs}
+      <h3 style="white-space:pre-line; line-height:1.6; font-size:1rem;">${escapeHtml(b.q.q)}</h3>
+      ${line("我", me)}${line(escapeHtml(shortName(opp)), them)}
+      <div class="lore-box">✔ 正確答案：<b>${CIRCLED[b.result.ans]}${escapeHtml(b.q.opts[b.result.ans])}</b>${b.q.exp ? `<br>📝 ${escapeHtml(b.q.exp)}` : ""}</div>
+      ${isTrial() ? "" : `<div style="font-size:.8rem; color:var(--ink-soft)">${me.ok ? "" : "這題已經加進你的錯題本。"}</div>`}
+      <button class="btn-primary" style="width:100%; padding:12px;" onclick="net.battleOp('ack', { id: '${b.id}' })">好！繼續冒險</button>`;
+    if (!handledBattles.has(b.id)) {
+      handledBattles.add(b.id);
+      if (session.user.role === "student") {
+        myRows.push({ t: b.result.t || nowStr(), subject: b.q.subject, unit: b.q.unit, qId: b.q.id, q: b.q.q, opts: b.q.opts,
+          chosen: me.choice == null ? "（沒有作答）" : b.q.opts[me.choice], correctText: b.q.opts[b.result.ans], ok: me.ok,
+          mode: "對戰", exp: b.q.exp || "", sid: b.id, uid: `bat-${b.id}-${session.user.name}`, pts: me.pts });
+        stats = aggregate(myRows, mySessions);
+        if (DEMO) store("508_DEMO_DATA_" + session.user.name, { answers: myRows, sessions: mySessions });
+        renderPills(); renderSide();
+      }
+    }
+  } else {
+    if (!handledBattles.has(b.id + b.status)) {
+      handledBattles.add(b.id + b.status);
+      toast(b.status === "declined" ? "對方這次不想比賽，下次再約！" : "邀請已過期");
+    }
+    net.battleOp("ack", { id: b.id }).catch(() => {});
+    modal.classList.remove("open");
+    return;
+  }
+  modal.classList.add("open");
+}
+
+// ── 示範模式：由兩位「示範同學」扮演線上的同學（正式上線後不會出現） ──
+const demo = (() => {
+  const BOTS = [
+    { name: "508示範同學二", seat: "02", emoji: "🐰", color: "#fecaca" },
+    { name: "508示範同學三", seat: "03", emoji: "🦊", color: "#bbf7d0" }
+  ];
+  const LINES = ["好喔！", "我剛剛在錯題島複習完 💪", "要不要來比一場？", "這單元好難 😵", "我搭飛機過來的 ✈️", "加油加油！"];
+  const st = { places: {}, msgs: [], battle: null, nextBotChallenge: Date.now() + 25000 };
+  const bots = () => BOTS.filter(b => b.name !== session.user.name);
+  const allPlaces = () => {
+    const list = ["W:BOSS", ...WORLD.filter(s => s.units.length).map(s => "W:" + s.key)];
+    WORLD.forEach(s => s.units.forEach(u => list.push("U:" + u.key)));
+    return list;
+  };
+  const botSay = (bot, text) => st.msgs.push({ id: Date.now() + Math.random(), name: bot.name, emoji: bot.emoji, color: bot.color, role: "student", text, t: nowStr() });
+  const snapshot = (since) => {
+    const b = st.battle;
+    let battle = null;
+    if (b) {
+      const now = Date.now();
+      if (b.status === "pending" && now > b.until) b.status = "expired";
+      if (b.status === "active" && now > b.until) resolve(b);
+      battle = Object.assign({}, b, { left: Math.max(0, b.until - now), myAnswered: b.ans[session.user.name] != null,
+        oppAnswered: b.ans[b.a === session.user.name ? b.b : b.a] != null, q: b.q && Object.assign({}, b.q, { ans: undefined }) });
+    }
+    return {
+      others: bots().map(bot => Object.assign({}, bot, { place: st.places[bot.name] })),
+      messages: st.msgs.filter(m => m.id > since), battle
+    };
+  };
+  function resolve(b) {
+    const R = SCORE_RULES, res = { ans: b.q.ans, t: nowStr() };
+    ["a", "b"].forEach(k => { const c = b.ans[b[k]]; const ok = c === b.q.ans; res[k] = { choice: c == null ? null : c, ok, pts: ok ? R.battleOk : R.battleWrong }; });
+    b.result = res; b.status = "done";
+  }
+  function pickQuestion(subject) {
+    let pool = BANK.filter(q => (!subject || q.subject === subject) && !q.passage);
+    const v = VIRTUAL_UNITS.filter(x => x.subject === subject);
+    if (v.length && (!pool.length || Math.random() < 0.4)) pool = [pickRandom(v).gen()];
+    const q = prepareQuestion(pickRandom(pool.length ? pool : BANK.filter(x => !x.passage)));
+    return { id: q.id, subject: q.subject, unit: q.unit, q: q.q, opts: q.opts.map(stripNum), ans: q.ans, exp: q.exp };
+  }
+  function botAnswerLater(b, bot) {
+    setTimeout(() => { if (st.battle === b && b.status === "active") { b.ans[bot.name] = Math.random() < 0.65 ? b.q.ans : (b.q.ans + 1) % b.q.opts.length; if (b.ans[session.user.name] != null) resolve(b); } }, 2500 + Math.random() * 4000);
+  }
+  return {
+    presence({ place, since }) {
+      bots().forEach(bot => {
+        if (!st.places[bot.name] || Math.random() < 0.2) st.places[bot.name] = Math.random() < 0.45 ? place : pickRandom(allPlaces());
+      });
+      if (!st.battle && session.user.role === "student" && Date.now() > st.nextBotChallenge) {
+        const bot = bots().find(b => st.places[b.name] === place);
+        if (bot) {
+          st.battle = { id: uid(), a: bot.name, b: session.user.name, status: "pending", until: Date.now() + 20000, ans: {}, subject: view.subject };
+          st.nextBotChallenge = Date.now() + 90000;
+        }
+      }
+      return snapshot(since);
+    },
+    chat({ text, since }) {
+      st.msgs.push({ id: Date.now(), name: session.user.name, emoji: myEmoji(), color: myColor(), role: session.user.role, text, t: nowStr() });
+      const bot = pickRandom(bots());
+      if (bot) setTimeout(() => botSay(bot, text.includes("@" + shortName(bot.name)) ? "嗨嗨！👋" : pickRandom(LINES)), 1800);
+      return snapshot(since);
+    },
+    battle({ op, to, id, accept, choice, since, subject }) {
+      const me = session.user.name;
+      if (op === "challenge") {
+        const bot = bots().find(b => b.name === to);
+        if (!bot) throw new Error("找不到這位同學");
+        const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {} };
+        setTimeout(() => {
+          if (st.battle !== b || b.status !== "pending") return;
+          if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
+          else b.status = "declined";
+        }, 1500);
+      } else if (op === "respond" && st.battle && st.battle.id === id) {
+        const b = st.battle;
+        if (accept) { b.status = "active"; b.q = pickQuestion(b.subject); b.until = Date.now() + 25000; botAnswerLater(b, BOTS.find(x => x.name === b.a)); }
+        else b.status = "declined";
+      } else if (op === "answer" && st.battle && st.battle.id === id && st.battle.status === "active") {
+        const b = st.battle;
+        if (b.ans[me] == null) b.ans[me] = choice;
+        const opp = b.a === me ? b.b : b.a;
+        if (b.ans[opp] != null) resolve(b);
+      } else if (op === "cancel" && st.battle && st.battle.id === id) {
+        st.battle = null;
+      } else if (op === "ack" && st.battle && st.battle.id === id) {
+        st.battle = null;
+      }
+      return snapshot(since);
+    },
+    saveProfile(p) { store("508_DEMO_PROFILE_" + session.user.name, p); return { ok: true }; },
+    getProfile() { return { profile: load("508_DEMO_PROFILE_" + session.user.name, null) }; }
+  };
+})();
+
+// =========================================================
+// 13. 程式出題島：課內成語、數學各單元、英語單字句型
+//     每次登島都重新出題，答案由程式計算或來自查證過的資料，所以每次都不一樣、答案一定對
+// =========================================================
+function hashStr(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.codePointAt(0)) | 0; return (h >>> 0).toString(36); }
+function genQ(subject, unit, type, q, correct, wrongs, exp) {
+  const opts = [correct, ...wrongs].map(String);
+  return { id: "g-" + hashStr(unit + q + correct), subject, unit, type, q, opts, ans: 0, exp, src: "gen" };
+}
+function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function pickN(arr, n) { return shuffle(arr).slice(0, n); }
+function uniqWrongs(correct, cands, n) {
+  const out = [];
+  for (const c of shuffle(cands)) { if (String(c) !== String(correct) && !out.map(String).includes(String(c))) out.push(c); if (out.length >= n) break; }
+  return out;
+}
+
+// ── 課內成語（老師的成語卷 24 個成語＋例句；另外每個成語再補 3 句新例句） ──
+// cat：意思相近的成語放同一類，出填空題時錯誤選項只從「不同類」挑，避免兩個答案都說得通
+const IDIOMS = [
+  { w: "健步如飛", cat: "人", m: "腳步輕快有力，走得像飛一樣快。", ex: ["阿姨雖然已經七十歲了，爬起山來仍然＿＿＿＿，年輕人都追不上。", "爺爺每天早上去公園運動，走起路來＿＿＿＿，一點也不像八十歲的人。", "登山社的阿伯雖然滿頭白髮，爬步道時依然＿＿＿＿，把我們遠遠甩在後面。", "王奶奶的腳傷痊癒後，又能＿＿＿＿的去市場買菜了。"] },
+  { w: "一擁而上", cat: "人", m: "形容許多人一起擠著衝上前去。", ex: ["聽說蛋糕店在發試吃品，路過的人立刻＿＿＿＿。", "下課鐘一響，同學們＿＿＿＿，把福利社的櫃臺圍得水洩不通。", "偶像一走出機場，等候的粉絲立刻＿＿＿＿，想要合照簽名。", "老師把獎品放在講桌上，大家＿＿＿＿，差點把桌子擠翻。"] },
+  { w: "眉清目秀", cat: "人", m: "形容五官端正、面貌俊秀。", ex: ["舞臺上的小演員＿＿＿＿，模樣十分可愛。", "新來的轉學生長得＿＿＿＿，說話也很有禮貌。", "照片裡的小嬰兒＿＿＿＿，大家都說他長大一定很帥。", "姊姊從小就＿＿＿＿，常被親戚稱讚長得漂亮。"] },
+  { w: "糊里糊塗", cat: "人", m: "形容頭腦不清楚、不明事理，或做事馬虎隨便。", ex: ["他＿＿＿＿地把媽媽交代的事情忘得一乾二淨。", "他早上太匆忙，＿＿＿＿的穿了兩隻不同顏色的襪子出門。", "弟弟＿＿＿＿的把鹽當成糖，加進了媽媽的咖啡裡。", "小明上課不專心，老師問他問題時，他回答得＿＿＿＿。"] },
+  { w: "興高采烈", cat: "心情", m: "形容心情非常愉快、興致高昂。", ex: ["生日派對上，同學們＿＿＿＿地唱著生日快樂歌。", "聽到明天要去校外教學，全班同學都＿＿＿＿的討論要帶什麼點心。", "弟弟拿到新玩具後，＿＿＿＿的跑去和鄰居分享。", "比賽得到冠軍，隊員們＿＿＿＿的捧著獎盃拍照。"] },
+  { w: "沒精打采", cat: "心情", m: "形容精神不振、情緒低落。", ex: ["小花感冒了，連續幾天都＿＿＿＿的，一點笑容也沒有。", "昨晚熬夜看書，今天上課時他一直＿＿＿＿的打哈欠。", "比賽輸了以後，球員們＿＿＿＿的走回休息區。", "小狗生病了，整天＿＿＿＿的趴在角落，連最愛的骨頭都不想吃。"] },
+  { w: "如願以償", cat: "心情", m: "願望得到實現。", ex: ["經過不斷練習，姊姊終於＿＿＿＿，考到了鋼琴檢定證書。", "哥哥努力存了一整年的零用錢，終於＿＿＿＿，買到了想要的腳踏車。", "她每天練習投籃，最後＿＿＿＿的入選了校隊。", "經過三次挑戰，小美總算＿＿＿＿，看到了日出時的雲海。"] },
+  { w: "井然有序", cat: "秩序", m: "形容整齊、有條理，秩序良好。", ex: ["打掃完後，小明的房間變得＿＿＿＿，連襪子都分類收好了。", "圖書館的書按照編號排列，看起來＿＿＿＿，找書非常方便。", "運動會進場時，各班隊伍＿＿＿＿的走進操場。", "媽媽把廚房的調味料分類擺好，整個櫃子＿＿＿＿。"] },
+  { w: "七零八落", cat: "秩序", m: "形容零散、雜亂不整齊，或被破壞後的樣子。", ex: ["一陣大風吹過，曬衣架上的衣服被吹得＿＿＿＿，掉滿了陽臺。", "弟弟玩完積木沒有收，客廳裡積木散得＿＿＿＿。", "颱風過後，路旁的盆栽被吹得＿＿＿＿。", "小貓打翻了書架，書本掉得＿＿＿＿。"] },
+  { w: "密密麻麻", cat: "數量", m: "形容又多又密，空隙很小。", ex: ["期中考前，哥哥的課本上畫滿了＿＿＿＿的重點。", "大樹上停滿了＿＿＿＿的麻雀，吱吱喳喳叫個不停。", "爸爸的行事曆上寫得＿＿＿＿，每天都排滿了工作。", "黑板上寫滿了＿＿＿＿的算式，同學們看得眼花撩亂。"] },
+  { w: "星羅棋布", cat: "數量", m: "像天上的星星、棋盤上的棋子般分布；形容數量多、分布廣。", ex: ["從高空俯瞰，太平洋上的小島＿＿＿＿。", "臺灣的海岸線上，大大小小的漁港＿＿＿＿，各有特色。", "從飛機上往下看，田野間的小村莊＿＿＿＿。", "澎湖的海面上，大大小小的島嶼＿＿＿＿。"] },
+  { w: "源源不絕", cat: "連續", m: "接連不斷，沒有停止。", ex: ["這口古井的井水＿＿＿＿，幾百年來從沒乾涸過。", "這家麵包店的新口味一推出，訂單就＿＿＿＿地湧進來。", "這座山上的泉水＿＿＿＿，供應山下村莊的用水。", "地震發生後，各地的救災物資＿＿＿＿的送到災區。"] },
+  { w: "川流不息", cat: "連續", m: "像河水一樣流個不停；形容行人、車輛往來不斷。", ex: ["熱鬧的西門町人潮＿＿＿＿，假日更是擠得水洩不通。", "每到連假，前往觀光景點的車輛＿＿＿＿，塞滿了整條公路。", "捷運站裡的旅客＿＿＿＿，上下班時間更是擁擠。", "這條大馬路車輛＿＿＿＿，過馬路一定要走斑馬線。"] },
+  { w: "盡收眼底", cat: "看", m: "所有的景物都能完全看見。", ex: ["站在觀景臺上，整個港口的夜景＿＿＿＿。", "爬上一○一大樓的觀景臺，整個臺北市的景色＿＿＿＿。", "站在山頂上，山腳下的稻田和小鎮都＿＿＿＿。", "坐在摩天輪的最高點，整座遊樂園＿＿＿＿。"] },
+  { w: "目眩神迷", cat: "看", m: "眼睛看得發花，心神被迷住；形容景象非常美麗或令人震撼。", ex: ["在燈光照耀下，水晶吊燈閃閃發光，美得令人＿＿＿＿。", "舞者身上的亮片在燈光下閃耀，美得讓觀眾＿＿＿＿。", "夜空中綻放的煙火五彩繽紛，讓觀眾看得＿＿＿＿。", "走進珠寶店，閃閃發亮的鑽石讓人＿＿＿＿。"] },
+  { w: "目不暇給", cat: "看", m: "東西太多、太精彩，眼睛都來不及看。（「給」讀ㄐㄧˇ）", ex: ["博覽會上展示了上百種新發明，多到讓參觀的人＿＿＿＿。", "遊樂園裡的設施一樣比一樣有趣，孩子們看得＿＿＿＿，不知道該先玩哪一個。", "夜市裡的攤位一攤接著一攤，讓人看得＿＿＿＿。", "花博會場展示了上千種花卉，令遊客＿＿＿＿。"] },
+  { w: "耳目一新", cat: "看", m: "所見所聞都有了改變，給人全新、新鮮的感覺。", ex: ["這間咖啡廳的裝潢很有創意，讓第一次來的客人感到＿＿＿＿。", "教室重新布置後，掛上了同學們的畫作，讓人感到＿＿＿＿。", "這部電影的拍攝手法很特別，令觀眾＿＿＿＿。", "公園經過整修，多了花圃和步道，讓來散步的居民＿＿＿＿。"] },
+  { w: "鬼斧神工", cat: "景物", m: "形容技藝精巧，好像不是人力所能做到的；常用來讚美大自然的奇景。", ex: ["這尊木雕佛像雕刻得＿＿＿＿，連衣服上的皺褶都栩栩如生。", "太魯閣的峽谷是大自然＿＿＿＿的傑作。", "野柳的女王頭是海水和風經過千萬年雕琢而成，堪稱＿＿＿＿。", "這件玉雕連花瓣的紋路都刻得清清楚楚，真是＿＿＿＿。"] },
+  { w: "氣勢雄偉", cat: "景物", m: "氣派、聲勢雄壯而偉大。", ex: ["雪山山脈連綿不斷，高聳入雲，＿＿＿＿。", "萬里長城沿著山脊蜿蜒，看起來＿＿＿＿。", "瀑布從高處奔騰而下，＿＿＿＿，令人讚嘆。", "總統府的建築高大莊嚴，＿＿＿＿。"] },
+  { w: "奇形怪狀", cat: "景物", m: "形容形狀奇特、怪異，和一般的不一樣。", ex: ["溪邊的石頭被溪水沖刷成＿＿＿＿的模樣，有的像青蛙，有的像小船。", "海邊的礁石被海浪拍打成＿＿＿＿的樣子，有的像蘑菇，有的像烏龜。", "弟弟用黏土捏出許多＿＿＿＿的小怪獸。", "天上的雲朵＿＿＿＿，一會兒像兔子，一會兒像城堡。"] },
+  { w: "凹凸不平", cat: "景物", m: "表面高低起伏，不平坦。", ex: ["學校後山的小路＿＿＿＿，下過雨後更是到處都是水窪。", "這條老街的石板路＿＿＿＿，騎腳踏車時要特別小心。", "月球的表面＿＿＿＿，布滿了大大小小的坑洞。", "木板沒有磨平，摸起來＿＿＿＿，容易刺傷手。"] },
+  { w: "深淺交錯", cat: "景物", m: "深色和淺色（或深處和淺處）互相交錯在一起。", ex: ["梯田裡的秧苗有的翠綠、有的嫩黃，顏色＿＿＿＿，像一幅美麗的拼圖。", "秋天的山林裡，紅葉和黃葉＿＿＿＿，像打翻了調色盤。", "海水因為深度不同，顏色＿＿＿＿，有的湛藍，有的碧綠。", "這幅水墨畫用墨＿＿＿＿，畫出了山的層次感。"] },
+  { w: "張燈結綵", cat: "氣氛", m: "掛上燈籠、繫上彩帶，形容喜慶熱鬧的氣氛。", ex: ["中秋節晚上，社區廣場＿＿＿＿，大家一起烤肉賞月。", "過年前，家家戶戶＿＿＿＿，到處都洋溢著喜氣。", "學校慶祝創校一百週年，校門口＿＿＿＿，非常熱鬧。", "姊姊結婚那天，餐廳裡＿＿＿＿，賓客們都笑容滿面。"] },
+  { w: "險象環生", cat: "氣氛", m: "危險的情況接連不斷地出現。", ex: ["颱風過後的山路落石很多，車子行駛時＿＿＿＿。", "這條山路又窄又彎，下雨天開車更是＿＿＿＿。", "小狗衝到馬路中央，車子來來往往，情況＿＿＿＿。", "登山隊遇到暴風雪，一路上＿＿＿＿，所幸最後平安下山。"] }
+];
+const IDIOM_UNIT = "課內成語";
+const IDIOM_ANTONYM = { "興高采烈": "沒精打采", "沒精打采": "興高采烈", "井然有序": "七零八落", "七零八落": "井然有序" };
+
+function genIdiom() {
+  const it = pickRandom(IDIOMS);
+  const others = IDIOMS.filter(x => x.cat !== it.cat);
+  const r = Math.random();
+  if (r < 0.6) {
+    const s = pickRandom(it.ex);
+    return genQ("國語", IDIOM_UNIT, "成語填空", `${s}\n＿＿＿＿中最適合填入哪一個成語？`, it.w, pickN(others, 3).map(x => x.w),
+      `「${it.w}」：${it.m}\n完整句子：${s.replace("＿＿＿＿", "「" + it.w + "」")}`);
+  }
+  if (r < 0.8) {
+    return genQ("國語", IDIOM_UNIT, "成語意思", `哪一個成語的意思是「${it.m.replace(/（.*?）/g, "")}」？`, it.w, pickN(others, 3).map(x => x.w),
+      `「${it.w}」：${it.m}\n例句：${pickRandom(it.ex).replace("＿＿＿＿", "「" + it.w + "」")}`);
+  }
+  if (r < 0.92 || !IDIOM_ANTONYM[it.w]) {
+    return genQ("國語", IDIOM_UNIT, "成語意思", `「${it.w}」是什麼意思？`, it.m.replace(/（.*?）/g, ""), pickN(others, 3).map(x => x.m.replace(/（.*?）/g, "")),
+      `例句：${pickRandom(it.ex).replace("＿＿＿＿", "「" + it.w + "」")}`);
+  }
+  // 用法判斷：把意思相反的成語放進句子，一定是用錯
+  const anti = IDIOM_ANTONYM[it.w], antiObj = IDIOMS.find(x => x.w === anti);
+  const right = pickRandom(it.ex).replace("＿＿＿＿", "「" + it.w + "」");
+  const wrongs = [pickRandom(it.ex).replace("＿＿＿＿", "「" + anti + "」"), ...pickN(others.filter(x => x.w !== anti), 2).map(x => pickRandom(x.ex).replace("＿＿＿＿", "「" + it.w + "」"))];
+  return genQ("國語", IDIOM_UNIT, "成語用法", `下列哪一句的「${it.w}」用得最恰當？`, right, wrongs,
+    `「${it.w}」：${it.m}；「${anti}」的意思正好相反：${antiObj.m}`);
+}
+
+// ── 數學 ──
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+const lcm = (a, b) => a / gcd(a, b) * b;
+const factorsOf = n => { const f = []; for (let i = 1; i <= n; i++) if (n % i === 0) f.push(i); return f; };
+const M1 = "第1單元 折線圖", M2 = "第2單元 因數和倍數", M3 = "第3單元 多邊形", M4 = "第4單元 擴分、約分和通分", M5 = "第5單元 線對稱圖形";
+
+function genLineGraph() {
+  const months = ["1月", "2月", "3月", "4月", "5月", "6月"];
+  const vals = months.map(() => randInt(4, 30) * 5);
+  while (new Set(vals).size < 6) vals[randInt(0, 5)] = randInt(4, 30) * 5;
+  const table = months.map((m, i) => `${m}：${vals[i]}`).join("、");
+  const item = pickRandom(["冊", "杯", "人", "公斤"]);
+  const ctx = { "冊": "圖書館借書數量", "杯": "飲料店賣出的珍奶杯數", "人": "公園遊客人數", "公斤": "果園採收的芒果重量" }[item];
+  const r = Math.random();
+  if (r < 0.35) {
+    const diffs = vals.slice(1).map((v, i) => v - vals[i]);
+    const best = diffs.indexOf(Math.max(...diffs));
+    if (diffs[best] <= 0) return genLineGraphConcept();
+    const opts = vals.slice(1).map((_, i) => `${months[i]}到${months[i + 1]}`);
+    return genQ("數學", M1, "讀折線圖", `下面是${ctx}的紀錄：${table}（單位：${item}）。如果畫成折線圖，哪兩個月之間的線段「上升」得最多？`,
+      opts[best], uniqWrongs(opts[best], opts, 3), `相鄰兩個月相減，${opts[best]}增加了 ${diffs[best]} ${item}，是增加最多的，所以這一段線段最陡。`);
+  }
+  if (r < 0.65) {
+    const mx = vals.indexOf(Math.max(...vals));
+    return genQ("數學", M1, "讀折線圖", `下面是${ctx}的紀錄：${table}（單位：${item}）。畫成折線圖後，哪一個月的點最高？`,
+      months[mx], uniqWrongs(months[mx], months, 3), `數量最多的是${months[mx]}的 ${vals[mx]} ${item}，所以這個點最高。`);
+  }
+  return genLineGraphConcept();
+}
+const LINE_CONCEPTS = [
+  ["想表示一個人從一年級到六年級身高的「變化情形」，用哪一種統計圖最適合？", "折線圖", ["長條圖", "圓形圖", "象形圖"], "折線圖最適合表示同一件事物隨時間的變化情形。"],
+  ["折線圖中的線段由左往右「往上」，表示數量怎麼變化？", "增加", ["減少", "不變", "無法判斷"], "線段往上表示後面的數量比前面多。"],
+  ["折線圖中的線段由左往右「是水平的」，表示數量怎麼變化？", "沒有改變", ["增加", "減少", "一下增加一下減少"], "水平的線段表示前後兩個數量一樣。"],
+  ["折線圖中，線段愈陡，表示什麼？", "數量變化愈大", ["數量變化愈小", "數量一定在增加", "數量一定在減少"], "愈陡代表前後兩個時間的差距愈大。"],
+  ["畫折線圖時，如果資料都很大（例如都在 200 以上），縱軸可以用什麼符號省略前面的部分？", "用「≈」波浪線省略", ["把縱軸畫斷掉不標", "把數字全部除以 10", "改畫成長條圖"], "可以用波浪線「≈」表示省略，讓圖比較清楚。"],
+  ["要比較五年一班「男生和女生最喜歡的水果人數」，用哪一種統計圖比較適合？", "複雜長條圖", ["折線圖", "單一折線", "不需要統計圖"], "比較兩組類別的數量，可以用複雜長條圖並排比較。"]
+];
+function genLineGraphConcept() {
+  const [q, a, w, e] = pickRandom(LINE_CONCEPTS);
+  return genQ("數學", M1, "折線圖觀念", q, a, w, e);
+}
+
+const GCD_TPL = [
+  (a, b, g) => [`老師準備了 ${a} 支鉛筆、${b} 本筆記本，要平分給班上的小朋友，每人分到的鉛筆一樣多、筆記本也一樣多，而且全部分完。最多可以分給幾位小朋友？`, `${g} 位`],
+  (a, b, g) => [`一張長 ${a} 公分、寬 ${b} 公分的長方形色紙，要剪成大小相同的正方形，而且沒有剩餘。正方形的邊長最大是幾公分？`, `${g} 公分`],
+  (a, b, g) => [`花店有 ${a} 朵紅玫瑰、${b} 朵白玫瑰，要包成相同的花束，每束的紅玫瑰一樣多、白玫瑰也一樣多，而且全部用完。最多可以包成幾束？`, `${g} 束`],
+  (a, b, g) => [`班遊時老師準備了 ${a} 顆糖果、${b} 塊餅乾，要平分給各小組，每組分到的糖果一樣多、餅乾也一樣多，而且全部分完。最多可以分成幾組？`, `${g} 組`]
+];
+const LCM_TPL = [
+  (a, b, l) => [`甲路公車每 ${a} 分鐘發一班車，乙路公車每 ${b} 分鐘發一班車。早上 7:00 兩路公車同時發車，至少再過幾分鐘會再同時發車？`, `${l} 分鐘`],
+  (a, b, l) => [`小華每 ${a} 天去一次圖書館，小明每 ${b} 天去一次圖書館。今天兩人同一天去圖書館，至少再過幾天兩人又會同一天去？`, `${l} 天`],
+  (a, b, l) => [`用長 ${a} 公分、寬 ${b} 公分的長方形磁磚，同方向緊密拼成一個正方形（不重疊、不切割），正方形的邊長最小是幾公分？`, `${l} 公分`]
+];
+function genFactor() {
+  const r = Math.random();
+  if (r < 0.25) {
+    const g = randInt(2, 12), x = randInt(2, 9), y = randInt(2, 9);
+    if (gcd(x, y) !== 1 || x === y) return genFactor();
+    const a = g * x, b = g * y;
+    const [q, ans] = pickRandom(GCD_TPL)(Math.max(a, b), Math.min(a, b), g);
+    const unit = ans.replace(/\d+\s*/, "");
+    const cands = [gcd(a, b) * 2, Math.min(a, b), Math.abs(a - b), g === 1 ? 3 : g / 2 | 0, lcm(a, b), x, y].filter(v => v > 0 && v !== g);
+    return genQ("數學", M2, "最大公因數應用", q, ans, uniqWrongs(ans, cands.map(v => v + " " + unit), 3),
+      `要「全部分完、而且最多（最大）」，就是找 ${a} 和 ${b} 的最大公因數：${a} 和 ${b} 的最大公因數是 ${g}。`);
+  }
+  if (r < 0.45) {
+    const pairs = [[4, 6], [6, 8], [8, 12], [6, 9], [10, 15], [12, 18], [9, 12], [6, 10], [4, 10], [12, 16], [15, 20], [8, 10]];
+    const [a, b] = pickRandom(pairs);
+    const l = lcm(a, b);
+    const [q, ans] = pickRandom(LCM_TPL)(a, b, l);
+    const unit = ans.replace(/\d+\s*/, "");
+    const cands = [a * b, gcd(a, b), a + b, l * 2, Math.max(a, b)].filter(v => v !== l);
+    return genQ("數學", M2, "最小公倍數應用", q, ans, uniqWrongs(ans, cands.map(v => v + " " + unit), 3),
+      `要找「下一次同時、最小」，就是找 ${a} 和 ${b} 的最小公倍數：${a} 和 ${b} 的最小公倍數是 ${l}。`);
+  }
+  if (r < 0.6) {
+    const n = pickRandom([12, 16, 18, 20, 24, 28, 30, 32, 36, 40, 42, 45, 48, 54, 56, 60, 64, 72]);
+    const fs = factorsOf(n);
+    const notF = [];
+    for (let i = 2; i < n && notF.length < 10; i++) if (n % i) notF.push(i);
+    if (Math.random() < 0.5) {
+      const c = pickRandom(fs.filter(v => v > 1 && v < n));
+      return genQ("數學", M2, "因數", `下列哪一個數是 ${n} 的因數？`, c, pickN(notF, 3), `${n} ÷ ${c} = ${n / c}，可以整除，所以 ${c} 是 ${n} 的因數。${n} 的因數有：${fs.join("、")}。`);
+    }
+    return genQ("數學", M2, "因數", `${n} 一共有幾個因數？`, fs.length + " 個", uniqWrongs(fs.length + " 個", [fs.length - 1, fs.length + 1, fs.length - 2, fs.length + 2].map(v => v + " 個"), 3),
+      `${n} 的因數有：${fs.join("、")}，共 ${fs.length} 個。`);
+  }
+  if (r < 0.75) {
+    const k = randInt(3, 9), lo = randInt(10, 30), hi = lo + randInt(30, 60);
+    let cnt = 0; for (let v = lo + 1; v < hi; v++) if (v % k === 0) cnt++;
+    const list = []; for (let v = lo + 1; v < hi; v++) if (v % k === 0) list.push(v);
+    return genQ("數學", M2, "倍數", `${k} 的倍數中，大於 ${lo} 而且小於 ${hi} 的整數有幾個？`, cnt + " 個",
+      uniqWrongs(cnt + " 個", [cnt - 1, cnt + 1, cnt + 2, cnt - 2].filter(v => v >= 0).map(v => v + " 個"), 3), `符合的數有：${list.join("、")}，共 ${cnt} 個。`);
+  }
+  if (r < 0.9) {
+    const a = randInt(2, 9) * randInt(2, 6), b = randInt(2, 9) * randInt(2, 6);
+    if (a === b) return genFactor();
+    const g = gcd(a, b);
+    return genQ("數學", M2, "最大公因數", `${a} 和 ${b} 的最大公因數是多少？`, g, uniqWrongs(g, [g * 2, 1, Math.min(a, b), lcm(a, b), g + 1, Math.max(2, g - 1)].filter(v => v !== g && v > 0), 3),
+      `${a} 的因數：${factorsOf(a).join("、")}；${b} 的因數：${factorsOf(b).join("、")}。共同的因數裡最大的是 ${g}。`);
+  }
+  const k = pickRandom([2, 5, 10, 3]);
+  const nums = [];
+  while (nums.length < 1) { const v = randInt(100, 999); if (v % k === 0) nums.push(v); }
+  const wrong = [];
+  while (wrong.length < 3) { const v = randInt(100, 999); if (v % k !== 0 && !wrong.includes(v)) wrong.push(v); }
+  const rule = { 2: "個位數字是 0、2、4、6、8 的數是 2 的倍數", 5: "個位數字是 0 或 5 的數是 5 的倍數", 10: "個位數字是 0 的數是 10 的倍數", 3: "各位數字加起來是 3 的倍數，這個數就是 3 的倍數" }[k];
+  return genQ("數學", M2, "倍數判斷", `下列哪一個數是 ${k} 的倍數？`, nums[0], wrong, `${rule}。${nums[0]} ÷ ${k} = ${nums[0] / k}。`);
+}
+
+const POLY = { 3: "三角形", 4: "四邊形", 5: "五邊形", 6: "六邊形", 7: "七邊形", 8: "八邊形", 9: "九邊形", 10: "十邊形", 12: "十二邊形" };
+function genPolygon() {
+  const r = Math.random();
+  if (r < 0.3) {
+    const n = pickRandom([4, 5, 6, 7, 8, 9, 10, 12]), s = (n - 2) * 180;
+    return genQ("數學", M3, "多邊形內角和", `${POLY[n]}的內角和是幾度？`, s + "°", uniqWrongs(s + "°", [s - 180, s + 180, n * 180, (n - 1) * 180, 360].filter(v => v !== s).map(v => v + "°"), 3),
+      `${POLY[n]}可以從一個頂點畫對角線分成 ${n - 2} 個三角形，內角和是 ${n - 2} × 180° = ${s}°。`);
+  }
+  if (r < 0.5) {
+    const n = pickRandom([3, 4, 5, 6, 8, 9, 10, 12]), a = (n - 2) * 180 / n;
+    return genQ("數學", M3, "正多邊形", `正${POLY[n]}的每一個內角是幾度？`, a + "°",
+      uniqWrongs(a + "°", [180 - a, a + 20, a - 20, 360 / n, 90].filter(v => v > 0 && v !== a).map(v => v + "°"), 3),
+      `正${POLY[n]}的內角和是 ${(n - 2) * 180}°，${n} 個角都一樣大，每個角 ${(n - 2) * 180} ÷ ${n} = ${a}°。`);
+  }
+  if (r < 0.75) {
+    let a, b, c;
+    do { a = randInt(3, 12); b = randInt(3, 12); c = randInt(3, 12); } while (!(a + b > c && a + c > b && b + c > a));
+    const wrongs = [];
+    while (wrongs.length < 3) {
+      const x = randInt(2, 10), y = randInt(2, 10), z = x + y + randInt(0, 4);
+      const t = shuffle([x, y, z]).join("、") + " 公分";
+      if (!wrongs.includes(t)) wrongs.push(t);
+    }
+    const right = `${a}、${b}、${c} 公分`;
+    return genQ("數學", M3, "三角形邊長", "下列哪一組長度的三根小棒子，可以圍成一個三角形？", right, wrongs,
+      `三角形任意兩邊的和要大於第三邊。${a}、${b}、${c}：最短的兩邊加起來比最長的邊長，所以可以圍成三角形；其他選項最短的兩邊加起來不比最長邊長。`);
+  }
+  const x = randInt(30, 80), y = randInt(30, 150 - x);
+  const z = 180 - x - y;
+  if (z <= 0) return genPolygon();
+  return genQ("數學", M3, "三角形內角", `一個三角形的兩個內角分別是 ${x}° 和 ${y}°，第三個角是幾度？`, z + "°", uniqWrongs(z + "°", [360 - x - y, z + 10, z - 10, x + y].filter(v => v > 0 && v !== z).map(v => v + "°"), 3),
+    `三角形的內角和是 180°，180° − ${x}° − ${y}° = ${z}°。`);
+}
+
+function frac(a, b) { return `${a}/${b}`; }
+function genFraction() {
+  const r = Math.random();
+  if (r < 0.35) {
+    const b0 = randInt(3, 9), a0 = randInt(1, b0 - 1);
+    if (gcd(a0, b0) !== 1) return genFraction();
+    const k = randInt(2, 6), a = a0 * k, b = b0 * k;
+    return genQ("數學", M4, "約分", `把 ${frac(a, b)} 約成最簡分數是多少？`, frac(a0, b0),
+      uniqWrongs(frac(a0, b0), [frac(a0 + 1, b0), frac(a0, b0 + 1), frac(a / gcd(a, 2) | 0, b / gcd(a, 2) | 0), frac(b0, a0), frac(a0 * 2, b0 * 3)].filter(v => v !== frac(a0, b0)), 3),
+      `${a} 和 ${b} 的最大公因數是 ${gcd(a, b)}，分子分母同時除以 ${gcd(a, b)}，得到 ${frac(a0, b0)}。`);
+  }
+  if (r < 0.6) {
+    const b = randInt(3, 9), a = randInt(1, b - 1), k = randInt(2, 6);
+    const cands = [[a + k, b + k], [a * k, b + k], [a + 1, b * k], [a * k + 1, b * k], [a * k - 1, b * k]].filter(([x, y]) => x > 0 && x * b !== a * y).map(([x, y]) => frac(x, y));
+    return genQ("數學", M4, "擴分", `下列哪一個分數和 ${frac(a, b)} 一樣大？`, frac(a * k, b * k),
+      uniqWrongs(frac(a * k, b * k), cands, 3),
+      `分子和分母同時乘以 ${k}：${frac(a, b)} = ${frac(a * k, b * k)}，分數的大小不變。`);
+  }
+  if (r < 0.85) {
+    let b1, b2, a1, a2;
+    do { b1 = randInt(3, 9); b2 = randInt(3, 9); a1 = randInt(1, b1 - 1); a2 = randInt(1, b2 - 1); } while (b1 === b2 || a1 * b2 === a2 * b1);
+    const big = a1 * b2 > a2 * b1 ? frac(a1, b1) : frac(a2, b2);
+    const small = big === frac(a1, b1) ? frac(a2, b2) : frac(a1, b1);
+    const l = lcm(b1, b2);
+    return genQ("數學", M4, "通分比大小", `${frac(a1, b1)} 和 ${frac(a2, b2)}，哪一個比較大？`, big, [small, "一樣大", "無法比較"],
+      `通分成分母 ${l}：${frac(a1, b1)} = ${frac(a1 * l / b1, l)}，${frac(a2, b2)} = ${frac(a2 * l / b2, l)}，所以 ${big} 比較大。`);
+  }
+  const pairs = [[4, 6], [6, 8], [3, 4], [2, 5], [6, 9], [4, 10], [8, 12], [5, 6], [3, 8], [10, 15]];
+  const [p, q] = pickRandom(pairs), l = lcm(p, q);
+  return genQ("數學", M4, "通分", `把分母 ${p} 和分母 ${q} 的兩個分數通分，最小的公分母是多少？`, l, uniqWrongs(l, [p * q, gcd(p, q), p + q, l * 2].filter(v => v !== l), 3),
+    `最小的公分母就是 ${p} 和 ${q} 的最小公倍數 ${l}。`);
+}
+
+const SYM_AXES = [["正方形", "4 條"], ["長方形", "2 條"], ["正三角形", "3 條"], ["等腰三角形", "1 條"], ["正六邊形", "6 條"], ["正五邊形", "5 條"], ["菱形", "2 條"], ["圓形", "無限多條"]];
+function genSymmetry() {
+  const r = Math.random();
+  if (r < 0.45) {
+    const [shape, n] = pickRandom(SYM_AXES);
+    return genQ("數學", M5, "對稱軸", `${shape}有幾條對稱軸？`, n, uniqWrongs(n, ["1 條", "2 條", "3 條", "4 條", "5 條", "6 條", "無限多條", "0 條"], 3),
+      `${shape}有 ${n}對稱軸。對摺後兩邊能完全重疊的摺線就是對稱軸。`);
+  }
+  if (r < 0.7) {
+    const yes = ["正方形", "長方形", "圓形", "等腰三角形", "正五邊形", "菱形", "愛心形"], no = ["平行四邊形（不是長方形或菱形）", "一般的不等邊三角形", "阿拉伯數字「7」的形狀", "英文字母「Z」"];
+    if (Math.random() < 0.5) return genQ("數學", M5, "線對稱圖形", "下列哪一個「不是」線對稱圖形？", pickRandom(no), pickN(yes, 3), "線對稱圖形沿著某一條直線對摺後，兩邊可以完全重疊。");
+    return genQ("數學", M5, "線對稱圖形", "下列哪一個是線對稱圖形？", pickRandom(yes), pickN(no, 3), "線對稱圖形沿著某一條直線對摺後，兩邊可以完全重疊。");
+  }
+  const facts = [
+    ["線對稱圖形中，對稱軸兩邊互相對應的點叫做什麼？", "對稱點", ["對稱邊", "頂點", "中心點"], "對摺後互相重疊的點是對稱點。"],
+    ["線對稱圖形中，對稱邊的長度有什麼關係？", "一樣長", ["左邊比較長", "右邊比較長", "不一定"], "對摺後對稱邊完全重疊，所以一樣長。"],
+    ["線對稱圖形中，對稱角的大小有什麼關係？", "一樣大", ["不一樣大", "加起來是 90 度", "加起來是 360 度"], "對摺後對稱角完全重疊，所以一樣大。"],
+    ["連接兩個對稱點的線段，和對稱軸有什麼關係？", "互相垂直", ["互相平行", "重疊在一起", "沒有關係"], "對稱點的連線會被對稱軸垂直平分。"],
+    ["對稱點到對稱軸的距離有什麼關係？", "一樣遠", ["左邊比較遠", "右邊比較遠", "不一定"], "對稱點到對稱軸的距離相等。"]
+  ];
+  const [q, a, w, e] = pickRandom(facts);
+  return genQ("數學", M5, "對稱觀念", q, a, w, e);
+}
+
+// ── 英語 ──
+const DRINKS = [["water", "水"], ["tea", "茶"], ["coffee", "咖啡"], ["milk", "牛奶"], ["juice", "果汁"], ["cola", "可樂"], ["soy milk", "豆漿"], ["bubble tea", "珍珠奶茶"], ["hot chocolate", "熱巧克力"], ["lemonade", "檸檬水"], ["milk tea", "奶茶"]];
+const FRUITS = [["apples", "蘋果"], ["bananas", "香蕉"], ["grapes", "葡萄"], ["guavas", "芭樂"], ["oranges", "柳橙"], ["papayas", "木瓜"], ["pineapples", "鳳梨"]];
+const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"], TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const TEENS = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+function numWord(n) { if (n === 100) return "one hundred"; if (n < 10) return ONES[n]; if (n < 20) return TEENS[n - 10]; return TENS[Math.floor(n / 10)] + (n % 10 ? "-" + ONES[n % 10] : ""); }
+const SUBJ3 = ["He", "She", "Amy", "Kevin", "My brother", "Mom"], SUBJP = ["I", "You", "We", "They", "Amy and Kevin", "My parents"];
+const EU1 = "Unit 1 The Best Drink", EU2 = "Unit 2 Let's Make Fruit Salad";
+
+function genVocab(unit, list) {
+  const [en, zh] = pickRandom(list), others = list.filter(x => x[0] !== en);
+  if (Math.random() < 0.5) return genQ("英語", unit, "單字", `「${en}」的中文意思是什麼？`, zh, pickN(others, 3).map(x => x[1]), `${en}：${zh}`);
+  return genQ("英語", unit, "單字", `「${zh}」的英文是哪一個？`, en, pickN(others, 3).map(x => x[0]), `${zh}：${en}`);
+}
+function genEnglish1() {
+  const r = Math.random();
+  if (r < 0.35) return genVocab(EU1, DRINKS);
+  if (r < 0.55) {
+    const n = Math.random() < 0.2 ? 100 : randInt(20, 99);
+    const near = [n + 10, n - 10, n + 1, n - 1, (n % 10) * 10 + Math.floor(n / 10)].filter(v => v >= 13 && v <= 100 && v !== n);
+    if (Math.random() < 0.5) return genQ("英語", EU1, "數字", `「${numWord(n)}」是哪一個數字？`, n, uniqWrongs(n, near, 3), `${numWord(n)} = ${n}`);
+    return genQ("英語", EU1, "數字", `${n} 的英文怎麼寫？`, numWord(n), uniqWrongs(numWord(n), near.map(numWord), 3), `${n} = ${numWord(n)}`);
+  }
+  const [d] = pickRandom(DRINKS);
+  if (r < 0.78) {
+    const third = Math.random() < 0.5, s = pickRandom(third ? SUBJ3 : SUBJP);
+    return genQ("英語", EU1, "句型 like / likes", `${s} ＿＿＿ ${d}.`, third ? "likes" : "like", third ? ["like", "liking", "is like"] : ["likes", "liking", "is like"],
+      third ? `${s} 是第三人稱單數，動詞要加 s：${s} likes ${d}.` : `${s} 不是第三人稱單數，用原形：${s} like ${d}.`);
+  }
+  const third = Math.random() < 0.5, s = pickRandom(third ? SUBJ3.filter(x => !["He", "She"].includes(x)) : ["you", "they"]);
+  const pron = third ? (["Amy", "Mom"].includes(s) ? "she" : "he") : (s === "you" ? "I" : "they");
+  const yes = Math.random() < 0.5;
+  const ansText = yes ? `Yes, ${pron} ${third ? "does" : "do"}.` : `No, ${pron} ${third ? "doesn’t" : "don’t"}.`;
+  const wrongs = yes ? [`Yes, ${pron} ${third ? "do" : "does"}.`, `Yes, ${pron} is.`, `No, ${pron} ${third ? "doesn’t" : "don’t"}.`] : [`No, ${pron} ${third ? "don’t" : "doesn’t"}.`, `No, ${pron} isn’t.`, `Yes, ${pron} ${third ? "does" : "do"}.`];
+  return genQ("英語", EU1, "句型 Do / Does", `A: ${third ? "Does" : "Do"} ${s} like ${d}?\nB: ${yes ? "（喜歡）" : "（不喜歡）"} ＿＿＿＿`, ansText, wrongs,
+    `${third ? "Does" : "Do"} 開頭的問句，回答也用 ${third ? "does / doesn’t" : "do / don’t"}：${ansText}`);
+}
+function genEnglish2() {
+  const r = Math.random();
+  if (r < 0.4) return genVocab(EU2, FRUITS);
+  const [f] = pickRandom(FRUITS), single = f.replace(/s$/, "");
+  if (r < 0.65) {
+    const third = Math.random() < 0.5, s = pickRandom(third ? SUBJ3 : SUBJP), n = randInt(2, 9);
+    return genQ("英語", EU2, "句型 need / needs", `${s} ＿＿＿ ${numWord(n)} ${f}.`, third ? "needs" : "need", third ? ["need", "needing", "is need"] : ["needs", "needing", "is need"],
+      third ? `${s} 是第三人稱單數，用 needs。` : `${s} 用 need。`);
+  }
+  if (r < 0.85) {
+    const n = randInt(2, 9), art = /^[aeiou]/.test(single) ? "an" : "a";
+    return genQ("英語", EU2, "單複數", "下列哪一句是正確的？", `I need ${numWord(n)} ${f}.`,
+      [`I need ${numWord(n)} ${single}.`, `I need ${art} ${f}.`, `She need ${numWord(n)} ${f}.`],
+      `兩個以上要用複數 ${f}；一個用 ${art} ${single}；主詞 She 要用 needs。`);
+  }
+  return genQ("英語", EU2, "句型 How many", `A: ＿＿＿ ${f} do you need?\nB: I need four ${f}.`, "How many", ["How much", "What", "Where"], "問「幾個」要用 How many，後面接複數名詞。");
+}
+
+// 哪些單元由程式出題：only=true 表示整座島都是程式出的題；否則和題庫的題目混著出
+const VIRTUAL_UNITS = [
+  { subject: "國語", unit: IDIOM_UNIT, gen: genIdiom, only: true, icon: "🀄",
+    lore: "<b>【課內成語島】</b>國語第一～六課的 24 個課內成語。期中考很重要！每次登島都會重新出題：看句子選成語、看意思選成語、判斷用法，句子有老師的例句也有新例句。" },
+  { subject: "數學", unit: M1, gen: genLineGraph, only: true, icon: "📈", lore: "<b>【折線圖島】</b>讀資料、判斷上升下降，還有折線圖的觀念題。數字每次都會重新產生。" },
+  { subject: "數學", unit: M2, gen: genFactor, only: false, icon: "🔢", lore: "<b>【因數和倍數島】</b>因數、倍數、最大公因數、最小公倍數，以及老師補充的應用題（數字每次都不一樣）。" },
+  { subject: "數學", unit: M3, gen: genPolygon, only: false, icon: "🔷", lore: "<b>【多邊形島】</b>多邊形內角和、正多邊形、三角形邊長的性質、三角形內角。" },
+  { subject: "數學", unit: M4, gen: genFraction, only: true, icon: "🍕", lore: "<b>【擴分約分通分島】</b>約成最簡分數、擴分、通分比大小。" },
+  { subject: "數學", unit: M5, gen: genSymmetry, only: true, icon: "🦋", lore: "<b>【線對稱島】</b>對稱軸、對稱點、對稱邊、對稱角。" },
+  { subject: "英語", unit: EU1, gen: genEnglish1, only: false, icon: "🧋" },
+  { subject: "英語", unit: EU2, gen: genEnglish2, only: false, icon: "🍍" }
+];
+function virtualOf(unit) { return VIRTUAL_UNITS.find(v => v.subject === unit.subject && v.unit === unit.unit); }
+function generateVirtual(v, n, used) {
+  const out = [], ids = new Set(used);
+  for (let i = 0; i < n * 15 && out.length < n; i++) {
+    const q = v.gen();
+    if (q && !ids.has(q.id) && new Set(q.opts).size === q.opts.length) { ids.add(q.id); out.push(q); }
+  }
+  return out;
+}
+
+
+let lastPortrait = isPortrait();
+window.addEventListener("resize", () => {
+  if (isPortrait() !== lastPortrait && session && !walking) { lastPortrait = isPortrait(); renderMap(); }
+});
+
+boot();
+</script>
+</body>
+</html>
