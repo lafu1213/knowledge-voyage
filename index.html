@@ -917,6 +917,19 @@ let walking = false;
 // =========================================================
 // 2. 小工具
 // =========================================================
+// ---- 題目附圖：「圖解」欄位填圖片網址（Google 雲端分享連結或任何 https 圖片）就會顯示 ----
+function questionImageUrl(q) {
+  const raw = String((q && (q.image || q.diagram)) || "").trim();
+  if (!/^https?:\/\//i.test(raw)) return "";
+  const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
+  return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
+}
+function questionImageHtml(q) {
+  const url = questionImageUrl(q);
+  if (!url) return "";
+  return `<div class="diagram-card"><img src="${escapeHtml(url)}" alt="題目附圖" loading="lazy" style="max-width:100%; max-height:420px; border-radius:8px; cursor:zoom-in;" onclick="window.open(this.src,'_blank')" onerror="this.parentNode.innerHTML='⚠️ 圖片載入失敗，請確認雲端檔案已設為「知道連結的任何人可檢視」'"></div>`;
+}
+
 function escapeHtml(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -2068,13 +2081,14 @@ function renderQuestion() {
   const total = quizState.questions.length;
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
-      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${sourceBadge(q)}</span>
+      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${sourceBadge(q)}</span>
       <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
     </div>
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
     ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
     ${quizState.mode === "複習" ? `<div class="trial-note" style="background:#e0e7ff;color:#3730a3">📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong} 並回到待訂正</div>` : ""}
     ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 課文（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
+    ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${escapeHtml(q.q)}</h3>
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>`;
@@ -2229,6 +2243,7 @@ function openMistakeBook(tab) {
           <span style="color:var(--success); font-weight:900;">✔ 正確答案：${escapeHtml(stripNum(q.opts[q.ans]))}</span><br>
           ${q.exp ? `<span style="font-size:.86rem;">💡 ${escapeHtml(q.exp)}</span>` : ""}
           ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
+          ${questionImageHtml(q)}
         </div>`;
       }).join("")}
     </div>
