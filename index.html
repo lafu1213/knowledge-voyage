@@ -1132,6 +1132,7 @@ function buildWorld() {
       }
       u.questions.push(q);
     });
+    units.forEach(u => { const m = UNIT_META[u.unit]; if (m) { u.icon = m.icon; if (m.lore) u.lore = m.lore; } });
     VIRTUAL_UNITS.filter(v => v.subject === key).forEach(v => {
       let u = units.find(x => x.unit === v.unit);
       if (!u) {
@@ -1144,6 +1145,11 @@ function buildWorld() {
     return Object.assign({}, base, { units });
   });
 }
+
+// 題庫單元的島嶼圖示與介紹（沒寫的單元用科目預設圖示）
+const UNIT_META = {
+  "Review 1 綜合複習": { icon: "🎯", lore: "<b>【Review 1 複習島】</b>Unit 1、Unit 2 的總複習：母音拼法、單字分類、回應句、對話理解、句子配中文。聽力和看圖題已改成文字題。" }
+};
 
 function findQuestion(id) { return BANK.find(q => q.id === id); }
 
