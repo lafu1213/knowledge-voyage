@@ -2037,7 +2037,7 @@ function openUnitModal(key) {
       • 選項順序每次重新洗牌${pend ? `<br>• 這個單元還有 <b style="color:var(--danger)">${pend}</b> 題錯題待訂正` : ""}
     </div>
     ${isTrial() ? `<div class="trial-note">👀 試玩模式：這次作答不會列入紀錄</div>` : ""}
-    <button class="btn-primary" style="width:100%; padding:14px; font-size:1.05rem; margin-top:10px;" onclick="startQuiz('${escapeHtml(key)}')">⚔️ 開始闖關</button>`;
+    <button class="btn-primary" style="width:100%; padding:14px; font-size:1.05rem; margin-top:10px;" data-key="${escapeHtml(key)}" onclick="startQuiz(this.dataset.key)">⚔️ 開始闖關</button>`;
   openModal("quiz-modal");
 }
 
