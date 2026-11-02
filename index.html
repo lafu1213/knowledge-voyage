@@ -930,9 +930,14 @@ let walking = false;
 // 2. 小工具
 // =========================================================
 // ---- 題目附圖：「圖解」欄位填圖片網址（Google 雲端分享連結或任何 https 圖片）就會顯示 ----
+function diagramParts(q) { return String((q && (q.image || q.diagram)) || "").split(/[｜\n]/).map(x => x.trim()).filter(Boolean); }
+function questionSpeech(q) {
+  const t = diagramParts(q).find(x => /^(聽|🔊)[：:]/.test(x));
+  return t ? t.replace(/^(聽|🔊)[：:]\s*/, "") : "";
+}
 function questionImageUrl(q) {
-  const raw = String((q && (q.image || q.diagram)) || "").trim();
-  if (!/^https?:\/\//i.test(raw)) return "";
+  const raw = diagramParts(q).find(x => /^https?:\/\//i.test(x)) || "";
+  if (!raw) return "";
   const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
   return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
 }
@@ -940,6 +945,34 @@ function questionImageHtml(q) {
   const url = questionImageUrl(q);
   if (!url) return "";
   return `<div class="diagram-card"><img src="${escapeHtml(url)}" alt="題目附圖" loading="lazy" style="max-width:100%; max-height:420px; border-radius:8px; cursor:zoom-in;" onclick="window.open(this.src,'_blank')" onerror="this.parentNode.innerHTML='⚠️ 圖片載入失敗，請確認雲端檔案已設為「知道連結的任何人可檢視」'"></div>`;
+}
+
+// ---- 英聽：用瀏覽器內建的英語朗讀念出「聽：」後面的原文 ----
+let speechVoice = null;
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  const vs = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
+  return vs.find(v => /en[-_]US/i.test(v.lang) && /Google|Samantha|Microsoft|Natural/i.test(v.name)) || vs.find(v => /en[-_]US/i.test(v.lang)) || vs[0] || null;
+}
+if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => { speechVoice = pickVoice(); };
+function speakText(text, slow) {
+  if (!text) return;
+  if (!("speechSynthesis" in window)) { toast("這台裝置不支援英語朗讀，請換用 Chrome 或 Safari"); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US"; u.rate = slow ? 0.6 : 0.85;
+  speechVoice = speechVoice || pickVoice(); if (speechVoice) u.voice = speechVoice;
+  speechSynthesis.speak(u);
+}
+function speakCurrent(slow) { const q = quizState && quizState.questions[quizState.idx]; if (q) speakText(questionSpeech(q), slow); }
+function listenBoxHtml(q, auto) {
+  const t = questionSpeech(q);
+  if (!t) return "";
+  return `<div class="lore-box" style="border-left-color:#0ea5e9; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+    <b>🎧 英聽題：</b>
+    <button class="btn-primary" style="padding:8px 14px" onclick="${auto ? "speakCurrent(false)" : `speakText(${escapeHtml(JSON.stringify(t))}, false)`}">🔊 播放</button>
+    <button class="btn-ghost" style="padding:8px 14px" onclick="${auto ? "speakCurrent(true)" : `speakText(${escapeHtml(JSON.stringify(t))}, true)`}">🐢 慢速再聽</button>
+    <span style="font-size:.8rem; opacity:.75">可以重複聽，聽完再作答</span></div>`;
 }
 
 function escapeHtml(s) {
@@ -955,14 +988,25 @@ function nowStr() {
 }
 function stripNum(s) { return String(s).replace(/^\s*[①②③④]\s*/, ""); }
 function unitKey(subject, unit) { return subject + "｜" + unit; }
+// 題型「看圖題」「英聽題」各自放到同單元旁邊的小島：
+//   中文單元：第一單元 → 第一單元看圖／第一單元英聽
+//   英文單元：Unit 1 The Best Drink → Unit 1 看圖：The Best Drink（地圖上才看得出是哪一座）
+function specialIslandUnit(q) {
+  const tag = q.type === "看圖題" ? "看圖" : q.type === "英聽題" ? "英聽" : "";
+  if (!tag || q.unit.includes(tag)) return q.unit;
+  const m = String(q.unit).match(/^((?:Unit|Review|Lesson)\s*\d+)\s*(.*)$/i);
+  return m ? `${m[1]} ${tag}：${m[2] || m[1]}` : q.unit + tag;
+}
 function splitUnit(unit) {
   const m = String(unit).split(/[：:]/);
-  return m.length > 1 ? [m[0], m.slice(1).join("：")] : ["", unit];
+  if (m.length > 1) return [m[0], m.slice(1).join("：")];
+  const e = String(unit).match(/^((?:Unit|Review|Lesson)\s*\d+)\s+(.+)$/i);   // 英文單元：Unit 1 The Best Drink → Unit 1・The Best Drink
+  return e ? [e[1], e[2]] : ["", unit];
 }
 function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
-function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal" && "speechSynthesis" in window) speechSynthesis.cancel(); }
 function seatEmoji(seat) { const n = parseInt(seat, 10); return n ? SEAT_EMOJI[(n - 1) % SEAT_EMOJI.length] : "🧑‍🏫"; }
 function shortName(name) { return String(name).replace(/^508/, ""); }
 
@@ -1113,7 +1157,7 @@ async function loadData() {
   if (DEMO && Array.isArray(window.DEMO_BANK)) cloud = window.DEMO_BANK.map(q => Object.assign({}, q, { src: "cloud" }));
   if (!DEMO) cloud = (await api("questions")).questions.map(q => Object.assign(q, { src: "cloud", subject: SUBJECT_ALIASES[q.subject] || q.subject }));
   // 題型是「看圖題」的題目，自動放到同單元旁邊的「看圖」小島（例：第一單元 → 第一單元看圖），老師不用改單元欄
-  cloud.forEach(q => { if (q.type === "看圖題" && !/看圖$/.test(q.unit)) q.unit = q.unit + "看圖"; });
+  cloud.forEach(q => { q.unit = specialIslandUnit(q); });
   // 內建國語題庫：雲端已經有同名單元時就用雲端的，沒有的單元才補上內建題目
   const hasChinese = cloud.some(q => q.subject === "國語");
   BANK = hasChinese ? cloud : [...builtinQuestions(), ...cloud];
@@ -1954,7 +1998,8 @@ function radText(r) { return RAD_LABEL[r] || `${r}部`; }
 
 function prepareQuestion(q, extra = {}) {
   const plain = q.opts.map(stripNum);
-  const keepOrder = /[①②③④]/.test(q.exp || "") || plain.length === 2;   // 是非題固定「對／錯」順序
+  const keepOrder = /[①②③④]/.test(q.exp || "") || plain.length === 2   // 是非題固定「對／錯」順序
+    || plain.every(o => /^\(?[A-D]\)?$/.test(o));   // 選項是圖上的 (A)(B)(C) 代號時不洗牌
   const idx = plain.map((_, i) => i);
   const order = keepOrder ? idx : shuffle(idx);
   return Object.assign({}, q, extra, { opts: order.map((oi, i) => CIRCLED[i] + plain[oi]), ans: order.indexOf(q.ans) });
@@ -2117,17 +2162,20 @@ function renderQuestion() {
   const total = quizState.questions.length;
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
-      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
+      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${questionSpeech(q) ? "🎧 英聽" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
       <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
     </div>
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
     ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
     ${quizState.mode === "複習" ? `<div class="trial-note" style="background:#e0e7ff;color:#3730a3">📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong} 並回到待訂正</div>` : ""}
     ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 課文（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
+    ${listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${escapeHtml(q.q)}</h3>
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>`;
+  if (questionSpeech(q)) setTimeout(() => speakCurrent(false), 350);
+  else if ("speechSynthesis" in window) speechSynthesis.cancel();
 }
 
 function submitAnswer(choice) {
@@ -2279,6 +2327,7 @@ function openMistakeBook(tab) {
           <span style="color:var(--success); font-weight:900;">✔ 正確答案：${escapeHtml(stripNum(q.opts[q.ans]))}</span><br>
           ${q.exp ? `<span style="font-size:.86rem;">💡 ${escapeHtml(q.exp)}</span>` : ""}
           ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
+          ${listenBoxHtml(q, false)}
           ${questionImageHtml(q)}
         </div>`;
       }).join("")}
