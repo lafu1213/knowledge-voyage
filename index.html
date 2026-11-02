@@ -204,6 +204,10 @@
   .avatar.walking .face-av { animation: hopAv 0.4s ease-in-out infinite; }
   @keyframes bobAv { 50% { transform: translateY(-3px); } }
   @keyframes hopAv { 50% { transform: translateY(-10px); } }
+  .avatar .shield { position: absolute; top: -10px; left: -14px; font-size: 1rem; z-index: 2; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+  .peer-subjects { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .peer-subjects button { padding: 6px 4px; font-size: .78rem; }
+  .peer-note { font-size: .74rem; color: var(--ink-soft); line-height: 1.4; }
   .avatar .lv { position: absolute; top: -10px; right: -16px; background: linear-gradient(90deg, #7c3aed, #db2777); color: #fff; font-size: 0.64rem; font-weight: 900; padding: 1px 6px; border-radius: 99px; border: 2px solid #fff; white-space: nowrap; z-index: 2; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   .lv-pill { display: inline-block; background: linear-gradient(90deg, #7c3aed, #db2777); color: #fff; font-size: 0.74rem; font-weight: 900; padding: 1px 8px; border-radius: 99px; }
   .avatar .tag { position: absolute; top: calc(100% + 2px); left: 50%; transform: translateX(-50%); background: #ea580c; color: #fff; font-size: 0.68rem; font-weight: 900; padding: 1px 8px; border-radius: 99px; white-space: nowrap; }
@@ -344,7 +348,7 @@
   .chat-form { display: flex; gap: 6px; }
   .chat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; }
   .chat-note { font-size: 0.7rem; color: var(--ink-soft); margin-top: 6px; }
-  .peer-menu { position: absolute; z-index: 250; width: 180px; background: var(--card-solid); color: var(--ink); border-radius: 16px; padding: 10px; box-shadow: 0 14px 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 6px; border: 3px solid var(--accent); }
+  .peer-menu { position: absolute; z-index: 250; width: 200px; background: var(--card-solid); color: var(--ink); border-radius: 16px; padding: 10px; box-shadow: 0 14px 30px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 6px; border: 3px solid var(--accent); }
   .peer-head { display: flex; align-items: center; gap: 8px; }
   .peer-head .face-av, .picker-preview .face-av, .vs-row .face-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
   .face-av { border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -1721,7 +1725,7 @@ function renderAvatars() {
     list.slice(0, 6).forEach((o, k) => {
       const el = document.createElement("div");
       el.className = "avatar other" + (net.battle && [net.battle.a, net.battle.b].includes(o.name) ? " battling" : "");
-      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
+      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}${o.battleOn === false ? `<div class="shield" title="專心練習中，暫不接受挑戰">🛡️</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
       el.title = shortName(o.name);
       el.onclick = (e) => { e.stopPropagation(); openPeerMenu(o, el); };
       setPos(el, spotOf(byId[id], k), vb);
@@ -1898,6 +1902,15 @@ function renderMap() {
   else renderSubject(kw);
 }
 
+// 挑戰設定：開＝別人可以找我對戰；關＝專心練習，別人無法邀請我
+function battleOn() { return session && session.user.role === "student" ? load("508_BATTLE_ON_" + session.user.name, true) !== false : false; }
+function toggleBattle() {
+  const on = !battleOn();
+  store("508_BATTLE_ON_" + session.user.name, on);
+  renderPills();
+  net.heartbeat();
+  toast(on ? "⚔️ 挑戰已開啟：同學可以找你對戰囉！" : "🛡️ 挑戰已關閉：別人不能找你對戰，可以好好練習！");
+}
 function renderPills() {
   const u = session.user;
   const pills = document.getElementById("pills");
@@ -1906,7 +1919,8 @@ function renderPills() {
     const lv = getLevelInfo(stats.score);
     const p = stats.pending.length;
     html += `<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
-      <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>`;
+      <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>
+      <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>`;
   }
   pills.innerHTML = html;
   document.getElementById("btn-dashboard").hidden = u.role === "student";
@@ -1938,7 +1952,7 @@ function renderSide() {
   const side = document.getElementById("side-dyn");
   const online = (net.others || []).length;
   const onlineCard = `<div class="card"><h3>🟢 島上同學（${online} 位在線）</h3>
-    ${online ? `<div class="online-list">${net.others.map(o => `<button class="online-chip" onclick='openPeerMenu(${JSON.stringify({ name: o.name, emoji: o.emoji, color: o.color, seat: o.seat, place: o.place }).replace(/'/g, "&#39;")})'>${o.emoji || seatEmoji(o.seat)} ${escapeHtml(shortName(o.name))}</button>`).join("")}</div>`
+    ${online ? `<div class="online-list">${net.others.map(o => `<button class="online-chip" onclick='openPeerMenu(${JSON.stringify({ name: o.name, emoji: o.emoji, color: o.color, seat: o.seat, place: o.place, battleOn: o.battleOn }).replace(/'/g, "&#39;")})'>${o.emoji || seatEmoji(o.seat)} ${escapeHtml(shortName(o.name))}${o.battleOn === false ? " 🛡️" : ""}</button>`).join("")}</div>`
       : `<div class="empty-note" style="padding:6px">目前沒有其他同學在線上</div>`}</div>`;
   const subjRows = WORLD.map(s => {
     if (!s.units.length) return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span style="opacity:.6">準備中</span></div><div class="bar"><i style="width:0"></i></div></div>`;
@@ -2560,7 +2574,7 @@ const net = {
     if (!session) return;
     try {
       const since = this.messages.length ? this.messages[this.messages.length - 1].id : 0;
-      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0 }));
+      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0, battleOn: battleOn() }));
     } catch (e) { /* 網路斷掉時下次再試 */ }
   },
   apply(r) {
@@ -2614,23 +2628,28 @@ function openPeerMenu(o, el) {
   const sameIsland = o.place === myPlace();
   menu.innerHTML = `
     <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}<b>${escapeHtml(shortName(o.name))}</b></div>
-    ${session.user.role === "student" ? `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}')">⚔️ 邀請比賽</button>` : ""}
+    ${session.user.role !== "student" ? "" : o.battleOn === false
+      ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>`
+      : `<div class="peer-note">⚔️ 選一科來挑戰他：</div>
+         <div class="peer-subjects">${WORLD.filter(s => s.units.length).map(s => `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '${escapeHtml(s.key)}')">${s.icon} ${escapeHtml(s.key)}</button>`).join("")}
+         <button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '')">🎲 不限</button></div>
+         <div class="peer-note">系統會先從你答錯過的題目出題；沒有的話就隨機出題。</div>`}
     ${session.user.role !== "parent" ? `<button class="btn-primary" onclick="sendChat('@${escapeHtml(shortName(o.name))} 嗨！'); closePeerMenu();">💬 打招呼</button>` : ""}
-    ${sameIsland ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
+    ${sameIsland || o.battleOn === false || session.user.role !== "student" ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
     <button class="btn-ghost" onclick="closePeerMenu()">關閉</button>`;
   document.body.appendChild(menu);
   const rect = (el || document.getElementById("map-stage")).getBoundingClientRect();
-  menu.style.left = Math.min(window.innerWidth - 190, Math.max(8, rect.left + rect.width / 2 - 90)) + "px";
-  menu.style.top = Math.min(window.innerHeight - 200, rect.bottom + 6) + window.scrollY + "px";
+  menu.style.left = Math.min(window.innerWidth - 210, Math.max(8, rect.left + rect.width / 2 - 100)) + "px";
+  menu.style.top = Math.min(window.innerHeight - menu.offsetHeight - 8, rect.bottom + 6) + window.scrollY + "px";
   setTimeout(() => document.addEventListener("click", closePeerMenuOutside), 0);
 }
 function closePeerMenuOutside(e) { if (!e.target.closest("#peer-menu")) closePeerMenu(); }
 function closePeerMenu() { const m = document.getElementById("peer-menu"); if (m) m.remove(); document.removeEventListener("click", closePeerMenuOutside); }
 
-async function challengePeer(name) {
+async function challengePeer(name, subject) {
   closePeerMenu();
   if (net.battle && ["pending", "active"].includes(net.battle.status)) { toast("你已經在一場比賽裡了！"); return; }
-  try { await net.battleOp("challenge", { to: name, subject: view.subject || "" }); toast(`已經邀請 ${shortName(name)}，等他回應…`); }
+  try { await net.battleOp("challenge", { to: name, subject: subject || "" }); toast(`已經邀請 ${shortName(name)} 比${subject ? "「" + subject + "」" : "賽"}，等他回應…`); }
   catch (e) { toast("⚠️ " + e.message); }
 }
 
@@ -2660,7 +2679,7 @@ function renderBattle() {
 
   if (b.status === "pending" && b.b === session.user.name) {
     box.innerHTML = `<h2 style="margin-top:0;">⚔️ 有人找你比賽！</h2>${vs}
-      <p><b>${escapeHtml(shortName(b.a))}</b> 邀請你來一場知識對決！答對 <b>+${SCORE_RULES.battleOk}</b>，答錯 <b>${SCORE_RULES.battleWrong}</b>。</p>
+      <p><b>${escapeHtml(shortName(b.a))}</b> 邀請你來一場${b.subject ? `「${escapeHtml(b.subject)}」` : ""}知識對決！答對 <b>+${SCORE_RULES.battleOk}</b>，答錯 <b>${SCORE_RULES.battleWrong}</b>。</p>
       <div class="battle-timer">⏳ <span id="bt-left"></span> 秒內回應</div>
       <div style="display:flex; gap:8px;"><button class="btn-success" style="flex:1; padding:12px;" onclick="net.battleOp('respond', { id: '${b.id}', accept: true })">接受挑戰！</button>
       <button class="btn-ghost" style="flex:1;" onclick="net.battleOp('respond', { id: '${b.id}', accept: false })">下次再說</button></div>`;
@@ -2675,7 +2694,7 @@ function renderBattle() {
     } else {
       box.innerHTML = `<h2 style="margin-top:0;">⚔️ 知識對決！</h2>${vs}
         <div class="battle-timer">⏳ 剩 <span id="bt-left"></span> 秒 ${b.oppAnswered ? "・對手已經答完了！" : ""}</div>
-        <div style="font-size:.8rem; color:var(--ink-soft)">${escapeHtml(b.q.subject)}・${escapeHtml(b.q.unit)}</div>
+        <div style="font-size:.8rem; color:var(--ink-soft)">${escapeHtml(b.q.subject)}・${escapeHtml(b.q.unit)}${b.q.fromMistake ? `・🎯 ${b.a === session.user.name ? "你" : escapeHtml(shortName(b.a))}曾經答錯的題目` : ""}</div>
         <h3 style="white-space:pre-line; line-height:1.6;">${escapeHtml(b.q.q)}</h3>
         ${b.q.opts.map((o, i) => `<button class="option-btn" onclick="this.disabled=true; net.battleOp('answer', { id: '${b.id}', choice: ${i} })">${CIRCLED[i]}${escapeHtml(o)}</button>`).join("")}`;
     }
@@ -2718,7 +2737,7 @@ function renderBattle() {
 const demo = (() => {
   const BOTS = [
     { name: "508示範同學二", seat: "02", emoji: "🐰", color: "#fecaca" },
-    { name: "508示範同學三", seat: "03", emoji: "🦊", color: "#bbf7d0" }
+    { name: "508示範同學三", seat: "03", emoji: "🦊", color: "#bbf7d0", battleOn: false }
   ];
   const LINES = ["好喔！", "我剛剛在錯題島複習完 💪", "要不要來比一場？", "這單元好難 😵", "我搭飛機過來的 ✈️", "加油加油！"];
   const st = { places: {}, msgs: [], battle: null, nextBotChallenge: Date.now() + 25000 };
@@ -2740,7 +2759,7 @@ const demo = (() => {
         oppAnswered: b.ans[b.a === session.user.name ? b.b : b.a] != null, q: b.q && Object.assign({}, b.q, { ans: undefined }) });
     }
     return {
-      others: bots().map(bot => Object.assign({}, bot, { place: st.places[bot.name] })),
+      others: bots().map(bot => Object.assign({ battleOn: true }, bot, { place: st.places[bot.name] })),
       messages: st.msgs.filter(m => m.id > since), battle
     };
   };
@@ -2749,7 +2768,18 @@ const demo = (() => {
     ["a", "b"].forEach(k => { const c = b.ans[b[k]]; const ok = c === b.q.ans; res[k] = { choice: c == null ? null : c, ok, pts: ok ? R.battleOk : R.battleWrong }; });
     b.result = res; b.status = "done";
   }
-  function pickQuestion(subject) {
+  function pickQuestion(subject, challenger) {
+    // 第一優先：挑戰者曾經答錯的題目（示範模式只知道自己的紀錄）
+    if (challenger === session.user.name) {
+      const ok = q => q && q.src !== "gen" && (!subject || q.subject === subject) && !q.passage && !q.diagram;
+      const wrong = questionObjects(stats.wrongEver).filter(ok);
+      const pend = wrong.filter(q => stats.pending.some(p => p.qId === q.id));
+      const pool0 = pend.length ? pend : wrong;
+      if (pool0.length) {
+        const q = prepareQuestion(pickRandom(pool0));
+        return { id: q.id, subject: q.subject, unit: q.unit, q: q.q, opts: q.opts.map(stripNum), ans: q.ans, exp: q.exp, fromMistake: true };
+      }
+    }
     let pool = BANK.filter(q => (!subject || q.subject === subject) && !q.passage);
     const v = VIRTUAL_UNITS.filter(x => x.subject === subject);
     if (v.length && (!pool.length || Math.random() < 0.4)) pool = [pickRandom(v).gen()];
@@ -2764,7 +2794,7 @@ const demo = (() => {
       bots().forEach(bot => {
         if (!st.places[bot.name] || Math.random() < 0.2) st.places[bot.name] = Math.random() < 0.45 ? place : pickRandom(allPlaces());
       });
-      if (!st.battle && session.user.role === "student" && Date.now() > st.nextBotChallenge) {
+      if (!st.battle && session.user.role === "student" && battleOn() && Date.now() > st.nextBotChallenge) {
         const bot = bots().find(b => st.places[b.name] === place);
         if (bot) {
           st.battle = { id: uid(), a: bot.name, b: session.user.name, status: "pending", until: Date.now() + 20000, ans: {}, subject: view.subject };
@@ -2784,15 +2814,16 @@ const demo = (() => {
       if (op === "challenge") {
         const bot = bots().find(b => b.name === to);
         if (!bot) throw new Error("找不到這位同學");
-        const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {} };
+        if (bot.battleOn === false) throw new Error("這位同學關閉了挑戰，正在專心練習");
+        const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {}, subject: subject || "" };
         setTimeout(() => {
           if (st.battle !== b || b.status !== "pending") return;
-          if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
+          if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject, me); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
           else b.status = "declined";
         }, 1500);
       } else if (op === "respond" && st.battle && st.battle.id === id) {
         const b = st.battle;
-        if (accept) { b.status = "active"; b.q = pickQuestion(b.subject); b.until = Date.now() + 25000; botAnswerLater(b, BOTS.find(x => x.name === b.a)); }
+        if (accept) { b.status = "active"; b.q = pickQuestion(b.subject, b.a); b.until = Date.now() + 25000; botAnswerLater(b, BOTS.find(x => x.name === b.a)); }
         else b.status = "declined";
       } else if (op === "answer" && st.battle && st.battle.id === id && st.battle.status === "active") {
         const b = st.battle;
