@@ -994,13 +994,13 @@ function unitKey(subject, unit) { return subject + "｜" + unit; }
 function specialIslandUnit(q) {
   const tag = q.type === "看圖題" ? "看圖" : q.type === "英聽題" ? "英聽" : "";
   if (!tag || q.unit.includes(tag)) return q.unit;
-  const m = String(q.unit).match(/^((?:Unit|Review|Lesson)\s*\d+)\s*(.*)$/i);
-  return m ? `${m[1]} ${tag}：${m[2] || m[1]}` : q.unit + tag;
+  const m = String(q.unit).match(/^((?:Unit|Review|Lesson)\s*\d+|第\S+?單元)\s+(.+)$/i);   // 「第3單元 多邊形」→「第3單元 看圖：多邊形」
+  return m ? `${m[1]} ${tag}：${m[2]}` : q.unit + tag;
 }
 function splitUnit(unit) {
   const m = String(unit).split(/[：:]/);
   if (m.length > 1) return [m[0], m.slice(1).join("：")];
-  const e = String(unit).match(/^((?:Unit|Review|Lesson)\s*\d+)\s+(.+)$/i);   // 英文單元：Unit 1 The Best Drink → Unit 1・The Best Drink
+  const e = String(unit).match(/^((?:Unit|Review|Lesson)\s*\d+|第\S+?單元)\s+(.+)$/i);   // 英文單元：Unit 1 The Best Drink → Unit 1・The Best Drink
   return e ? [e[1], e[2]] : ["", unit];
 }
 function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
