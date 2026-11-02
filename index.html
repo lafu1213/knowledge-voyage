@@ -1112,6 +1112,8 @@ async function loadData() {
   // 示範模式：有 demo-bank.js 就用它（五科題庫）；沒有的話只用內建國語題庫
   if (DEMO && Array.isArray(window.DEMO_BANK)) cloud = window.DEMO_BANK.map(q => Object.assign({}, q, { src: "cloud" }));
   if (!DEMO) cloud = (await api("questions")).questions.map(q => Object.assign(q, { src: "cloud", subject: SUBJECT_ALIASES[q.subject] || q.subject }));
+  // 題型是「看圖題」的題目，自動放到同單元旁邊的「看圖」小島（例：第一單元 → 第一單元看圖），老師不用改單元欄
+  cloud.forEach(q => { if (q.type === "看圖題" && !/看圖$/.test(q.unit)) q.unit = q.unit + "看圖"; });
   // 內建國語題庫：雲端已經有同名單元時就用雲端的，沒有的單元才補上內建題目
   const hasChinese = cloud.some(q => q.subject === "國語");
   BANK = hasChinese ? cloud : [...builtinQuestions(), ...cloud];
