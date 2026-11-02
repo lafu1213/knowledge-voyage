@@ -690,8 +690,17 @@ const SVG_DIAGRAMS = {
     </div>`
 };
 
+// 1～99 級：每 100 分升一級（和原本一樣）。
+// 100 級以後：第 n 級要再多 200 + 10×(n−100) 分，愈高愈難，最高 MAX_LEVEL 級。
+const MAX_LEVEL = 200;
+function levelStartScore(lv) {
+  if (lv <= 99) return (lv - 1) * LEVEL_STEP;
+  const k = lv - 99;   // 從 99 級往上升了幾級
+  return 98 * LEVEL_STEP + 200 * k + 5 * k * (k - 1);
+}
 function getLevelInfo(totalPoints) {
-  const lv = Math.min(99, Math.max(1, Math.floor(totalPoints / LEVEL_STEP) + 1));
+  let lv = 1;
+  while (lv < MAX_LEVEL && totalPoints >= levelStartScore(lv + 1)) lv++;
   const titles = [
     [1, "初心者小書僮"], [5, "墨水村見習生"], [10, "幸福筆記收集者"],
     [15, "漢字尋寶獵人"], [20, "井然有序小師傅"], [25, "眉清目秀書法家"],
@@ -699,7 +708,10 @@ function getLevelInfo(totalPoints) {
     [45, "太魯閣峽谷遊俠"], [50, "池上黃金稻浪詩人"], [55, "墾丁護蟹巡守隊"],
     [60, "複句機關破解師"], [65, "成語典故大行家"], [70, "手不釋卷大學士"],
     [75, "有口皆碑大文豪"], [80, "五維度方舟領航員"], [85, "北辰星光榮譽狀元"],
-    [90, "無懈可擊國語宗師"], [95, "制霸期中考守護神"], [99, "508國語傳奇大文豪"]
+    [90, "無懈可擊國語宗師"], [95, "制霸期中考守護神"], [99, "508國語傳奇大文豪"],
+    [100, "五科知識航海士"], [110, "雨林探險博物家"], [120, "數字迷宮破解王"], [130, "英語星球外交官"],
+    [140, "臺灣歷史穿越者"], [150, "五維方舟艦長"], [160, "知識銀河探索家"], [170, "智慧燈塔守護者"],
+    [180, "星辰大海學霸"], [190, "傳說級全能學者"], [200, "508知識大航海之王"]
   ];
   let title = "初心者小書僮";
   for (const [minLv, t] of titles) { if (lv >= minLv) title = t; }
@@ -1453,9 +1465,19 @@ function bfs(from, to, neighbors) {
   return path;
 }
 
+// 完成度星：本單元「答對過」的題目達 40% 一顆、70% 兩顆、全部三顆（和正確率星分開算，最多再加 3 顆）
+function unitCoverage(u) {
+  const rec = id => stats.byId && stats.byId[id];
+  const total = u.questions.length;
+  const done = u.questions.filter(q => rec(q.id)).length;
+  const right = u.questions.filter(q => rec(q.id) && rec(q.id).correct > 0).length;
+  const r = total ? right / total : 0;
+  return { total, done, unseen: total - done, right, stars: r >= 1 ? 3 : r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0 };
+}
+function unitStars(u) { return (stats.stars[u.key] || 0) + unitCoverage(u).stars; }
 function subjectProgress(s) {
-  const got = s.units.reduce((t, u) => t + (stats.stars[u.key] || 0), 0);
-  return { got, max: s.units.length * 3 };
+  const got = s.units.reduce((t, u) => t + unitStars(u), 0);
+  return { got, max: s.units.length * 6 };
 }
 function pendingCount(filterFn) { return stats.pending.filter(filterFn).length; }
 
@@ -1528,7 +1550,7 @@ function renderSubject(kw) {
   const isles = nodes.map((n, i) => {
     if (n.dock) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "dock" + s.key, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
       shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🪵"], icon: "⛵", label: "碼頭", sub: "回世界地圖" });
-    const u = n.unitObj, st = stats.stars[u.key] || 0;
+    const u = n.unitObj, st = stats.stars[u.key] || 0, cov = unitCoverage(u);
     const color = s.palette[(i - 1) % s.palette.length];
     const [l1, l2] = splitUnit(u.unit);
     const maxLen = isPortrait() ? 6 : 8;
@@ -1537,9 +1559,9 @@ function renderSubject(kw) {
     return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: s.sand,
       shape: Object.assign({}, s.shape, { points: s.shape.sharp ? 5 + (i % 3) : s.shape.points }), deco: shuffleSeeded(s.deco, u.key),
       icon: locked ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
-      sub: `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${isPortrait() ? "" : `　${u.questions.length} 題`}`,
+      sub: `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
       badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (kw ? (matches ? " hit" : " dim") : ""),
-      aria: `${u.unit}，${st} 顆星` });
+      aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過` });
   });
   setMapSvg(vb, `
     <defs>${SHARED_DEFS}</defs>
@@ -1871,17 +1893,17 @@ function renderSide() {
   }
 
   const lv = getLevelInfo(stats.score);
-  const floor = (lv.lv - 1) * LEVEL_STEP, nextAt = lv.lv * LEVEL_STEP;
-  const pct = lv.lv >= 99 ? 100 : Math.round((stats.score - floor) / (nextAt - floor) * 100);
+  const floor = levelStartScore(lv.lv), nextAt = levelStartScore(lv.lv + 1);
+  const pct = lv.lv >= MAX_LEVEL ? 100 : Math.round((stats.score - floor) / (nextAt - floor) * 100);
   const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0;
-  const starsTotal = Object.values(stats.stars).reduce((a, b) => a + b, 0);
+  const starsTotal = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
   const recent = mySessions.slice(-4).reverse();
   side.innerHTML = `
     <div class="card">
       <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
         <div style="flex:1"><div class="me-name">${escapeHtml(shortName(u.name))} <button class="btn-ghost" style="padding:2px 8px; font-size:.72rem" onclick="openAvatarPicker()">換頭像</button></div>
         <div class="me-title">Lv.${lv.lv} ${lv.title}</div>
-        <div class="bar"><i style="width:${pct}%"></i></div><div class="me-title" style="font-size:.72rem">${lv.lv >= 99 ? "已達最高等級！" : `再 ${nextAt - stats.score} 分升級`}</div></div></div>
+        <div class="bar"><i style="width:${pct}%"></i></div><div class="me-title" style="font-size:.72rem">${lv.lv >= MAX_LEVEL ? "已達最高等級！" : `再 ${nextAt - stats.score} 分升級`}</div></div></div>
       <div class="tiles">
         <div class="tile-kpi"><b>⭐ ${starsTotal}</b><span>收集的星星</span></div>
         <div class="tile-kpi"><b>🎯 ${acc}%</b><span>總正確率</span></div>
@@ -1898,7 +1920,7 @@ function renderSide() {
       📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong}<br>
       ⚔️ 相遇對戰：答對 +${SCORE_RULES.battleOk}，答錯 ${SCORE_RULES.battleWrong}<br>
       🏁 一場結束：全對 +${SCORE_RULES.perfect}，80% 以上 +${SCORE_RULES.good}，不到 40% ${SCORE_RULES.poor}<br>
-      📉 每 ${LEVEL_STEP} 分一級，分數掉下來等級也會降；總分最低 0 分</details></div>
+      📉 99 級以前每 ${LEVEL_STEP} 分一級，100 級以後每級需要的分數愈來愈多（最高 ${MAX_LEVEL} 級），分數掉下來等級也會降；總分最低 0 分</details></div>
     <div class="card"><h3>🕒 最近闖關</h3>
       ${recent.length ? `<ul class="recent">${recent.map(r => `<li><span>${escapeHtml(r.subject)}・${escapeHtml(splitUnit(r.unit)[1] || r.unit)}</span><b>${r.correct}/${r.total}</b></li>`).join("")}</ul>` : `<div class="empty-note" style="padding:8px">還沒有闖關紀錄，快去登島吧！</div>`}
     </div>`;
@@ -2045,9 +2067,21 @@ function openUnitModal(key) {
   const hasGen = !!unit.virtual || (unit.subject === "國語" && (CHAR_FACTS.some(f => f.unit === unit.unit) || /字音|字形|部首/.test(unit.unit)));
   const genOnly = unit.virtual && unit.virtual.only;
   const pend = pendingCount(q => unitKey(q.subject, q.unit) === key);
+  const cov = unitCoverage(unit), st = stats.stars[unit.key] || 0;
+  const covBox = genOnly || !cov.total ? "" : `
+    <div class="lore-box" style="border-left-color:#f59e0b">
+      ${cov.unseen ? `🆕 <b>還有 <span style="color:var(--danger)">${cov.unseen}</span> 題你還沒做過</b>，這次會優先出現！<br>` : `🎉 <b>這座島的題目你全部都做過了！</b><br>`}
+      📘 已做過 ${cov.done}／${cov.total} 題，答對過 ${cov.right} 題
+      <div class="bar"><i style="width:${Math.round(cov.done / cov.total * 100)}%"></i></div>
+      <div style="margin-top:6px; font-size:.86rem">
+        正確率星 ${"⭐".repeat(st)}${"☆".repeat(3 - st)}：單場 10 題答對 40%／70%／全對<br>
+        完成度星 ${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}：本島題目答對過 40%／70%／全部
+      </div>
+    </div>`;
   document.getElementById("quiz-content").innerHTML = `
     <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
+    ${covBox}
     <div class="lore-box violet">
       🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
       ${genOnly ? `• 這座島的題目每次都由程式重新產生，數字、句子、選項都會換<br>• 以前在這裡答錯的題目，也會挑一兩題回來複習<br>`
@@ -2081,7 +2115,7 @@ function renderQuestion() {
   const total = quizState.questions.length;
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
-      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${sourceBadge(q)}</span>
+      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
       <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
     </div>
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
