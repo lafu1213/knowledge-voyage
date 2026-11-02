@@ -2628,14 +2628,13 @@ function openPeerMenu(o, el) {
   const sameIsland = o.place === myPlace();
   menu.innerHTML = `
     <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}<b>${escapeHtml(shortName(o.name))}</b></div>
-    ${session.user.role !== "student" ? "" : o.battleOn === false
-      ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>`
-      : `<div class="peer-note">⚔️ 選一科來挑戰他：</div>
+    ${!canChallenge(o) ? (session.user.role === "student" && o.battleOn === false ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>` : "")
+      : `<div class="peer-note">⚔️ 選一科來挑戰${session.user.role === "parent" ? "孩子" : "他"}：</div>
          <div class="peer-subjects">${WORLD.filter(s => s.units.length).map(s => `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '${escapeHtml(s.key)}')">${s.icon} ${escapeHtml(s.key)}</button>`).join("")}
          <button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '')">🎲 不限</button></div>
-         <div class="peer-note">系統會先從你答錯過的題目出題；沒有的話就隨機出題。</div>`}
+         <div class="peer-note">${session.user.role === "student" ? "系統會先從你答錯過的題目出題" : "系統會先從他答錯過的題目出題"}；沒有的話就隨機出題。</div>`}
     ${session.user.role !== "parent" ? `<button class="btn-primary" onclick="sendChat('@${escapeHtml(shortName(o.name))} 嗨！'); closePeerMenu();">💬 打招呼</button>` : ""}
-    ${sameIsland || o.battleOn === false || session.user.role !== "student" ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
+    ${sameIsland || !canChallenge(o) ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
     <button class="btn-ghost" onclick="closePeerMenu()">關閉</button>`;
   document.body.appendChild(menu);
   const rect = (el || document.getElementById("map-stage")).getBoundingClientRect();
@@ -2646,10 +2645,17 @@ function openPeerMenu(o, el) {
 function closePeerMenuOutside(e) { if (!e.target.closest("#peer-menu")) closePeerMenu(); }
 function closePeerMenu() { const m = document.getElementById("peer-menu"); if (m) m.remove(); document.removeEventListener("click", closePeerMenuOutside); }
 
+/** 誰可以挑戰誰：學生↔開啟挑戰的同學；老師→任何學生；家長→自己的孩子 */
+function canChallenge(o) {
+  const u = session.user;
+  if (u.role === "teacher") return true;
+  if (u.role === "parent") return o.name === u.child;
+  return u.role === "student" && o.battleOn !== false;
+}
 async function challengePeer(name, subject) {
   closePeerMenu();
   if (net.battle && ["pending", "active"].includes(net.battle.status)) { toast("你已經在一場比賽裡了！"); return; }
-  try { await net.battleOp("challenge", { to: name, subject: subject || "" }); toast(`已經邀請 ${shortName(name)} 比${subject ? "「" + subject + "」" : "賽"}，等他回應…`); }
+  try { await net.battleOp("challenge", { to: name, subject: subject || "", emoji: myEmoji(), color: myColor() }); toast(`已經邀請 ${shortName(name)} 比${subject ? "「" + subject + "」" : "賽"}，等他回應…`); }
   catch (e) { toast("⚠️ " + e.message); }
 }
 
@@ -2667,9 +2673,12 @@ function renderBattle() {
   clearInterval(battleTick);
   if (!b) { modal.classList.remove("open"); return; }
   const opp = b.a === session.user.name ? b.b : b.a;
-  const oppInfo = net.others.find(o => o.name === opp) || {};
+  const oppInfo = net.others.find(o => o.name === opp) || (opp === b.a && b.ae ? { emoji: b.ae, color: b.ac } : {});
+  const ROLE_TAG = { teacher: "👩‍🏫 ", parent: "👪 " };
+  const oppLabel = (opp === b.a ? ROLE_TAG[b.ar] || "" : "") + shortName(opp);
+  const mistakeOwner = b.ar && b.ar !== "student" ? b.b : b.a;
   const oppFace = avatarFace(oppInfo.emoji || "🙂", oppInfo.color);
-  const vs = `<div class="vs-row"><div>${avatarFace(myEmoji(), myColor())}<b>我</b></div><span class="vs">VS</span><div>${oppFace}<b>${escapeHtml(shortName(opp))}</b></div></div>`;
+  const vs = `<div class="vs-row"><div>${avatarFace(myEmoji(), myColor())}<b>我</b></div><span class="vs">VS</span><div>${oppFace}<b>${escapeHtml(oppLabel)}</b></div></div>`;
   const countdown = (sec, id) => {
     let left = Math.max(0, Math.round(sec));
     const tick = () => { const el = document.getElementById(id); if (el) el.textContent = left; left = Math.max(0, left - 1); };
@@ -2679,7 +2688,7 @@ function renderBattle() {
 
   if (b.status === "pending" && b.b === session.user.name) {
     box.innerHTML = `<h2 style="margin-top:0;">⚔️ 有人找你比賽！</h2>${vs}
-      <p><b>${escapeHtml(shortName(b.a))}</b> 邀請你來一場${b.subject ? `「${escapeHtml(b.subject)}」` : ""}知識對決！答對 <b>+${SCORE_RULES.battleOk}</b>，答錯 <b>${SCORE_RULES.battleWrong}</b>。</p>
+      <p><b>${escapeHtml(oppLabel)}</b> 邀請你來一場${b.subject ? `「${escapeHtml(b.subject)}」` : ""}知識對決！答對 <b>+${SCORE_RULES.battleOk}</b>，答錯 <b>${SCORE_RULES.battleWrong}</b>。</p>
       <div class="battle-timer">⏳ <span id="bt-left"></span> 秒內回應</div>
       <div style="display:flex; gap:8px;"><button class="btn-success" style="flex:1; padding:12px;" onclick="net.battleOp('respond', { id: '${b.id}', accept: true })">接受挑戰！</button>
       <button class="btn-ghost" style="flex:1;" onclick="net.battleOp('respond', { id: '${b.id}', accept: false })">下次再說</button></div>`;
@@ -2694,7 +2703,7 @@ function renderBattle() {
     } else {
       box.innerHTML = `<h2 style="margin-top:0;">⚔️ 知識對決！</h2>${vs}
         <div class="battle-timer">⏳ 剩 <span id="bt-left"></span> 秒 ${b.oppAnswered ? "・對手已經答完了！" : ""}</div>
-        <div style="font-size:.8rem; color:var(--ink-soft)">${escapeHtml(b.q.subject)}・${escapeHtml(b.q.unit)}${b.q.fromMistake ? `・🎯 ${b.a === session.user.name ? "你" : escapeHtml(shortName(b.a))}曾經答錯的題目` : ""}</div>
+        <div style="font-size:.8rem; color:var(--ink-soft)">${escapeHtml(b.q.subject)}・${escapeHtml(b.q.unit)}${b.q.fromMistake ? `・🎯 ${mistakeOwner === session.user.name ? "你" : escapeHtml(shortName(mistakeOwner))}曾經答錯的題目` : ""}</div>
         <h3 style="white-space:pre-line; line-height:1.6;">${escapeHtml(b.q.q)}</h3>
         ${b.q.opts.map((o, i) => `<button class="option-btn" onclick="this.disabled=true; net.battleOp('answer', { id: '${b.id}', choice: ${i} })">${CIRCLED[i]}${escapeHtml(o)}</button>`).join("")}`;
     }
@@ -2702,13 +2711,13 @@ function renderBattle() {
   } else if (b.status === "done") {
     const me = b.a === session.user.name ? b.result.a : b.result.b;
     const them = b.a === session.user.name ? b.result.b : b.result.a;
-    const line = (who, r) => `<div class="q-row"><b>${who}</b>：${r.choice == null ? "沒有作答" : CIRCLED[r.choice] + escapeHtml(b.q.opts[r.choice])}
-      <span class="chip ${r.ok ? "green" : "red"}">${r.ok ? "答對" : "答錯"}</span> <span class="pts ${r.pts >= 0 ? "plus" : "minus"}">${fmtPts(r.pts)}</span></div>`;
+    const line = (who, r, noPts) => `<div class="q-row"><b>${who}</b>：${r.choice == null ? "沒有作答" : CIRCLED[r.choice] + escapeHtml(b.q.opts[r.choice])}
+      <span class="chip ${r.ok ? "green" : "red"}">${r.ok ? "答對" : "答錯"}</span> ${noPts ? "" : `<span class="pts ${r.pts >= 0 ? "plus" : "minus"}">${fmtPts(r.pts)}</span>`}</div>`;
     box.innerHTML = `<h2 style="margin-top:0;">${me.ok && them.ok ? "🤝 兩個人都答對！一起加分！" : me.ok ? "🏆 你贏了！" : them.ok ? "😵 這次輸了，下次再來！" : "😅 兩個人都答錯…"}</h2>${vs}
       <h3 style="white-space:pre-line; line-height:1.6; font-size:1rem;">${escapeHtml(b.q.q)}</h3>
-      ${line("我", me)}${line(escapeHtml(shortName(opp)), them)}
+      ${line("我", me, session.user.role !== "student")}${line(escapeHtml(oppLabel), them, opp === b.a && b.ar && b.ar !== "student")}
       <div class="lore-box">✔ 正確答案：<b>${CIRCLED[b.result.ans]}${escapeHtml(b.q.opts[b.result.ans])}</b>${b.q.exp ? `<br>📝 ${escapeHtml(b.q.exp)}` : ""}</div>
-      ${isTrial() ? "" : `<div style="font-size:.8rem; color:var(--ink-soft)">${me.ok ? "" : "這題已經加進你的錯題本。"}</div>`}
+      ${isTrial() || session.user.role !== "student" ? "" : `<div style="font-size:.8rem; color:var(--ink-soft)">${me.ok ? "" : "這題已經加進你的錯題本。"}</div>`}
       <button class="btn-primary" style="width:100%; padding:12px;" onclick="net.battleOp('ack', { id: '${b.id}' })">好！繼續冒險</button>`;
     if (!handledBattles.has(b.id)) {
       handledBattles.add(b.id);
@@ -2814,8 +2823,9 @@ const demo = (() => {
       if (op === "challenge") {
         const bot = bots().find(b => b.name === to);
         if (!bot) throw new Error("找不到這位同學");
-        if (bot.battleOn === false) throw new Error("這位同學關閉了挑戰，正在專心練習");
-        const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {}, subject: subject || "" };
+        if (session.user.role === "parent" && to !== session.user.child) throw new Error("家長只能和自己的孩子對戰");
+        if (session.user.role === "student" && bot.battleOn === false) throw new Error("這位同學關閉了挑戰，正在專心練習");
+        const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {}, subject: subject || "", ar: session.user.role, ae: myEmoji(), ac: myColor() };
         setTimeout(() => {
           if (st.battle !== b || b.status !== "pending") return;
           if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject, me); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
