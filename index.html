@@ -48,6 +48,84 @@
   body.season-final .splash { background: radial-gradient(ellipse at 50% 0%, #1c3f73 0%, #0a1a36 50%, #030812 100%); }
   body.season-final .splash-title { background: linear-gradient(180deg, #fff7cf, #ffd45c 45%, #c98a1b); -webkit-background-clip: text; background-clip: text; color: transparent; }
   body.season-final .splash-card, body.season-final .modal-card { box-shadow: 0 0 0 2px #e9b949, 0 24px 50px rgba(0,0,0,.6); }
+
+  /* ═════════ 期末季正式外觀：暗夜風暴 × 黃金寶藏（照設計稿）═════════ */
+  body.season-final { font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+  body.season-final .gold-text, body.season-final .brand, body.season-final .card h3, body.season-final .crumbs {
+    font-family: "Noto Serif TC", serif; font-weight: 900; letter-spacing: 1px;
+  }
+  body.season-final .brand { background: linear-gradient(180deg, #fff7cf, #ffd45c 45%, #c98a1b); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 1.35rem; }
+  body.season-final .brand small { -webkit-text-fill-color: #2a1404; background: linear-gradient(180deg, #ffe48a, #c98a1b); color: #2a1404; font-family: "Noto Sans TC", sans-serif; letter-spacing: 0; }
+  body.season-final .topbar { background: linear-gradient(180deg, rgba(18,34,64,.96), rgba(6,14,30,.96)); border-bottom: 2px solid #9a6a16; box-shadow: 0 6px 24px rgba(0,0,0,.55); }
+  body.season-final .pill { background: rgba(0,0,0,.45); border: 1px solid rgba(255,212,92,.45); color: #fff3d6; }
+  body.season-final .pill.danger { background: rgba(255,59,82,.2); border-color: #ff6b7b; color: #ffd0d5; }
+  /* 金色邊框面板：深色玻璃底＋黃金外框 */
+  body.season-final .card, body.season-final .modal-box {
+    border: 3px solid transparent; color: #fff7e6;
+    background: linear-gradient(180deg, rgba(18,34,64,.96), rgba(6,14,30,.97)) padding-box,
+                linear-gradient(160deg, #fff3b0, #e9b949 30%, #9a6a16 55%, #f6d474 78%, #7a5212) border-box;
+    box-shadow: 0 0 0 2px #1a0e02, 0 12px 30px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1);
+  }
+  body.season-final .card h3 { background: linear-gradient(180deg, #fff7cf, #ffd45c 45%, #c98a1b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  body.season-final .tile-kpi { background: rgba(0,0,0,.35); border: 1px solid rgba(127,184,255,.3); }
+  body.season-final .tile-kpi b { font-family: "Cinzel", "Noto Serif TC", serif; color: #ffd45c; }
+  body.season-final .bar { background: #030812; border: 1px solid #6e5420; }
+  body.season-final .bar > i { background-image: linear-gradient(90deg, #c98a1b 0%, #ffe48a 25%, #c98a1b 50%, #ffe48a 75%, #c98a1b 100%); background-size: 200% 100%; animation: goldShine 2.2s linear infinite; box-shadow: 0 0 10px rgba(255,212,92,.7); }
+  @keyframes goldShine { to { background-position: -200% 0; } }
+  body.season-final .me-emoji { box-shadow: 0 0 0 3px #ffd45c, 0 0 18px rgba(255,212,92,.65); }
+  body.season-final .me-name { font-family: "Noto Serif TC", serif; font-weight: 900; }
+  body.season-final .search { background: rgba(0,0,0,.45); color: #fff3d6; border-color: #9a6a16; }
+  body.season-final .travel-modes button { background: rgba(0,0,0,.45); color: #cfe0ff; border: 1px solid #3a5a8a; }
+  body.season-final .travel-modes button.on { background: linear-gradient(180deg, #ffe48a, #c98a1b); color: #2a1404; border-color: #1a0e02; }
+  /* 航海圖 */
+  body.season-final .map-wrapper {
+    padding: 3px; border-radius: 22px;
+    background: linear-gradient(160deg, #fff3b0, #e9b949 30%, #9a6a16 55%, #f6d474 78%, #7a5212);
+    box-shadow: 0 0 0 2px #1a0e02, 0 14px 34px rgba(0,0,0,.6);
+  }
+  body.season-final .map-stage { border-radius: 19px; overflow: hidden; background: radial-gradient(ellipse at 55% 40%, #145089 0%, #0a2a52 55%, #040c1c 100%); }
+  body.season-final .wave { stroke: rgba(143,211,255,.22); }
+  body.season-final .shore { fill: rgba(255,212,92,.12); stroke: rgba(255,212,92,.35); }
+  body.season-final .isle .lift { filter: drop-shadow(0 10px 14px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(255,212,92,.25)); }
+  body.season-final .isle:hover .lift { filter: drop-shadow(0 12px 16px rgba(0,0,0,.6)) drop-shadow(0 0 22px rgba(255,212,92,.75)); }
+  body.season-final .face { stroke: rgba(255,228,138,.85); stroke-width: 2.5; }
+  body.season-final .banner-rect { fill: rgba(10,20,40,.92); stroke: #e9b949; stroke-width: 2.5; filter: drop-shadow(0 0 6px rgba(233,185,73,.55)); }
+  body.season-final .banner-text { fill: #fff3d6; font-family: "Noto Serif TC", serif; }
+  body.season-final .route-boat, body.season-final .route-plane, body.season-final .route-swim {
+    stroke: #ffd45c; stroke-dasharray: 3 14; stroke-linecap: round; animation: routeFlow 1.6s linear infinite; filter: drop-shadow(0 0 5px rgba(255,212,92,.8));
+  }
+  @keyframes routeFlow { to { stroke-dashoffset: -34; } }
+  .final-deco { pointer-events: none; }
+  .final-deco .beam { animation: beamPulse 2.4s ease-in-out infinite; }
+  @keyframes beamPulse { 0%, 100% { opacity: .3; } 50% { opacity: .75; } }
+  /* 答題畫面 */
+  body.season-final .modal-overlay.open { background: rgba(2,6,16,.78); }
+  body.season-final .q-head { color: #ffd45c; font-family: "Noto Serif TC", serif; }
+  body.season-final .modal-box h3 { font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 1.3rem; color: #fff7e6; }
+  body.season-final .option-btn {
+    background: linear-gradient(180deg, #1e3a6e, #0b1a36); color: #fff; border: 2px solid #7fb8ff;
+    box-shadow: 0 0 12px rgba(127,184,255,.25), 0 4px 0 #050c1c; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 1.05rem;
+  }
+  body.season-final .option-btn:hover:not(:disabled) { box-shadow: 0 0 22px rgba(127,184,255,.6), 0 4px 0 #050c1c; }
+  body.season-final .option-btn:disabled { opacity: 1; }
+  body.season-final .option-btn:disabled:not(.correct):not(.wrong) { opacity: .6; }
+  body.season-final .option-btn.correct { background: linear-gradient(180deg, #1e7a4a, #0a3a20) !important; border-color: #7ff5b0 !important; box-shadow: 0 0 20px rgba(127,245,176,.55); color: #fff !important; }
+  body.season-final .option-btn.wrong { background: linear-gradient(180deg, #8a1424, #3a0610) !important; border-color: #ff8a9a !important; box-shadow: 0 0 20px rgba(255,107,123,.5); color: #fff !important; }
+  body.season-final .lore-box { background: rgba(0,0,0,.35) !important; color: #fff3d6; }
+  body.season-final .passage { background: rgba(60,40,10,.45); }
+  body.season-final.night .splash { background: radial-gradient(ellipse at 50% 0%, #1c3f73 0%, #0a1a36 50%, #030812 100%); }
+  body.season-final.night .splash-card {
+    border: 3px solid transparent;
+    background: linear-gradient(180deg, rgba(18,34,64,.95), rgba(6,14,30,.97)) padding-box,
+                linear-gradient(160deg, #fff3b0, #e9b949 30%, #9a6a16 55%, #f6d474 78%, #7a5212) border-box;
+    box-shadow: 0 0 0 2px #1a0e02, 0 30px 60px rgba(0,0,0,.6), 0 0 40px rgba(233,185,73,.25);
+  }
+  body.season-final .splash-title { font-family: "Noto Serif TC", serif; filter: drop-shadow(0 0 18px rgba(255,212,92,.35)); }
+  body.season-final .splash-subtitle { background: linear-gradient(180deg, #ff5a6b, #9e0f22); box-shadow: 0 0 16px rgba(255,59,82,.5); font-family: "Noto Serif TC", serif; }
+  body.season-final.night .role-card { background: radial-gradient(circle at 50% 0%, #2a4a7a, #0b1730 75%); border: 2px solid #7fb8ff; box-shadow: 0 0 14px rgba(127,184,255,.3); }
+  body.season-final.night .role-card:hover { border-color: #ffd45c; box-shadow: 0 0 22px rgba(255,212,92,.55); }
+  body.season-final .role-card b { font-family: "Noto Serif TC", serif; }
+  body.season-final .close-btn { background: linear-gradient(180deg, #ffe48a, #c98a1b); color: #2a1404; }
   .pace-note { margin-top: 8px; font-size: .85rem; font-weight: 800; color: var(--ink-soft); text-align: center; }
   .rush-warn { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(220,38,38,.18); border: 2px solid #f87171; font-weight: 800; }
 
@@ -1060,6 +1138,12 @@ async function boot() {
   if (load(NIGHT_KEY, false)) document.body.classList.add("night");
   if (FINAL) {
     document.body.classList.add("season-final", "night");
+    const font = document.createElement("link");
+    font.rel = "stylesheet";
+    font.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap";
+    document.head.appendChild(font);
+    const badge = document.querySelector(".splash-badge");
+    if (badge) badge.textContent = "508 班 ・ 期末考特訓";
     document.title = "寶藏海知識大冒險：508 期末航線";
     document.querySelector(".splash-title").textContent = "寶藏海知識大冒險";
     document.querySelector(".splash-subtitle").textContent = "⚓ 508 期末航線 ⚓";
@@ -1680,6 +1764,26 @@ function renderSubject(kw) {
 function shuffleSeeded(arr, seed) { const rnd = seeded(seed); return [...arr].sort(() => rnd() - 0.5); }
 
 let currentVB = LAYOUTS.wide.vb;
+// 期末航海圖的背景裝飾（不擋點擊）
+function finalDecoSvg(vb) {
+  const { x, y, w, h } = vb, step = Math.max(60, Math.round(w / 10));
+  let grid = "";
+  for (let gx = x + step; gx < x + w; gx += step) grid += `M${f1(gx)} ${f1(y)}V${f1(y + h)}`;
+  for (let gy = y + step; gy < y + h; gy += step) grid += `M${f1(x)} ${f1(gy)}H${f1(x + w)}`;
+  const cr = Math.min(w, h) * 0.055, cx = x + cr * 1.5, cy = y + h - cr * 1.5;   // 羅盤放左下角，避開碼頭
+  return `<g class="final-deco" aria-hidden="true">
+    <defs><radialGradient id="fd-moon"><stop offset="0" stop-color="#bfe3ff" stop-opacity=".22"/><stop offset="1" stop-color="#bfe3ff" stop-opacity="0"/></radialGradient></defs>
+    <path d="${grid}" stroke="#6fc3ff" stroke-opacity=".08" stroke-width="1.2" fill="none"/>
+    <ellipse cx="${f1(x + w * 0.82)}" cy="${f1(y + h * 0.08)}" rx="${f1(w * 0.22)}" ry="${f1(h * 0.08)}" fill="url(#fd-moon)"/>
+    <g transform="translate(${f1(cx)} ${f1(cy)})" opacity=".85">
+      <circle r="${f1(cr)}" fill="#0a1428" stroke="#e9b949" stroke-width="2"/>
+      <circle r="${f1(cr * 0.8)}" fill="none" stroke="#e9b949" stroke-width="1" stroke-dasharray="2 4"/>
+      <path d="M0 ${f1(-cr * 0.95)}L${f1(cr * 0.18)} ${f1(-cr * 0.18)}L${f1(cr * 0.95)} 0L${f1(cr * 0.18)} ${f1(cr * 0.18)}L0 ${f1(cr * 0.95)}L${f1(-cr * 0.18)} ${f1(cr * 0.18)}L${f1(-cr * 0.95)} 0L${f1(-cr * 0.18)} ${f1(-cr * 0.18)}Z" fill="#f6d474"/>
+      <path d="M0 ${f1(-cr * 0.95)}L${f1(cr * 0.18)} ${f1(-cr * 0.18)}L0 0Z" fill="#ff3b52"/>
+    </g>
+  </g>`;
+}
+
 function setMapSvg(vb, inner, subject) {
   currentVB = vb;
   const svg = document.getElementById("map-svg");
@@ -1689,7 +1793,7 @@ function setMapSvg(vb, inner, subject) {
   wrap.style.background = subject && !document.body.classList.contains("night")
     ? `radial-gradient(ellipse at 50% 40%, ${subject.sea[0]} 0%, ${subject.sea[1]} 65%, ${subject.sea[2]} 100%)` : "";
   wrap.dataset.theme = subject ? subject.pattern : "world";
-  svg.innerHTML = inner;
+  svg.innerHTML = FINAL ? finalDecoSvg(vb) + inner : inner;
 }
 
 function bindActivate(el, fn) {
