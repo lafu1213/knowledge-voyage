@@ -35,6 +35,22 @@
   body.night .btn-ghost { color: #93c5fd; }
   [hidden] { display: none !important; }
 
+  /* ───────── 期末季：暗夜風暴 × 黃金寶藏 ───────── */
+  body.season-final {
+    --ink: #fff7e6; --ink-soft: #d6c7a1; --card: rgba(10,20,40,0.94); --card-solid: #0b1730; --line: #6e5420;
+    --accent: #e9a92b; --primary: #1f5fb8; --page: radial-gradient(ellipse at 70% 0%, #1c3f73 0%, #0a1a36 45%, #030812 100%);
+    --sea-1: #0f3460; --sea-2: #0a2a52; --sea-deep: #040c1c; --foam: rgba(143,211,255,0.25);
+    --shore: rgba(255,212,92,0.22); --plank: #7a4a24; --plank-light: #c98a1b; --rope: #2a1404;
+  }
+  body.season-final .btn-accent, body.season-final .btn-primary {
+    background: linear-gradient(180deg, #ffe48a, #e9a92b 55%, #b7791f); color: #2a1404; box-shadow: 0 3px 0 #5a3a08, 0 0 14px rgba(255,201,60,.35);
+  }
+  body.season-final .splash { background: radial-gradient(ellipse at 50% 0%, #1c3f73 0%, #0a1a36 50%, #030812 100%); }
+  body.season-final .splash-title { background: linear-gradient(180deg, #fff7cf, #ffd45c 45%, #c98a1b); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  body.season-final .splash-card, body.season-final .modal-card { box-shadow: 0 0 0 2px #e9b949, 0 24px 50px rgba(0,0,0,.6); }
+  .pace-note { margin-top: 8px; font-size: .85rem; font-weight: 800; color: var(--ink-soft); text-align: center; }
+  .rush-warn { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(220,38,38,.18); border: 2px solid #f87171; font-weight: 800; }
+
   /* ───────── 進入畫面 ───────── */
   .splash {
     position: fixed; inset: 0; overflow: hidden; z-index: 300;
@@ -894,6 +910,10 @@ const ROLE_INFO = {
 const SESSION_SIZE = 10, MAX_BANK_PER_SESSION = 7, MAX_GEN_PER_SESSION = 3, LOCK_LIMIT = 10;
 const CIRCLED = ["①", "②", "③", "④"];
 const SESSION_KEY = "508_SESSION_V4", NIGHT_KEY = "508_NIGHT", TRAVEL_KEY = "508_TRAVEL";
+// 期末季：網址加 ?season=final（/final/ 會自動轉過來）。讀「期末題庫」分頁，紀錄的 sid 以 F- 開頭，和期中分開計算
+const FINAL = new URLSearchParams(location.search).get("season") === "final";
+const FINAL_SID = "F-";
+const PACE = { minSeconds: 20, fastSeconds: 3, lockMinutes: 15, doubleCount: 10 };   // 期末：每題至少停 20 秒、3 秒內作答算太快
 
 // 計分規則：答對加分、答錯扣分，一錯再錯扣更多；總分最低 0，每 100 分一級，分數掉了等級也會降
 const LEVEL_STEP = 100;
@@ -1038,6 +1058,14 @@ const DEMO_ROSTER = [
 
 async function boot() {
   if (load(NIGHT_KEY, false)) document.body.classList.add("night");
+  if (FINAL) {
+    document.body.classList.add("season-final", "night");
+    document.title = "寶藏海知識大冒險：508 期末航線";
+    document.querySelector(".splash-title").textContent = "寶藏海知識大冒險";
+    document.querySelector(".splash-subtitle").textContent = "⚓ 508 期末航線 ⚓";
+    document.querySelector(".splash-sub").textContent = "黑帆海盜出沒的寶藏海！每題停留 20 秒、看懂詳解，把錯題寶箱一個個撈上來。";
+    document.querySelector(".brand").innerHTML = "🏴‍☠️ 寶藏海 <small>508 期末航線・試航版</small>";
+  }
   if (DEMO) {
     const note = document.getElementById("demo-note");
     note.hidden = false;
@@ -1161,12 +1189,12 @@ async function loadData() {
   let cloud = [];
   // 示範模式：有 demo-bank.js 就用它（五科題庫）；沒有的話只用內建國語題庫
   if (DEMO && Array.isArray(window.DEMO_BANK)) cloud = window.DEMO_BANK.map(q => Object.assign({}, q, { src: "cloud" }));
-  if (!DEMO) cloud = (await api("questions")).questions.map(q => Object.assign(q, { src: "cloud", subject: SUBJECT_ALIASES[q.subject] || q.subject }));
+  if (!DEMO) cloud = (await api("questions", FINAL ? { season: "final" } : {})).questions.map(q => Object.assign(q, { src: "cloud", subject: SUBJECT_ALIASES[q.subject] || q.subject }));
   // 題型是「看圖題」的題目，自動放到同單元旁邊的「看圖」小島（例：第一單元 → 第一單元看圖），老師不用改單元欄
   cloud.forEach(q => { q.unit = specialIslandUnit(q); });
   // 內建國語題庫：雲端已經有同名單元時就用雲端的，沒有的單元才補上內建題目
   const hasChinese = cloud.some(q => q.subject === "國語");
-  BANK = hasChinese ? cloud : [...builtinQuestions(), ...cloud];
+  BANK = hasChinese || FINAL ? cloud : [...builtinQuestions(), ...cloud];
   buildWorld();
 
   myRows = []; mySessions = [];
@@ -1184,14 +1212,19 @@ async function loadData() {
       flushQueue();
     }
   }
+  // 期中、期末的紀錄分開算：期末只看 F- 開頭的場次，期中排除它們
+  const isFinalRow = r => String(r.sid || "").indexOf(FINAL_SID) === 0;
+  myRows = myRows.filter(r => isFinalRow(r) === FINAL);
+  mySessions = mySessions.filter(r => isFinalRow(r) === FINAL);
   stats = aggregate(myRows, mySessions);
   profile = { emoji: "", color: "" };
   try { const r = await net.loadProfile(); if (r && r.profile) profile = r.profile; } catch (e) {}
 }
 
 function buildWorld() {
-  const order = [...SUBJECTS.map(s => s.key)];
+  let order = [...SUBJECTS.map(s => s.key)];
   BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
+  if (FINAL) order = order.filter(key => BANK.some(q => q.subject === key));   // 期末：題目上傳到哪一科，就先開哪一科
   WORLD = order.slice(0, 7).map((key, i) => {
     const base = SUBJECTS.find(s => s.key === key) || {
       key, name: key + "島", icon: "⭐", colors: [["#a78bfa", "#5b21b6"], ["#2dd4bf", "#115e59"]][i % 2],
@@ -1210,7 +1243,7 @@ function buildWorld() {
       u.questions.push(q);
     });
     units.forEach(u => { const m = UNIT_META[u.unit]; if (m) { u.icon = m.icon; if (m.lore) u.lore = m.lore; } });
-    VIRTUAL_UNITS.filter(v => v.subject === key).forEach(v => {
+    VIRTUAL_UNITS.filter(v => !FINAL && v.subject === key).forEach(v => {
       let u = units.find(x => x.unit === v.unit);
       if (!u) {
         u = { key: unitKey(key, v.unit), subject: key, unit: v.unit, questions: [], icon: v.icon, lore: v.lore || "", keywords: "" };
@@ -2179,10 +2212,11 @@ function openUnitModal(key) {
 }
 
 function newQuizState(mode, subject, unit, questions) {
-  return { mode, subject, unit, questions, idx: 0, correctCount: 0, combo: 0, maxCombo: 0, startTime: Date.now(), sid: uid(), pts: 0 };
+  return { mode, subject, unit, questions, idx: 0, correctCount: 0, combo: 0, maxCombo: 0, startTime: Date.now(), sid: (FINAL ? FINAL_SID : "") + uid(), pts: 0, recent: [] };
 }
 
 function startQuiz(key) {
+  if (guardLocked()) return;
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
   renderQuestion();
@@ -2194,8 +2228,69 @@ function sourceBadge(q) {
   return "";
 }
 
+// ===== 期末：作答節奏與防亂答（試航版先記在這台裝置，之後改成雲端判斷）=====
+function paceKey() { return "508_PACE_" + session.user.name; }
+function paceState() {
+  const today = nowStr().slice(0, 10);
+  const st = load(paceKey(), null);
+  return st && st.day === today ? st : { day: today, count: 0, doubleLeft: 0, lockUntil: (st && st.lockUntil) || 0 };
+}
+function paceOn() { return FINAL && !isTrial(); }
+function guardLocked() {
+  if (!paceOn()) return false;
+  const left = paceState().lockUntil - Date.now();
+  if (left <= 0) return false;
+  toast(`⛓️ 船被扣押中，還有 ${Math.ceil(left / 60000)} 分鐘才能再答題。先去看看錯題的詳解吧！`, 4500);
+  return true;
+}
+// 判斷這一題是不是亂答：太快作答，或連續 5 題都點同一個位置而且幾乎都錯
+function isRushed(q, choice, ok) {
+  const sec = (Date.now() - (quizState.shownAt || Date.now())) / 1000;
+  const limit = PACE.fastSeconds + Math.min(3, Math.floor(String(q.q).length / 40));
+  quizState.recent.push({ choice, ok });
+  const last5 = quizState.recent.slice(-5);
+  const samePos = last5.length === 5 && last5.every(r => r.choice === last5[0].choice) && last5.filter(r => r.ok).length <= 1;
+  if (samePos) quizState.recent = [];
+  return sec < limit ? "fast" : samePos ? "same" : "";
+}
+function applyPace(q, choice, ok, pts) {
+  if (!paceOn()) return { pts, note: "", lock: false };
+  const st = paceState();
+  const why = isRushed(q, choice, ok);
+  let note = "", lock = false;
+  if (why) {
+    st.count++;
+    if (ok) pts = 0; else pts *= 2;
+    const reason = why === "fast" ? "你太快作答了，還沒看完題目" : "你連續好幾題都點同一個位置";
+    if (st.count === 1) note = `⚠️ ${reason}！這題不加分，答錯扣分加倍。再兩次就會被扣押 ${PACE.lockMinutes} 分鐘喔！`;
+    else if (st.count === 2) { st.doubleLeft = PACE.doubleCount; note = `⚠️ 第二次亂答！接下來 ${PACE.doubleCount} 題答錯都加倍扣分。再一次就會被扣押！`; }
+    else { st.lockUntil = Date.now() + PACE.lockMinutes * 60000; lock = true; note = `⛓️ 今天第 ${st.count} 次亂答，船被扣押 ${PACE.lockMinutes} 分鐘！先停下來看看詳解吧。`; }
+  } else if (!ok && st.doubleLeft > 0) {
+    st.doubleLeft--; pts *= 2;
+    note = `⚠️ 亂答處罰中：這題扣分加倍（還剩 ${st.doubleLeft} 題）`;
+  }
+  store(paceKey(), st);
+  return { pts, note, lock };
+}
+// 「下一題」按鈕要等題目出現滿 20 秒才能按
+function startPaceTimer() {
+  if (!paceOn()) return;
+  const btn = document.getElementById("next-btn"), noteEl = document.getElementById("pace-note");
+  if (!btn) return;
+  const label = btn.textContent;
+  const tick = () => {
+    const left = Math.ceil(PACE.minSeconds - (Date.now() - quizState.shownAt) / 1000);
+    if (!document.body.contains(btn)) return clearInterval(timer);
+    if (left > 0) { btn.disabled = true; btn.textContent = `⏳ ${left} 秒後可以下一題`; if (noteEl) noteEl.textContent = `每題至少停留 ${PACE.minSeconds} 秒，先把詳解看完吧！`; }
+    else { btn.disabled = false; btn.textContent = label; if (noteEl) noteEl.textContent = ""; clearInterval(timer); }
+  };
+  const timer = setInterval(tick, 250);
+  tick();
+}
+
 function renderQuestion() {
   const q = quizState.questions[quizState.idx];
+  quizState.shownAt = Date.now();
   const total = quizState.questions.length;
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
@@ -2223,7 +2318,9 @@ function submitAnswer(choice) {
   const ok = choice === q.ans;
   if (ok) { quizState.correctCount++; quizState.combo++; quizState.maxCombo = Math.max(quizState.maxCombo, quizState.combo); }
   else quizState.combo = 0;
-  const pts = answerPoints(q, ok, quizState.mode, quizState.combo);
+  const pace = applyPace(q, choice, ok, answerPoints(q, ok, quizState.mode, quizState.combo));
+  const pts = pace.pts;
+  quizState.locked = pace.lock;
   const wasRepeat = !ok && quizState.mode !== "訂正" && pts === SCORE_RULES.wrongAgain;
   quizState.pts += pts;
   const lvBefore = getLevelInfo(stats.score).lv;
@@ -2248,13 +2345,17 @@ function submitAnswer(choice) {
       <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
       ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${escapeHtml(q.exp)}</div>` : ""}
     </div>
+    ${pace.note ? `<div class="rush-warn">${escapeHtml(pace.note)}</div>` : ""}
     ${lvNote}
     ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
-    <button class="btn-primary" style="width:100%; padding:12px; margin-top:6px;" onclick="nextQuestion()">${last ? "🏁 看本局成績" : "➡️ 看懂了，下一題"}</button>`;
+    <button id="next-btn" class="btn-primary" style="width:100%; padding:12px; margin-top:6px;" onclick="nextQuestion()">${pace.lock ? "⛓️ 結束這一局" : last ? "🏁 看本局成績" : "➡️ 看懂了，下一題"}</button>
+    <div id="pace-note" class="pace-note"></div>`;
+  startPaceTimer();
   renderPills();
 }
 
 function nextQuestion() {
+  if (quizState.locked) { finishQuiz(true); return; }
   if (quizState.mode === "練習" && !isTrial() && stats.pending.length >= LOCK_LIMIT) {
     finishQuiz(true);
     return;
@@ -2279,7 +2380,7 @@ function finishQuiz(lockedOut) {
   document.getElementById("quiz-content").innerHTML = `
     <div style="text-align:center;">
       <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
-      <h2>${lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
       ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
       <div class="lore-box" style="text-align:left;">
         • 答對 <b>${quizState.correctCount} / ${done}</b> 題（正確率 ${Math.round(acc * 100)}%）<br>
@@ -2373,12 +2474,14 @@ function openMistakeBook(tab) {
 }
 
 function startMistakeRetry() {
+  if (guardLocked()) return;
   const list = shuffle(pendingQuestionObjects()).slice(0, SESSION_SIZE).map(q => prepareQuestion(q));
   quizState = newQuizState("訂正", "錯題本", "錯題本", list);
   renderQuestion();
 }
 
 function startReview() {
+  if (guardLocked()) return;
   const pool = stats.wrongEver.filter(q => mistakeView.subject === "全部" || q.subject === mistakeView.subject)
     .sort((a, b) => b.wrong - a.wrong).slice(0, SESSION_SIZE * 2);
   const list = shuffle(questionObjects(shuffle(pool).sort((a, b) => b.wrong - a.wrong).slice(0, SESSION_SIZE))).map(q => prepareQuestion(q));
