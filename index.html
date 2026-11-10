@@ -128,6 +128,14 @@
   body.season-final.night .role-card:hover { border-color: #ffd45c; box-shadow: 0 0 22px rgba(255,212,92,.55); }
   body.season-final .role-card b { font-family: "Noto Serif TC", serif; }
   body.season-final .close-btn { background: linear-gradient(180deg, #ffe48a, #c98a1b); color: #2a1404; }
+  body.season-final .me-emoji { position: relative; background: radial-gradient(circle, var(--me-bg) 60%, transparent 61%), conic-gradient(#ffd45c calc(var(--xp) * 1%), rgba(255,255,255,.15) 0) !important; }
+  body.season-final .me-lv { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); font: 900 .7rem "Cinzel", serif; background: linear-gradient(180deg,#ffe48a,#c98a1b); color: #1a0e02; border: 2px solid #1a0e02; border-radius: 8px; padding: 0 5px; white-space: nowrap; }
+  body.season-final .modal-box.wreck {
+    background: linear-gradient(180deg, rgba(8,70,84,.97), rgba(2,18,26,.98)) padding-box, linear-gradient(160deg, #9ff5f0, #3fc9c9 40%, #0f4c5c 70%, #e9b949) border-box;
+    box-shadow: 0 0 0 2px #01070c, 0 0 40px rgba(63,201,201,.35), 0 20px 40px rgba(0,0,0,.6);
+  }
+  body.season-final .modal-box.wreck h2 { font-family: "Noto Serif TC", serif; color: #ffd45c; }
+  body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
   .pace-note { margin-top: 8px; font-size: .85rem; font-weight: 800; color: var(--ink-soft); text-align: center; }
   .rush-warn { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(220,38,38,.18); border: 2px solid #f87171; font-weight: 800; }
 
@@ -993,6 +1001,9 @@ const SESSION_KEY = "508_SESSION_V4", NIGHT_KEY = "508_NIGHT", TRAVEL_KEY = "508
 // 期末季：網址加 ?season=final（/final/ 會自動轉過來）。讀「期末題庫」分頁，紀錄的 sid 以 F- 開頭，和期中分開計算
 const FINAL = new URLSearchParams(location.search).get("season") === "final";
 const FINAL_SID = "F-";
+// 期末航海圖：五片海域與錯題島的名字（照設計稿）
+const FINAL_SEA = { 國語: "書卷群島", 數學: "齒輪海峽", 英語: "風帆港灣", 自然: "火山實驗礁", 社會: "古地圖海" };
+const WRECK = FINAL ? "沉船寶藏灣" : "錯題島", WRECK_ICON = FINAL ? "⚓" : "🌋";
 const PACE = { minSeconds: 20, fastSeconds: 3, lockMinutes: 15, doubleCount: 10 };   // 期末：每題至少停 20 秒、3 秒內作答算太快
 
 // 計分規則：答對加分、答錯扣分，一錯再錯扣更多；總分最低 0，每 100 分一級，分數掉了等級也會降
@@ -1310,7 +1321,6 @@ async function loadData() {
 function buildWorld() {
   let order = [...SUBJECTS.map(s => s.key)];
   BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
-  if (FINAL) order = order.filter(key => BANK.some(q => q.subject === key));   // 期末：題目上傳到哪一科，就先開哪一科
   WORLD = order.slice(0, 7).map((key, i) => {
     const base = SUBJECTS.find(s => s.key === key) || {
       key, name: key + "島", icon: "⭐", colors: [["#a78bfa", "#5b21b6"], ["#2dd4bf", "#115e59"]][i % 2],
@@ -1678,6 +1688,10 @@ function renderWorld(kw) {
   const isles = nodes.map(n => {
     if (n.id === "BOSS") {
       const hot = pend >= LOCK_LIMIT;
+      if (FINAL) return islandSvg({ id: "BOSS", x: n.x, y: n.y, r: n.r, seed: "wreck-bay", land: hot ? ["#f87171", "#7f1d1d"] : ["#2dd4bf", "#0f4c5c"],
+        sand: "#5eead4", shape: { points: 9, wobble: 0.35 }, deco: ["🪙", "🐚", "🦑"], icon: hot ? "🆘" : "⚓",
+        label: WRECK, sub: `沉沒的寶箱 ${pend}・撈過 ${stats.wrongEver.length}`, cls: (hot ? "alarm" : "") + (kw && !WRECK.includes(kw) ? " dim" : ""),
+        aria: `${WRECK}，待訂正 ${pend} 題` });
       return islandSvg({ id: "BOSS", x: n.x, y: n.y, r: n.r, seed: "boss-volcano", land: hot ? ["#f87171", "#7f1d1d"] : ["#78716c", "#1c1917"],
         sand: "#a8a29e", shape: { points: 9, wobble: 0.4 }, deco: ["🔥", "🪨", "💀"], icon: hot ? "🔥" : "🌋", smoke: true,
         label: "錯題島", sub: `待訂正 ${pend}・歷史 ${stats.wrongEver.length}`, cls: (hot ? "alarm" : "") + (kw && !"錯題島".includes(kw) ? " dim" : ""),
@@ -1687,7 +1701,7 @@ function renderWorld(kw) {
     const matches = kw && s.units.some(u => u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
     const prog = subjectProgress(s);
     return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "world-" + s.key, land: s.land, sand: s.sand, shape: s.shape, deco: s.deco,
-      icon: s.icon, label: s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}`,
+      icon: s.icon, label: FINAL ? FINAL_SEA[s.key] || s.name : s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}`,
       badge: pendingCount(q => q.subject === s.key), cls: (empty ? "empty" : "") + (kw ? (matches ? " hit" : " dim") : "") });
   });
   const reefs = layout().reefs
@@ -2070,7 +2084,7 @@ function renderPills() {
     : "👀 試玩模式：老師、家長可以自由逛島和答題，但不會列入任何紀錄。";
   const lock = document.getElementById("lock-banner");
   lock.hidden = !(u.role === "student" && stats.pending.length >= LOCK_LIMIT);
-  lock.innerHTML = `⚠️ 錯題封印警報！待訂正的錯題已達 ${stats.pending.length} 題，單元小島暫時鎖住，請先到「🌋 錯題島」看詳解並答對消滅錯題。`;
+  lock.innerHTML = `⚠️ 錯題封印警報！待訂正的錯題已達 ${stats.pending.length} 題，單元小島暫時鎖住，請先到「${WRECK_ICON} ${WRECK}」看詳解並答對消滅錯題。`;
 }
 
 function renderCrumbs() {
@@ -2078,12 +2092,33 @@ function renderCrumbs() {
   const hint = document.getElementById("map-hint");
   if (view.level === "world") {
     c.innerHTML = `🌏 世界地圖`;
-    hint.textContent = "👆 先選交通方式，再點一座大島出發；🌋 錯題島可以訂正和複習所有錯過的題目";
+    hint.textContent = `👆 先選交通方式，再點一座大島出發；${WRECK_ICON} ${WRECK}可以訂正和複習所有錯過的題目`;
   } else {
     const s = WORLD.find(x => x.key === view.subject);
     c.innerHTML = `<button class="btn-ghost" onclick="backToWorld()">← 世界地圖</button> ${s.icon} ${escapeHtml(s.name)}`;
     hint.textContent = "👆 點單元小島出發；⛵ 碼頭回世界地圖；遇到同學可以點他的頭像比賽或聊天";
   }
+}
+
+// 期末：我的船會跟著等級升級
+const SHIPS = [
+  { lv: 1, name: "小舢舨", sail: "#ffd45c", masts: 1 }, { lv: 20, name: "單桅帆船", sail: "#ff8a3d", masts: 1 },
+  { lv: 60, name: "雙桅大帆船", sail: "#7fb8ff", masts: 2 }, { lv: 120, name: "黃金旗艦", sail: "#ffe48a", masts: 3 }
+];
+function shipSvg(ship) {
+  const masts = [36, 22, 50].slice(0, ship.masts);
+  return `<svg role="img" aria-label="我的船：${ship.name}" width="84" height="70" viewBox="0 0 72 60">
+    <ellipse cx="36" cy="56" rx="30" ry="3" fill="#6fc3ff" opacity=".35"/>
+    <path d="M6 40h60l-10 14H16z" fill="${ship.lv >= 120 ? "#c98a1b" : "#7a4a24"}" stroke="#1a0e02" stroke-width="2"/>
+    ${masts.map((x, i) => `<path d="M${x} 40V${8 + i * 6}" stroke="#1a0e02" stroke-width="2.5"/><path d="M${x + 2} ${10 + i * 6}l${12 - i * 3} ${20 - i * 4}H${x + 2}z" fill="${ship.sail}" stroke="#1a0e02" stroke-width="1.5"/><path d="M${x - 2} ${12 + i * 6}L${x - 12 + i * 3} ${30 - i * 2}h${10 - i * 3}z" fill="#fff3d6" stroke="#1a0e02" stroke-width="1.5"/>`).join("")}
+  </svg>`;
+}
+function myShipCard(lv) {
+  const i = SHIPS.reduce((k, sh, j) => (lv >= sh.lv ? j : k), 0), ship = SHIPS[i], next = SHIPS[i + 1];
+  const pct = next ? Math.round((lv - ship.lv) / (next.lv - ship.lv) * 100) : 100;
+  return `<div class="card"><h3>⛵ 我的船</h3><div style="display:flex; gap:12px; align-items:center">${shipSvg(ship)}
+    <div style="flex:1"><div class="me-name">${ship.name}</div><div class="bar" style="margin:6px 0 4px"><i style="width:${pct}%"></i></div>
+    <div class="me-title" style="font-size:.78rem">${next ? `再升 ${next.lv - lv} 級換成${next.name}` : "已經是最強的船了！"}</div></div></div></div>`;
 }
 
 function renderSide() {
@@ -2120,9 +2155,10 @@ function renderSide() {
   const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0;
   const starsTotal = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
   const recent = mySessions.slice(-4).reverse();
+  const shipCard = FINAL ? myShipCard(lv.lv) : "";
   side.innerHTML = `
     <div class="card">
-      <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
+      <div class="me-head"><div class="me-emoji" style="background:${myColor()}; --me-bg:${myColor()}; --xp:${pct}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}${FINAL ? `<span class="me-lv">Lv.${lv.lv}</span>` : ""}</div>
         <div style="flex:1"><div class="me-name">${escapeHtml(shortName(u.name))} <button class="btn-ghost" style="padding:2px 8px; font-size:.72rem" onclick="openAvatarPicker()">換頭像</button></div>
         <div class="me-title">Lv.${lv.lv} ${lv.title}</div>
         <div class="bar"><i style="width:${pct}%"></i></div><div class="me-title" style="font-size:.72rem">${lv.lv >= MAX_LEVEL ? "已達最高等級！" : `再 ${nextAt - stats.score} 分升級`}</div></div></div>
@@ -2133,6 +2169,7 @@ function renderSide() {
         <div class="tile-kpi" style="cursor:pointer" onclick="openMistakeBook('history')"><b>📚 ${stats.wrongEver.length}</b><span>歷史錯題</span></div>
       </div>
     </div>
+    ${shipCard}
     ${onlineCard}
     <div class="card"><h3>🏝️ 各科大島進度</h3>${subjRows}</div>
     <div class="card rules"><details><summary>📏 計分規則（會扣分喔！）</summary>
@@ -2284,7 +2321,7 @@ function isTrial() { return session.user.role !== "student"; }
 function openUnitModal(key) {
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   if (!isTrial() && stats.pending.length >= LOCK_LIMIT) {
-    toast("⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 🌋 錯題島訂正！", 4500);
+    toast(`⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 ${WRECK_ICON} ${WRECK}訂正！`, 4500);
     return;
   }
   const hasGen = !!unit.virtual || (unit.subject === "國語" && (CHAR_FACTS.some(f => f.unit === unit.unit) || /字音|字形|部首/.test(unit.unit)));
@@ -2323,6 +2360,7 @@ function newQuizState(mode, subject, unit, questions) {
 
 function startQuiz(key) {
   if (guardLocked()) return;
+  document.getElementById("quiz-content").closest(".modal-box").classList.remove("wreck");
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
   renderQuestion();
@@ -2534,8 +2572,9 @@ function openMistakeBook(tab) {
   if (tab) mistakeView.tab = tab;
   const box = document.getElementById("quiz-content");
   openModal("quiz-modal");
+  box.closest(".modal-box").classList.toggle("wreck", FINAL);
   if (isTrial()) {
-    box.innerHTML = `<h2 style="margin-top:0;">🌋 錯題島</h2><div class="lore-box">錯題本是每位學生自己的。老師和家長請到「📊 後台」查看孩子哪些題目答錯、訂正了幾次、哪些一錯再錯。</div>
+    box.innerHTML = `<h2 style="margin-top:0;">${WRECK_ICON} ${WRECK}</h2><div class="lore-box">錯題本是每位學生自己的。老師和家長請到「📊 後台」查看孩子哪些題目答錯、訂正了幾次、哪些一錯再錯。</div>
       <button class="btn-accent" onclick="closeModal('quiz-modal'); openDashboard();">📊 開啟後台</button>`;
     return;
   }
@@ -2548,14 +2587,14 @@ function openMistakeBook(tab) {
     const list = stats.wrongEver.filter(q => mistakeView.subject === "全部" || q.subject === mistakeView.subject)
       .sort((a, b) => b.wrong - a.wrong || (a.lastTime < b.lastTime ? 1 : -1));
     box.innerHTML = `
-      <h2 style="margin-top:0;">🌋 錯題島｜歷史錯題</h2>${tabs}
+      <h2 style="margin-top:0;">${WRECK_ICON} ${WRECK}｜歷史錯題</h2>${tabs}
       <p style="font-size:.86rem; margin:0 0 8px;">訂正過的題目也會一直留在這裡。錯過的題目以後還可能再錯，隨時回來複習一下！</p>
       <div class="tabs" style="margin-top:0">${subjects.map(s => `<button class="${s === mistakeView.subject ? "on" : ""}" onclick="mistakeView.subject='${escapeHtml(s)}'; openMistakeBook();">${escapeHtml(s)}</button>`).join("")}</div>
       ${list.length ? `<div style="max-height:360px; overflow-y:auto; padding-right:6px;">${list.map(q => `
         <div class="q-row">
           <div class="meta">${q.last === false ? `<span class="chip red">待訂正</span>` : `<span class="chip green">已訂正</span>`}
             <span class="chip ${q.wrong >= 2 ? "red" : "amber"}">錯 ${q.wrong} 次</span><span>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</span></div>
-          <div>${escapeHtml(q.q)}</div>
+          <div>${mathHtml(q.q, q.subject)}</div>
           <div style="color:var(--success); font-weight:800;">✔ ${escapeHtml(q.correctText)}</div>
         </div>`).join("")}</div>
         <button class="btn-primary" style="width:100%; padding:14px; margin-top:10px;" onclick="startReview()">🔁 複習${mistakeView.subject === "全部" ? "全部" : mistakeView.subject}錯題（隨機 ${Math.min(SESSION_SIZE, list.length)} 題，錯最多次的優先）</button>`
@@ -2565,20 +2604,20 @@ function openMistakeBook(tab) {
 
   const list = pendingQuestionObjects();
   if (!list.length) {
-    box.innerHTML = `<h2 style="margin-top:0;">🌋 錯題島</h2>${tabs}<div style="text-align:center; padding:16px;"><div style="font-size:3.2rem;">✨</div><h3>待訂正的錯題都清光了！</h3><p>所有單元都解鎖了。想再加強的話，可以到「📚 歷史錯題」複習以前錯過的題目。</p><button class="btn-primary" onclick="closeQuiz()">回地圖</button></div>`;
+    box.innerHTML = `<h2 style="margin-top:0;">${WRECK_ICON} ${WRECK}</h2>${tabs}<div style="text-align:center; padding:16px;"><div style="font-size:3.2rem;">✨</div><h3>待訂正的錯題都清光了！</h3><p>所有單元都解鎖了。想再加強的話，可以到「📚 歷史錯題」複習以前錯過的題目。</p><button class="btn-primary" onclick="closeQuiz()">回地圖</button></div>`;
     return;
   }
   box.innerHTML = `
-    <h2 style="margin-top:0; color:var(--danger);">🌋 錯題島｜待訂正 ${list.length} 題</h2>${tabs}
+    <h2 style="margin-top:0; color:var(--danger);">${WRECK_ICON} ${WRECK}｜${FINAL ? "沉沒的寶箱" : "待訂正"} ${list.length} 題</h2>${tabs}
     <p style="font-size:.88rem;">先看懂正確答案和詳解，再按下面的按鈕重考，答對就能消滅它（紀錄還是會留在歷史錯題）：</p>
     <div style="max-height:360px; overflow-y:auto; padding-right:6px;">
       ${list.map((q, i) => {
         const st = stats.byId[q.id] || {};
         return `<div class="lore-box">
           <b>錯題 ${i + 1}【${escapeHtml(q.subject)}・${escapeHtml(q.unit)}】</b>${st.wrong >= 2 ? ` <span class="chip red">已經錯 ${st.wrong} 次</span>` : ""}<br>
-          <span style="white-space:pre-line">${escapeHtml(q.q)}</span><br>
-          <span style="color:var(--success); font-weight:900;">✔ 正確答案：${escapeHtml(stripNum(q.opts[q.ans]))}</span><br>
-          ${q.exp ? `<span style="font-size:.86rem;">💡 ${escapeHtml(q.exp)}</span>` : ""}
+          <span style="white-space:pre-line">${mathHtml(q.q, q.subject)}</span><br>
+          <span style="color:var(--success); font-weight:900;">✔ 正確答案：${mathHtml(stripNum(q.opts[q.ans]), q.subject)}</span><br>
+          ${q.exp ? `<span style="font-size:.86rem;">💡 ${mathHtml(q.exp, q.subject)}</span>` : ""}
           ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
           ${listenBoxHtml(q, false)}
           ${questionImageHtml(q)}
