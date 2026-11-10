@@ -34,6 +34,8 @@
   .btn-ghost { background: transparent; color: var(--primary); border: 2px solid currentColor; }
   body.night .btn-ghost { color: #93c5fd; }
   [hidden] { display: none !important; }
+  .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.82em; line-height: 1.1; margin: 0 2px; }
+  .frac > span:first-child { border-bottom: 2px solid currentColor; padding: 0 3px; }
 
   /* ───────── 期末季：暗夜風暴 × 黃金寶藏 ───────── */
   body.season-final {
@@ -2392,6 +2394,15 @@ function startPaceTimer() {
   tick();
 }
 
+// 數學題的分數用上下排的方式顯示：「2又3/4」→ 2 又 四分之三
+function mathHtml(text, subject) {
+  const h = escapeHtml(text);
+  if (subject !== "數學") return h;
+  const fr = (n, d) => `<span class="frac" aria-label="${d}分之${n}"><span>${n}</span><span>${d}</span></span>`;
+  return h.replace(/(\d+)又(\d+)\/(\d+)/g, (m, w, n, d) => `${w}${fr(n, d)}`)
+          .replace(/(\d+)\/(\d+)/g, (m, n, d) => fr(n, d));
+}
+
 function renderQuestion() {
   const q = quizState.questions[quizState.idx];
   quizState.shownAt = Date.now();
@@ -2407,8 +2418,8 @@ function renderQuestion() {
     ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 課文（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
     ${listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
-    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${escapeHtml(q.q)}</h3>
-    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
+    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject)}</h3>
+    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>`;
   if (questionSpeech(q)) setTimeout(() => speakCurrent(false), 350);
   else if ("speechSynthesis" in window) speechSynthesis.cancel();
@@ -2447,7 +2458,7 @@ function submitAnswer(choice) {
   document.getElementById("feedback-box").innerHTML = `
     <div class="lore-box" style="border-left-color:${ok ? "#16a34a" : "#dc2626"}; background:${ok ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)"}">
       <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
-      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${escapeHtml(q.exp)}</div>` : ""}
+      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${mathHtml(q.exp, q.subject)}</div>` : ""}
     </div>
     ${pace.note ? `<div class="rush-warn">${escapeHtml(pace.note)}</div>` : ""}
     ${lvNote}
