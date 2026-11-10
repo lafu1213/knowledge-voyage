@@ -422,6 +422,56 @@
 
   /* ───────── 後台 ───────── */
   .dash-table-wrap { max-height: 300px; overflow: auto; border: 1px solid var(--line); border-radius: 14px; }
+  /* 老師艦橋 */
+  .bridge-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .bridge-tabs button { padding: 6px 12px; font-size: .85rem; }
+  .mail-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 900; line-height: 18px; text-align: center; }
+  .mail-badge[hidden] { display: none; }
+  .bridge-kpis { grid-template-columns: repeat(4, 1fr); }
+  .bridge-kpis .tile-kpi { cursor: pointer; }
+  .bridge-kpis .tile-kpi span { font-size: .78rem; }
+  .bridge-switch { display: flex; gap: 10px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+  .bridge-switch input { width: 22px; height: 22px; margin-top: 2px; accent-color: #f5c451; }
+  .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; max-height: 240px; overflow: auto; margin-bottom: 10px; }
+  .pick-chip { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; font-size: .84rem; cursor: pointer; }
+  .grant-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0; font-size: .88rem; }
+  .grant-row button { padding: 4px 10px; font-size: .8rem; }
+  .grant-row input, .dm-send input, #bridge-content select, #bridge-content input[type=time] { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.92); color: #1f2937; font: inherit; }
+  .dm-wrap { display: grid; grid-template-columns: 210px 1fr; gap: 12px; min-height: 380px; }
+  .dm-list { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow: auto; }
+  .dm-peer { text-align: left; padding: 7px 10px; border-radius: 10px; background: transparent; border: 1px solid var(--line); color: inherit; }
+  .dm-peer small { display: block; opacity: .7; font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dm-peer.sel { border-color: #f5c451; background: rgba(245,196,81,.15); }
+  .dm-pane { display: flex; flex-direction: column; min-width: 0; }
+  .dm-title { font-weight: 900; margin-bottom: 8px; }
+  .dm-msgs { flex: 1; min-height: 240px; max-height: 50vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; }
+  .dm-msg { align-self: flex-start; max-width: 80%; background: rgba(127,184,255,.18); padding: 8px 12px; border-radius: 14px 14px 14px 4px; white-space: pre-wrap; word-break: break-word; }
+  .dm-msg.me { align-self: flex-end; background: rgba(245,196,81,.25); border-radius: 14px 14px 4px 14px; }
+  .dm-msg small { display: block; opacity: .6; font-size: .68rem; margin-top: 2px; }
+  .dm-send { display: flex; gap: 8px; margin-top: 8px; }
+  .dm-send input { flex: 1; min-width: 0; }
+  .mail-card { cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .mail-card small { flex-basis: 100%; opacity: .75; font-size: .76rem; }
+  .mk-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; font-size: .84rem; }
+  .mk-sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
+  .mk-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .mk-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .8rem; opacity: .9; margin-bottom: 6px; }
+  .mk-head b { color: #f87171; }
+  .mk-q { font-weight: 700; line-height: 1.6; margin-bottom: 8px; }
+  .mk-opts { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .mk-opt { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; border-radius: 8px; background: rgba(127,127,127,.08); font-size: .86rem; overflow: hidden; }
+  .mk-opt i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(239,68,68,.22); }
+  .mk-opt span, .mk-opt em { position: relative; font-style: normal; }
+  .mk-opt em { font-size: .76rem; opacity: .85; }
+  .mk-opt.right { background: rgba(34,197,94,.18); }
+  .mk-who { display: flex; gap: 5px; flex-wrap: wrap; }
+  .mk-st { font-size: .76rem; padding: 2px 8px; border-radius: 10px; background: rgba(239,68,68,.15); }
+  .mk-st.ok { background: rgba(34,197,94,.15); }
+  @media (max-width: 700px) {
+    .bridge-kpis { grid-template-columns: 1fr 1fr; }
+    .dm-wrap { grid-template-columns: 1fr; }
+    .dm-list { max-height: 150px; }
+  }
   table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
   th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
   th { position: sticky; top: 0; background: var(--card-solid); z-index: 1; }
@@ -691,6 +741,10 @@
 </div>
 <div class="modal-overlay" id="dash-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('dash-modal')" aria-label="關閉">✕</button><div id="dash-content"></div></div>
+</div>
+
+<div class="modal-overlay" id="bridge-modal">
+  <div class="modal-box wide"><button class="close-btn" onclick="closeModal('bridge-modal')" aria-label="關閉">✕</button><div id="bridge-content"></div></div>
 </div>
 
 <script src="demo-bank.js"></script>
@@ -1365,6 +1419,7 @@ async function loadData() {
   stats = aggregate(myRows, mySessions);
   profile = { emoji: "", color: "" };
   try { const r = await net.loadProfile(); if (r && r.profile) profile = r.profile; } catch (e) {}
+  if (FINAL) await loadBridgeRules();
 }
 
 function buildWorld() {
@@ -1689,6 +1744,7 @@ function pirateProtected() {
 function maybePirate(trigger) {
   if (!FINAL || !session || session.user.role !== "student" || isTrial() || pirate) return;
   if (document.querySelector(".modal-overlay.open")) return;
+  if (!pirateAllowed()) return;   // 老師艦橋：海盜關閉，或上課時間
   if (pirateProtected() || guardLocked && paceState().lockUntil > Date.now()) return;
   const log = pirateLog();
   if (log.count >= PIRATE_RULE.perDay || Date.now() - log.last < PIRATE_RULE.gapMinutes * 60000) return;
@@ -2542,7 +2598,9 @@ function renderSide() {
       <div class="card">
         <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
           <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
-        <button class="btn-accent" style="width:100%; margin-top:12px; padding:12px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
+        ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span></button>
+        <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
+        <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
         <div class="trial-note">👀 試玩模式：答題不列入紀錄</div>
       </div>
       ${onlineCard}
@@ -2573,6 +2631,7 @@ function renderSide() {
       </div>
     </div>
     ${shipCard}
+    ${FINAL ? mailCard() : ""}
     ${FINAL ? backpackCard() : ""}
     ${onlineCard}
     <div class="card"><h3>🏝️ 各科大島進度</h3>${subjRows}</div>
@@ -2781,7 +2840,7 @@ function paceKey() { return "508_PACE_" + session.user.name; }
 function paceState() {
   const today = nowStr().slice(0, 10);
   const st = load(paceKey(), null);
-  return st && st.day === today ? st : { day: today, count: 0, doubleLeft: 0, lockUntil: (st && st.lockUntil) || 0 };
+  return st && st.day === today ? st : { day: today, count: 0, doubleLeft: 0, lockUntil: (st && st.lockUntil) || 0, unlockSeen: (st && st.unlockSeen) || 0, lastAt: (st && st.lastAt) || 0 };
 }
 function paceOn() { return FINAL && !isTrial(); }
 function guardLocked() {
@@ -2807,7 +2866,8 @@ function applyPace(q, choice, ok, pts) {
   const why = isRushed(q, choice, ok);
   let note = "", lock = false;
   if (why) {
-    st.count++;
+    st.count++; st.lastAt = Date.now();
+    reportPace(why, st.count);
     if (ok) pts = 0; else pts *= 2;
     const reason = why === "fast" ? "你太快作答了，還沒看完題目" : "你連續好幾題都點同一個位置";
     if (st.count === 1) note = `⚠️ ${reason}！這題不加分，答錯扣分加倍。再兩次就會被扣押 ${PACE.lockMinutes} 分鐘喔！`;
@@ -3054,14 +3114,14 @@ function startReview() {
 // =========================================================
 // 10. 後台：老師看全班、家長只看自己的孩子
 // =========================================================
-let dashState = { data: null, student: null, tab: "repeated", sort: "seat" };
+let dashState = { data: null, student: null, tab: "repeated", sort: "seat", season: FINAL ? "final" : "mid" };
 
 async function openDashboard(student) {
   const box = document.getElementById("dash-content");
   openModal("dash-modal");
   if (!dashState.data || student !== undefined) box.innerHTML = `<div class="spinner"></div><div class="empty-note">正在讀取紀錄…</div>`;
   try {
-    dashState.data = DEMO ? demoDashboard(student) : await api("dashboard", { student: student || dashState.student || "" });
+    dashState.data = DEMO ? demoDashboard(student) : await api("dashboard", { student: student || dashState.student || "", season: dashState.season });
     dashState.student = dashState.data.detail ? dashState.data.detail.name : null;
     renderDashboard();
   } catch (e) {
@@ -3071,7 +3131,8 @@ async function openDashboard(student) {
 
 function demoDashboard(student) {
   const students = rosterList.filter(a => a.role === "student");
-  const statsOf = name => { const d = load("508_DEMO_DATA_" + name, { answers: [], sessions: [] }); return aggregate(d.answers, d.sessions); };
+  const isF = r => String(r.sid || "").indexOf(FINAL_SID) === 0, want = dashState.season === "final";
+  const statsOf = name => { const d = load("508_DEMO_DATA_" + name, { answers: [], sessions: [] }); return aggregate(d.answers.filter(r => isF(r) === want), d.sessions.filter(r => isF(r) === want)); };
   const u = session.user;
   if (u.role === "parent") {
     const kid = students.find(s => s.name === u.child);
@@ -3093,7 +3154,10 @@ function renderDashboard() {
   if (d.scope === "teacher") {
     html += `<h2 style="margin-top:0;">🧑‍🏫 508 全班後台 <button class="btn-ghost" style="font-size:.8rem; vertical-align:middle" onclick="showChatLog()">💬 全班聊天紀錄</button></h2>
       <p style="font-size:.84rem; color:var(--ink-soft); margin-top:0;">點任一位學生，看他答對、答錯哪些題目，訂正幾次，哪些一錯再錯。⭐ 正確率星、🌟 完成度星。</p>
-      <div style="margin:0 0 8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.8rem;">排序：
+      <div style="margin:0 0 8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.8rem;">考試：
+        ${[["mid", "📘 期中"], ["final", "🏴‍☠️ 期末"]].map(([k, l]) => `<button class="${dashState.season === k ? "btn-primary" : "btn-ghost"}" style="padding:3px 10px; font-size:.78rem" onclick="dashState.season='${k}'; openDashboard(dashState.student || '');">${l}</button>`).join("")}
+        ${FINAL ? `<button class="btn-accent" style="padding:3px 10px; font-size:.78rem" onclick="closeModal('dash-modal'); openBridge();">⚓ 老師艦橋</button>` : ""}
+        <span style="width:12px"></span>排序：
         ${[["seat", "座號"], ["level", "🏆 等級"], ["stars", "⭐ 星星"]].map(([k, l]) => `<button class="${dashState.sort === k ? "btn-primary" : "btn-ghost"}" style="padding:3px 10px; font-size:.78rem" onclick="dashState.sort='${k}'; renderDashboard();">${l}</button>`).join("")}
       </div>
       ${d.summary.some(s => s.rightIds) ? "" : `<div class="trial-note" style="margin-bottom:8px">ℹ️ 全班的星星欄要更新雲端 Apps Script 後才會顯示；等級已經可以看，點「查看」也能看到個人星星。</div>`}
@@ -3248,6 +3312,7 @@ const net = {
     (r.messages || []).forEach(m => { if (!known.has(m.id)) this.messages.push(m); });
     this.messages = this.messages.slice(-40);
     this.battle = r.battle || null;
+    applyBridgePulse(r.bridge || (DEMO && FINAL ? demoBridge("pulse") : null));
     const sig = this.others.map(o => o.name + o.place + o.emoji).join("|");
     if (sig !== this.sig) { this.sig = sig; renderSide(); }
     if (!walking) renderAvatars();
@@ -3260,6 +3325,355 @@ const net = {
   async saveProfile(p) { return this.call("saveProfile", p); },
   async loadProfile() { return this.call("getProfile", {}); }
 };
+
+// =========================================================
+// 11. 老師艦橋（期末）：航海規則、發金幣、私訊、亂答紀錄、分科錯題
+// =========================================================
+const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
+  peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set() };
+const BRIDGE_TABS = [["overview", "🧭 總覽"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00" };
+
+function bridgeCall(op, data = {}) { return DEMO ? Promise.resolve(demoBridge(op, data)) : api("bridge", Object.assign({ op }, data)); }
+async function loadBridgeRules() {
+  try { bridgeState.rules = (await bridgeCall("rules")).rules; } catch (e) { /* 舊版後端沒有艦橋，就照預設 */ }
+}
+function rulesNow() { return Object.assign({}, DEFAULT_RULES, bridgeState.rules || {}); }
+/** 上課時間：週一到週五、老師設定的上下課時間之間 */
+function inSchoolHours(r) {
+  const s = nowStr(), day = new Date(s.slice(0, 10) + "T12:00:00").getDay(), hm = s.slice(11, 16);
+  return day >= 1 && day <= 5 && hm >= r.schoolStart && hm < r.schoolEnd;
+}
+function pirateAllowed() {
+  const r = rulesNow();
+  if (!r.pirateOn) return false;
+  return !(r.afterSchoolOnly && inSchoolHours(r));
+}
+function pirateStatusText(r = rulesNow()) {
+  if (!r.pirateOn) return "⛔ 海盜已關閉，現在不會出現";
+  if (r.afterSchoolOnly) return inSchoolHours(r) ? `🏫 上課時間（${r.schoolStart}～${r.schoolEnd}），海盜休息中` : "🏴‍☠️ 放學時間，海盜出沒中";
+  return "🏴‍☠️ 海盜出沒中（隨時可能出現）";
+}
+
+/** 每 4 秒的回報帶回來的：未讀私訊、老師解除扣押、航海規則 */
+function applyBridgePulse(p) {
+  if (!p || !FINAL || !session) return;
+  if (p.rules) bridgeState.rules = p.rules;
+  const before = bridgeState.unread;
+  bridgeState.unread = p.unread || 0;
+  if (bridgeState.unread > before) {
+    const open = document.getElementById("bridge-modal").classList.contains("open");
+    if (open && (session.user.role === "student" || bridgeState.tab === "dm")) refreshDm();
+    else toast(session.user.role === "teacher" ? `📩 有 ${bridgeState.unread} 封學生來信` : "📩 老師寫信給你了！點右邊的「老師來信」看看", 4500);
+  }
+  document.querySelectorAll(".mail-badge").forEach(el => { el.textContent = bridgeState.unread; el.hidden = !bridgeState.unread; });
+  if (session.user.role === "student" && p.unlock) {
+    const st = paceState();
+    if (p.unlock > (st.unlockSeen || 0) && p.unlock > (st.lastAt || 0)) {
+      const wasLocked = st.lockUntil > Date.now();
+      store(paceKey(), Object.assign(st, { count: 0, doubleLeft: 0, lockUntil: 0, unlockSeen: p.unlock }));
+      if (wasLocked) toast("🔓 老師解除了扣押，可以繼續答題了！這次要慢慢看題目喔。", 5000);
+    }
+  }
+}
+function reportPace(why, count) {
+  if (DEMO) { demoBridge("paceReport", { reason: why, count, _from: session.user.name }); return; }
+  api("bridge", { op: "paceReport", reason: why, count }).catch(() => {});
+}
+
+function openBridge(tab) {
+  if (tab) bridgeState.tab = tab;
+  openModal("bridge-modal");
+  if (session.user.role === "student") { bridgeState.peer = "老師"; refreshDm(); return; }
+  renderBridge();
+}
+function bridgeShell(body) {
+  return `<h2 style="margin-top:0;">⚓ 老師艦橋 <small style="font-size:.8rem; opacity:.75">期末航線的指揮台</small></h2>
+    <div class="bridge-tabs">${BRIDGE_TABS.map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}</button>`).join("")}</div>
+    <div id="bridge-body">${body}</div>`;
+}
+function bridgeLoading() { return `<div class="spinner"></div><div class="empty-note">正在讀取…</div>`; }
+function bridgeError(e) { return `<div class="empty-note">⚠️ ${escapeHtml(e.message)}${/未知的動作/.test(e.message) ? "<br>（雲端 Apps Script 還沒更新成新版，請先貼上新的程式碼並重新部署）" : ""}</div>`; }
+function studentsList() { return rosterList.filter(a => a.role === "student"); }
+
+async function renderBridge() {
+  const box = document.getElementById("bridge-content");
+  const t = bridgeState.tab;
+  const set = html => { if (bridgeState.tab === t) box.innerHTML = bridgeShell(html); };
+  try {
+    if (t === "overview") {
+      set(bridgeLoading());
+      const [pace, mk] = await Promise.all([bridgeCall("paceList"), bridgeCall("mistakes", { season: "final" })]);
+      bridgeState.pace = pace.rows; bridgeState.mistakes = mk.mistakes;
+      const today = nowStr().slice(0, 10);
+      const todayPace = pace.rows.filter(r => String(r.t).slice(0, 10) === today && r.reason !== "老師解除");
+      const top = mk.mistakes.slice().sort((a, b) => b.wrong - a.wrong).slice(0, 3);
+      set(`<div class="tiles bridge-kpis">
+          <div class="tile-kpi" onclick="bridgeState.tab='rules'; renderBridge();"><b>${rulesNow().pirateOn ? "🏴‍☠️ 開" : "⛔ 關"}</b><span>${escapeHtml(pirateStatusText())}</span></div>
+          <div class="tile-kpi" onclick="bridgeState.tab='dm'; renderBridge();"><b>📩 ${bridgeState.unread}</b><span>未讀的學生來信</span></div>
+          <div class="tile-kpi" onclick="bridgeState.tab='pace'; renderBridge();"><b style="color:${todayPace.length ? "var(--danger)" : "inherit"}">⛓️ ${todayPace.length}</b><span>今天亂答人次（${new Set(todayPace.map(r => r.name)).size} 人）</span></div>
+          <div class="tile-kpi" onclick="bridgeState.tab='mistakes'; renderBridge();"><b>📚 ${mk.mistakes.length}</b><span>期末有人答錯的題目</span></div>
+        </div>
+        <h3>🔥 全班最常錯的題目</h3>
+        ${top.length ? top.map(q => mistakeCard(q, true)).join("") : `<div class="empty-note">期末還沒有人答錯，或還沒有人作答</div>`}
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px">
+          <button class="btn-accent" onclick="closeModal('bridge-modal'); dashState.season='final'; openDashboard();">📊 全班成績（期末）</button>
+          <button class="btn-ghost" onclick="closeModal('bridge-modal'); dashState.season='mid'; openDashboard();">📊 全班成績（期中）</button>
+        </div>`);
+    } else if (t === "rules") {
+      const r = rulesNow();
+      set(`<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
+        <label class="bridge-switch"><input type="checkbox" id="rule-pirate" ${r.pirateOn ? "checked" : ""}> <span><b>🏴‍☠️ 海盜出沒</b><br><small>關掉後，所有學生都不會再遇到海盜（考前、上課專心時可以先關）。</small></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-after" ${r.afterSchoolOnly ? "checked" : ""}> <span><b>🏫 只在放學後出現</b><br><small>週一到週五的上課時間，海盜不會出現；週末不限。</small></span></label>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 14px 32px; font-size:.9rem">上課時間 <input type="time" id="rule-start" value="${r.schoolStart}"> 到 <input type="time" id="rule-end" value="${r.schoolEnd}"></div>
+        <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
+        <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
+    } else if (t === "coins") {
+      set(`<div class="lore-box">發的金幣會直接放進學生的 <b>🔒 島上寶庫</b>，海盜搶不走。每次 1～500 枚。</div>
+        <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap">
+          <button class="btn-ghost" onclick="pickAll(true)">全選</button><button class="btn-ghost" onclick="pickAll(false)">全部取消</button>
+          <span id="pick-count" style="align-self:center; font-size:.85rem">已選 ${bridgeState.picked.size} 人</span></div>
+        <div class="pick-grid">${studentsList().map(s => `<label class="pick-chip"><input type="checkbox" value="${escapeHtml(s.name)}" ${bridgeState.picked.has(s.name) ? "checked" : ""} onchange="pickOne(this)"> ${escapeHtml(s.seat)} ${escapeHtml(shortName(s.name))}</label>`).join("")}</div>
+        <div class="grant-row">
+          <label>金額 <input type="number" id="grant-amt" min="1" max="500" value="20" style="width:80px"></label>
+          ${[10, 20, 50, 100].map(n => `<button class="btn-ghost" onclick="document.getElementById('grant-amt').value=${n}">${n}</button>`).join("")}
+        </div>
+        <div class="grant-row"><label style="flex:1">理由 <input id="grant-note" maxlength="40" value="老師的獎勵" style="width:100%"></label></div>
+        <div class="grant-row">${["認真訂正錯題", "上課表現好", "幫助同學", "考試進步"].map(n => `<button class="btn-ghost" onclick="document.getElementById('grant-note').value='${n}'">${n}</button>`).join("")}</div>
+        <button class="btn-accent" style="padding:10px 18px" onclick="grantCoins()">🎁 發放金幣</button>`);
+    } else if (t === "dm") {
+      if (!bridgeState.threads.length) set(bridgeLoading());
+      bridgeState.threads = (await bridgeCall("dmList")).threads || [];
+      set(dmTeacherHtml());
+      if (bridgeState.peer) refreshDm();
+    } else if (t === "pace") {
+      set(bridgeLoading());
+      bridgeState.pace = (await bridgeCall("paceList")).rows;
+      set(paceHtml());
+    } else if (t === "mistakes") {
+      set(bridgeLoading());
+      bridgeState.mistakes = (await bridgeCall("mistakes", { season: bridgeState.season })).mistakes;
+      set(mistakesHtml());
+    }
+  } catch (e) { set(bridgeError(e)); }
+}
+
+async function saveRules() {
+  const rules = { pirateOn: document.getElementById("rule-pirate").checked, afterSchoolOnly: document.getElementById("rule-after").checked,
+    schoolStart: document.getElementById("rule-start").value || "07:40", schoolEnd: document.getElementById("rule-end").value || "16:00" };
+  try {
+    bridgeState.rules = (await bridgeCall("setRules", { rules })).rules;
+    toast("💾 航海規則已儲存：" + pirateStatusText());
+    renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 發金幣 ──
+function pickOne(el) { el.checked ? bridgeState.picked.add(el.value) : bridgeState.picked.delete(el.value); document.getElementById("pick-count").textContent = `已選 ${bridgeState.picked.size} 人`; }
+function pickAll(on) { bridgeState.picked = new Set(on ? studentsList().map(s => s.name) : []); renderBridge(); }
+async function grantCoins() {
+  const to = [...bridgeState.picked], amount = Math.floor(Number(document.getElementById("grant-amt").value) || 0);
+  const note = document.getElementById("grant-note").value.trim() || "老師的獎勵";
+  if (!to.length) return toast("請先勾選要發給哪些同學");
+  if (amount < 1 || amount > 500) return toast("每次發放 1～500 枚");
+  try {
+    if (DEMO) to.forEach(n => { const k = "508_DEMO_COINS_" + n; store(k, load(k, []).concat({ t: nowStr(), op: "grant", amount, note, by: session.user.name })); });
+    else await api("coins", { op: "grant", to, amount, note });
+    toast(`🎁 已發給 ${to.length} 位同學各 ${amount} 枚金幣（${note}）`, 4500);
+    bridgeState.picked = new Set(); renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 私訊 ──
+function dmTeacherHtml() {
+  const map = {}; bridgeState.threads.forEach(t => { map[t.name] = t; });
+  const list = studentsList().map(s => Object.assign({ name: s.name, seat: s.seat }, map[s.name] || {}))
+    .sort((a, b) => (b.unread || 0) - (a.unread || 0) || String(b.lastT || "").localeCompare(String(a.lastT || "")) || String(a.seat).localeCompare(String(b.seat)));
+  return `<div class="dm-wrap">
+    <div class="dm-list">${list.map(s => `<button class="dm-peer ${bridgeState.peer === s.name ? "sel" : ""}" onclick="selectPeer('${escapeHtml(s.name)}')">
+      <b>${escapeHtml(s.seat)} ${escapeHtml(shortName(s.name))}</b>${s.unread ? ` <span class="mail-badge">${s.unread}</span>` : ""}
+      <small>${escapeHtml(s.last ? [...String(s.last)].slice(0, 16).join("") : "（還沒有訊息）")}</small></button>`).join("")}</div>
+    <div class="dm-pane">${bridgeState.peer ? dmPaneHtml() : `<div class="empty-note">← 選一位同學開始私訊</div>`}</div></div>`;
+}
+function selectPeer(name) {
+  bridgeState.peer = name; bridgeState.msgs = [];
+  const body = document.getElementById("bridge-body");
+  if (body) body.innerHTML = dmTeacherHtml();
+  refreshDm();
+}
+function dmPaneHtml() {
+  const isT = session.user.role === "teacher";
+  const title = isT ? `和 ${escapeHtml(shortName(bridgeState.peer))} 的私訊` : "📩 和老師的悄悄話";
+  return `<div class="dm-title">${title}</div>
+    <div class="dm-msgs" id="dm-msgs">${bridgeState.msgs.length ? bridgeState.msgs.map(m => `<div class="dm-msg ${m.mine ? "me" : ""}"><div>${escapeHtml(m.text)}</div><small>${escapeHtml(String(m.t).slice(5, 16))}</small></div>`).join("")
+      : `<div class="empty-note">${isT ? "還沒有訊息，寫一句話鼓勵他吧！" : "有問題可以直接問老師，只有老師看得到喔。"}</div>`}</div>
+    <div class="dm-send"><input id="dm-input" maxlength="200" placeholder="${isT ? "寫給學生…" : "寫給老師…"}" onkeydown="if(event.key==='Enter' && !event.isComposing) sendDm()">
+      <button class="btn-accent" onclick="sendDm()">送出</button></div>
+    ${isT ? `<div class="grant-row" style="margin-top:6px">${["做得很好，繼續加油！💪", "記得去沉船寶藏灣訂正錯題喔！", "每題慢慢看，不要急著按～", "有不懂的地方明天來問老師"].map(x => `<button class="btn-ghost" style="font-size:.76rem" onclick="document.getElementById('dm-input').value='${x}'">${x}</button>`).join("")}</div>` : ""}`;
+}
+async function refreshDm() {
+  const box = document.getElementById("bridge-content");
+  const isT = session.user.role === "teacher";
+  try {
+    const r = await bridgeCall("dmList", isT ? { with: bridgeState.peer } : {});
+    bridgeState.msgs = r.messages || [];
+    if (isT) {
+      const t = bridgeState.threads.find(x => x.name === bridgeState.peer); if (t) t.unread = 0;
+      const pane = box.querySelector(".dm-pane");
+      if (pane) pane.innerHTML = dmPaneHtml();
+    } else {
+      box.innerHTML = dmPaneHtml();
+    }
+    const m = document.getElementById("dm-msgs"); if (m) m.scrollTop = m.scrollHeight;
+  } catch (e) { if (isT) { const pane = box.querySelector(".dm-pane"); if (pane) pane.innerHTML = bridgeError(e); } else box.innerHTML = bridgeError(e); }
+}
+async function sendDm() {
+  const el = document.getElementById("dm-input"), text = (el.value || "").trim();
+  if (!text) return;
+  el.value = "";
+  try {
+    const r = await bridgeCall("dmSend", session.user.role === "teacher" ? { to: bridgeState.peer, text } : { text });
+    bridgeState.msgs = r.messages || bridgeState.msgs;
+    const isT = session.user.role === "teacher";
+    if (isT) { const t = bridgeState.threads.find(x => x.name === bridgeState.peer); if (t) { t.last = text; t.lastT = nowStr(); } else bridgeState.threads.push({ name: bridgeState.peer, last: text, lastT: nowStr(), unread: 0 }); }
+    refreshDm();
+  } catch (e) { el.value = text; toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 亂答紀錄 ──
+function paceHtml() {
+  const rows = bridgeState.pace || [], today = nowStr().slice(0, 10);
+  const per = {};
+  rows.filter(r => String(r.t).slice(0, 10) === today).forEach(r => {
+    const p = per[r.name] || (per[r.name] = { name: r.name, n: 0, max: 0, last: "", reason: "" });
+    if (r.reason === "老師解除") { p.n = 0; p.max = 0; p.unlocked = r.t; return; }
+    p.n++; p.max = Math.max(p.max, r.count); p.last = r.t; p.reason = r.reason;
+  });
+  const list = Object.keys(per).map(k => per[k]).filter(p => p.n).sort((a, b) => b.max - a.max);
+  const locked = p => p.max >= 3 && Date.now() - new Date(String(p.last).replace(" ", "T")).getTime() < 15 * 60000;
+  return `<div class="lore-box">學生<b>太快作答</b>（3 秒內）或<b>連續 5 題點同一個位置</b>就算亂答：第 1 次這題不加分、第 2 次之後 10 題答錯加倍扣分、第 3 次扣押 15 分鐘。按「解除」會把他今天的次數歸零。</div>
+    <h3>今天（${today}）</h3>
+    ${list.length ? `<div class="dash-table-wrap"><table><thead><tr><th>學生</th><th class="num">次數</th><th>最近原因</th><th>最後時間</th><th>狀態</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr><td><b>${escapeHtml(shortName(p.name))}</b></td><td class="num ${p.max >= 3 ? "warn-num" : ""}">${p.max}</td><td>${escapeHtml(p.reason)}</td><td>${escapeHtml(String(p.last).slice(11, 16))}</td>
+        <td>${locked(p) ? "⛓️ 扣押中" : p.max >= 2 ? "⚠️ 加倍扣分中" : "⚠️ 警告"}</td>
+        <td><button class="btn-primary" style="padding:4px 10px; font-size:.78rem" onclick="unlockStudent('${escapeHtml(p.name)}')">🔓 解除</button>
+          <button class="btn-ghost" style="padding:4px 8px; font-size:.78rem" onclick="bridgeState.peer='${escapeHtml(p.name)}'; bridgeState.tab='dm'; renderBridge();">📩</button></td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty-note">今天沒有人亂答 👍</div>`}
+    <h3>全部紀錄（最近 100 筆）</h3>
+    <div class="dash-table-wrap"><table><thead><tr><th>時間</th><th>學生</th><th>原因</th><th class="num">第幾次</th><th>處置</th></tr></thead><tbody>
+      ${rows.slice(-100).reverse().map(r => `<tr><td>${escapeHtml(String(r.t).slice(5, 16))}</td><td>${escapeHtml(shortName(r.name))}</td><td>${escapeHtml(r.reason)}</td><td class="num">${r.count || ""}</td><td>${escapeHtml(r.act)}${r.by && r.by !== "系統" ? "（" + escapeHtml(shortName(r.by)) + "）" : ""}</td></tr>`).join("") || `<tr><td colspan="5">還沒有紀錄</td></tr>`}
+    </tbody></table></div>`;
+}
+async function unlockStudent(name) {
+  try {
+    await bridgeCall("unlock", { to: name });
+    toast(`🔓 已解除 ${shortName(name)} 的扣押，學生畫面約 5 秒內恢復`);
+    renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 分科錯題 ──
+function mistakeCard(q, compact) {
+  const subj = q.subject, total = Object.values(q.choices || {}).reduce((t, n) => t + n, 0) || 1;
+  const unfixed = (q.students || []).filter(s => !s.fixed);
+  const rate = q.n ? Math.round(q.wrong / q.n * 100) : 0;
+  const opts = (q.opts && q.opts.length ? q.opts : Object.keys(q.choices || {}));
+  return `<div class="mk-card">
+    <div class="mk-head"><span>${escapeHtml(subj)}・${escapeHtml(splitUnit(q.unit)[1] || q.unit)}</span><b>錯 ${q.wrong} 次／作答 ${q.n} 次（${rate}%）</b></div>
+    <div class="mk-q">${mathHtml(q.q, subj)}</div>
+    ${compact ? "" : `<div class="mk-opts">${opts.map(o => {
+      const t = stripNum(o), right = t === stripNum(q.correctText), n = (q.choices || {})[o] || (q.choices || {})[t] || 0;
+      return `<div class="mk-opt ${right ? "right" : ""}"><span>${right ? "✅" : n ? "❌" : "・"} ${mathHtml(t, subj)}</span><i style="width:${right ? 0 : Math.round(n / total * 100)}%"></i><em>${right ? "正確答案" : n ? n + " 次" : ""}</em></div>`;
+    }).join("")}</div>`}
+    <div class="mk-who">${(q.students || []).map(s => `<span class="mk-st ${s.fixed ? "ok" : ""}">${s.fixed ? "✅" : "❌"} ${escapeHtml(shortName(s.name))}${s.wrong > 1 ? "×" + s.wrong : ""}</span>`).join("")}</div>
+    ${compact ? "" : `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+      ${unfixed.length ? `<button class="btn-accent" style="padding:6px 12px; font-size:.82rem" onclick="remindUnfixed('${escapeHtml(q.qId)}')">📩 提醒 ${unfixed.length} 位還沒訂正的同學</button>` : `<span style="font-size:.82rem">🎉 答錯的同學都訂正好了</span>`}
+      ${q.exp ? `<details style="font-size:.84rem"><summary>看詳解</summary>${mathHtml(q.exp, subj)}</details>` : ""}</div>`}
+  </div>`;
+}
+function mistakesHtml() {
+  const all = bridgeState.mistakes || [];
+  const subjects = ["全部", ...new Set(all.map(q => q.subject))];
+  if (!subjects.includes(bridgeState.subject)) bridgeState.subject = "全部";
+  const inSubj = all.filter(q => bridgeState.subject === "全部" || q.subject === bridgeState.subject);
+  const units = ["全部", ...new Set(inSubj.map(q => q.unit))];
+  if (!units.includes(bridgeState.unit)) bridgeState.unit = "全部";
+  const list = inSubj.filter(q => bridgeState.unit === "全部" || q.unit === bridgeState.unit)
+    .sort((a, b) => bridgeState.sort === "rate" ? b.wrong / b.n - a.wrong / a.n : bridgeState.sort === "unfixed" ? b.students.filter(s => !s.fixed).length - a.students.filter(s => !s.fixed).length : b.wrong - a.wrong);
+  const btn = (on, label, js) => `<button class="${on ? "btn-primary" : "btn-ghost"}" style="padding:4px 12px; font-size:.82rem" onclick="${js}">${label}</button>`;
+  return `<div class="mk-bar">
+      ${btn(bridgeState.season === "final", "期末", "bridgeState.season='final'; renderBridge();")}${btn(bridgeState.season === "mid", "期中", "bridgeState.season='mid'; renderBridge();")}
+      <span class="mk-sep"></span>
+      ${subjects.map(s => btn(bridgeState.subject === s, s === "全部" ? "全部科目" : s + `（${all.filter(q => q.subject === s).length}）`, `bridgeState.subject='${escapeHtml(s)}'; bridgeState.unit='全部'; document.getElementById('bridge-body').innerHTML=mistakesHtml();`)).join("")}
+    </div>
+    <div class="mk-bar">
+      <select onchange="bridgeState.unit=this.value; document.getElementById('bridge-body').innerHTML=mistakesHtml();">${units.map(u => `<option ${u === bridgeState.unit ? "selected" : ""} value="${escapeHtml(u)}">${u === "全部" ? "全部單元" : escapeHtml(u)}</option>`).join("")}</select>
+      排序：${btn(bridgeState.sort === "wrong", "答錯次數", "bridgeState.sort='wrong'; document.getElementById('bridge-body').innerHTML=mistakesHtml();")}
+      ${btn(bridgeState.sort === "rate", "錯誤率", "bridgeState.sort='rate'; document.getElementById('bridge-body').innerHTML=mistakesHtml();")}
+      ${btn(bridgeState.sort === "unfixed", "還沒訂正人數", "bridgeState.sort='unfixed'; document.getElementById('bridge-body').innerHTML=mistakesHtml();")}
+    </div>
+    <p style="font-size:.82rem; opacity:.8; margin:4px 0 10px">共 ${list.length} 題。❌ 是還沒訂正好的同學、✅ 是已經訂正好的同學，×2 代表錯了 2 次。</p>
+    ${list.length ? list.map(q => mistakeCard(q)).join("") : `<div class="empty-note">這裡還沒有人答錯 👍</div>`}`;
+}
+async function remindUnfixed(qId) {
+  const q = (bridgeState.mistakes || []).find(x => x.qId === qId);
+  if (!q) return;
+  const names = q.students.filter(s => !s.fixed).map(s => s.name);
+  const chars = [...String(q.q).replace(/\s+/g, " ")], short = chars.slice(0, 24).join("");
+  const text = `老師提醒：「${short}${chars.length > 24 ? "…" : ""}」這題你還沒訂正，記得去${WRECK}再挑戰一次喔！`;
+  toast(`📩 正在寄給 ${names.length} 位同學…`);
+  try {
+    for (const to of names) await bridgeCall("dmSend", { to, text });
+    toast(`📩 已提醒 ${names.map(shortName).join("、")}`, 4500);
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 學生側邊欄的「老師來信」 ──
+function mailCard() {
+  return `<div class="card mail-card" onclick="openBridge()"><b>📩 老師來信</b> <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>
+    <small>有問題可以私下問老師</small></div>`;
+}
+
+// ── 示範模式的艦橋（全部記在這台裝置，換帳號登入就能測試老師和學生互傳） ──
+function demoBridge(op, d) {
+  const K = "508_DEMO_BRIDGE", db = load(K, { rules: null, dms: [], pace: [], unl: {} });
+  const save = () => store(K, db);
+  const me = session.user.role === "teacher" ? "老師" : session.user.name;
+  const thread = peer => {
+    db.dms.forEach(m => { if (m.to === me && m.from === peer) m.read = true; }); save();
+    return { messages: db.dms.filter(m => (m.from === me && m.to === peer) || (m.from === peer && m.to === me)).map(m => ({ t: m.t, from: m.from, text: m.text, mine: m.from === me })) };
+  };
+  if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES };
+  if (op === "rules") return { rules: db.rules || DEFAULT_RULES };
+  if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, d.rules); save(); return { rules: db.rules }; }
+  if (op === "dmSend") { db.dms.push({ t: nowStr(), from: me, to: me === "老師" ? d.to : "老師", text: d.text, read: false }); save(); return thread(me === "老師" ? d.to : "老師"); }
+  if (op === "dmList") {
+    if (me !== "老師") return thread("老師");
+    if (d.with) return thread(d.with);
+    const map = {};
+    db.dms.forEach(m => { const p = m.from === "老師" ? m.to : m.from; const c = map[p] || (map[p] = { name: p, last: "", lastT: "", unread: 0 }); c.last = m.text; c.lastT = m.t; if (m.to === "老師" && !m.read) c.unread++; });
+    return { threads: Object.values(map) };
+  }
+  if (op === "paceReport") {
+    const act = d.count >= 3 ? "扣押 15 分鐘" : d.count === 2 ? "接下來 10 題答錯加倍扣分" : "這題不加分、答錯加倍扣分";
+    db.pace.push({ t: nowStr(), name: d._from, reason: d.reason === "same" ? "連續點同一個位置" : "太快作答", count: d.count, act, by: "系統" }); save(); return {};
+  }
+  if (op === "paceList") return { rows: db.pace };
+  if (op === "unlock") { db.pace.push({ t: nowStr(), name: d.to, reason: "老師解除", count: 0, act: "解除扣押並重新計算", by: session.user.name }); db.unl[d.to] = Date.now(); save(); return {}; }
+  if (op === "mistakes") {
+    const want = d.season !== "mid", byQ = {};
+    studentsList().forEach(s => load("508_DEMO_DATA_" + s.name, { answers: [] }).answers
+      .filter(r => (String(r.sid || "").indexOf(FINAL_SID) === 0) === want)
+      .forEach(r => {
+        const q = byQ[r.qId] || (byQ[r.qId] = { qId: r.qId, subject: r.subject, unit: r.unit, q: r.q, opts: r.opts, correctText: r.correctText, exp: r.exp, n: 0, wrong: 0, choices: {}, who: {} });
+        q.n++; if (!r.ok) { q.wrong++; q.choices[r.chosen] = (q.choices[r.chosen] || 0) + 1; }
+        const w = q.who[s.name] || (q.who[s.name] = { name: s.name, wrong: 0, fixed: false });
+        if (!r.ok) w.wrong++; w.fixed = r.ok;
+      }));
+    return { mistakes: Object.values(byQ).filter(q => q.wrong).map(q => Object.assign(q, { students: Object.values(q.who).filter(w => w.wrong) })) };
+  }
+  throw new Error("未知的艦橋動作");
+}
 
 // ── 聊天室 ──
 function renderChat() {
