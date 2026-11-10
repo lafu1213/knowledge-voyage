@@ -160,6 +160,30 @@
   .bp-slot b { font-size: .74rem; } .bp-slot span { font-family: "Cinzel", serif; font-weight: 900; color: #ffe48a; }
   .bp-slot.empty { filter: grayscale(.8); opacity: .55; }
   @media (max-width: 700px) { .shop-grid, .deco-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .modal-box.pirate { background: radial-gradient(ellipse at 30% 0%, #5a0c1e 0%, #240611 45%, #07030a 100%) !important; color: #fff3d6; border: 3px solid #ff6b7b; box-shadow: 0 0 40px rgba(255,59,82,.45), 0 20px 50px rgba(0,0,0,.7); }
+  .modal-box.pirate .close-btn { display: none; }
+  .pirate-title { text-align: center; font: 900 2.6rem "Noto Serif TC", serif; letter-spacing: 10px; color: #ffe3a0; text-shadow: 0 0 22px rgba(255,40,60,.85), 0 3px 0 #3a0008; animation: pirateGlow 1.2s ease-in-out infinite; }
+  .pirate-title.win { color: #bff5d6; text-shadow: 0 0 22px rgba(95,227,154,.8); }
+  @keyframes pirateGlow { 50% { text-shadow: 0 0 40px rgba(255,40,60,1), 0 3px 0 #3a0008; } }
+  .pirate-who { display: flex; gap: 14px; align-items: center; margin: 12px 0; padding: 12px; border-radius: 14px; background: rgba(0,0,0,.35); border: 2px solid #e9b949; }
+  .pirate-who b { font: 900 1.3rem "Noto Serif TC", serif; }
+  .pirate-emoji { font-size: 3rem; animation: pirateShake 2.4s ease-in-out infinite; }
+  @keyframes pirateShake { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  .pirate-stakes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pirate-stakes > div { padding: 10px 12px; border-radius: 12px; font-size: .82rem; font-weight: 900; }
+  .pirate-stakes b { display: block; font-size: 1rem; color: #fff; }
+  .pirate-stakes .win { background: rgba(30,120,70,.35); border: 2px solid #5fe39a; color: #9ff5c4; }
+  .pirate-stakes .lose { background: rgba(180,20,40,.35); border: 2px solid #ff6b7b; color: #ffb0b8; }
+  .pirate-rule { margin: 10px 0; font-size: .85rem; color: #ffd0d5; text-align: center; }
+  .pirate-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pirate-actions button { flex: 1 1 180px; padding: 12px; }
+  .pirate-actions button:disabled { opacity: .4; cursor: not-allowed; }
+  .pirate-bar { display: flex; align-items: center; gap: 8px; }
+  .pirate-bar .round { font: 900 .85rem "Cinzel", serif; background: linear-gradient(180deg,#ffe48a,#c98a1b); color: #1a0e02; border-radius: 8px; padding: 3px 10px; }
+  .pirate-bar .tag { font-size: .78rem; font-weight: 900; color: #ffd0d5; border: 1px solid #ff6b7b; border-radius: 8px; padding: 3px 8px; }
+  .pirate-clock { width: 46px; height: 46px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font: 900 1.2rem "Cinzel", serif; color: #ffd45c; border: 4px solid #ffd45c; box-shadow: 0 0 12px rgba(255,212,92,.6); }
+  .pirate-q { margin: 10px 0; padding: 14px 16px; border-radius: 14px; background: rgba(40,28,22,.9); border: 2px solid #e9b949; }
+  .pirate-q small { color: #ffd45c; font-weight: 900; } .pirate-q h3 { margin: 6px 0 0; line-height: 1.55; }
   .pace-note { margin-top: 8px; font-size: .85rem; font-weight: 800; color: var(--ink-soft); text-align: center; }
   .rush-warn { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(220,38,38,.18); border: 2px solid #f87171; font-weight: 800; }
 
@@ -1471,13 +1495,14 @@ function coinState() {
   const stars = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
   const fromAnswers = coinsForRows(myRows), fromLevel = (lv - 1) * COIN.levelUp, fromStars = stars * COIN.star;
   const sum = op => coinRows.filter(r => r.op === op).reduce((t, r) => t + (Number(r.amount) || 0), 0);
-  const earned = fromAnswers + fromLevel + fromStars, granted = sum("grant");
+  const loot = sum("loot");
+  const earned = fromAnswers + fromLevel + fromStars + loot, granted = sum("grant");
   const deposited = sum("deposit"), withdrawn = sum("withdraw"), spent = sum("spend"), stolen = sum("steal");
   const cap = COIN.vaultCap + 200 * coinRows.filter(r => r.op === "spend" && (r.note === "寶庫擴建" || r.note === "vault")).length;
   return {
     wallet: Math.max(0, earned - deposited + withdrawn - spent - stolen),
     vault: Math.max(0, deposited - withdrawn + granted), cap,
-    bounty: earned + granted, fromAnswers, fromLevel, fromStars, granted
+    bounty: earned + granted, fromAnswers, fromLevel, fromStars, granted, loot, stolen
   };
 }
 async function coinOp(op, amount, note) {
@@ -1635,6 +1660,157 @@ async function vaultMove(op, amount) {
   if (op === "withdraw" && amount > c.vault) return toast("⚠️ 寶庫裡沒有那麼多金幣");
   try { await coinOp(op, amount); toast(op === "deposit" ? `🔒 已存入寶庫 ${amount} 枚金幣` : `🪙 已從寶庫領出 ${amount} 枚金幣`); openVault(); }
   catch (e) { toast("⚠️ " + e.message); }
+}
+
+// =========================================================
+// 期末：系統海盜（只在孩子正在玩的時候出現；擊退海盜的方法就是答題，題目優先出自己的錯題）
+// =========================================================
+const PIRATES = {
+  minion: { name: "鐵鉤小嘍囉", emoji: "🦜", rounds: 1, need: 1, rate: 0.1, max: 30, reward: 20, secs: 20,
+            line: "嘿嘿，錢袋交出來！答得出我的題目就放你走～" },
+  captain: { name: "黑帆船長", emoji: "🏴‍☠️", rounds: 3, need: 2, rate: 0.2, max: 80, reward: 60, secs: 20,
+             line: "把錢袋交出來！除非你答得出我的三道題目……" }
+};
+const PIRATE_RULE = { gapMinutes: 10, perDay: 3, chance: 0.4, newbieDays: 3, dailyStealCap: 100 };
+let pirateChance = false, pirate = null;
+function pirateKey() { return "508_PIRATE_" + session.user.name; }
+function pirateLog() {
+  const today = nowStr().slice(0, 10), st = load(pirateKey(), null);
+  return st && st.day === today ? st : { day: today, count: 0, last: 0, lossStreak: st ? st.lossStreak || 0 : 0 };
+}
+function invCount(id) { const v = inventory()[id]; return v ? v.n : 0; }
+/** 新手保護：第一次期末作答後 3 天內不會遇到海盜 */
+function pirateProtected() {
+  const first = myRows.length ? String(myRows[0].t) : "";
+  if (!first) return true;
+  const days = (Date.now() - new Date(first.replace(" ", "T") + "+08:00").getTime()) / 86400000;
+  return days < PIRATE_RULE.newbieDays && !window.PIRATE_TEST;
+}
+function maybePirate(trigger) {
+  if (!FINAL || !session || session.user.role !== "student" || isTrial() || pirate) return;
+  if (document.querySelector(".modal-overlay.open")) return;
+  if (pirateProtected() || guardLocked && paceState().lockUntil > Date.now()) return;
+  const log = pirateLog();
+  if (log.count >= PIRATE_RULE.perDay || Date.now() - log.last < PIRATE_RULE.gapMinutes * 60000) return;
+  if (Math.random() > (window.PIRATE_TEST ? 1 : PIRATE_RULE.chance)) return;
+  const lv = getLevelInfo(stats.score).lv, wallet = coinState().wallet;
+  const captainOdds = log.lossStreak >= 2 ? 0 : lv < 5 ? 0 : wallet > 200 ? 0.5 : 0.2;   // 連輸兩次，下一個一定是比較弱的小嘍囉
+  log.count++; log.last = Date.now(); store(pirateKey(), log);
+  openPirate(Math.random() < captainOdds ? "captain" : "minion");
+}
+function pirateQuestions(n) {
+  const ok = q => q && !q.passage && q.opts && q.opts.length >= 2;
+  const pend = shuffle(pendingQuestionObjects().filter(ok)), ever = shuffle(questionObjects(stats.wrongEver).filter(ok));
+  const rest = shuffle(BANK.filter(ok));
+  const out = [], seen = new Set();
+  [...pend, ...ever, ...rest].forEach(q => { if (out.length < n && !seen.has(q.id)) { seen.add(q.id); out.push(prepareQuestion(q)); } });
+  return out;
+}
+function stealAmount(type) {
+  const P = PIRATES[type], c = coinState();
+  let amt = Math.min(P.max, Math.floor(c.wallet * P.rate));
+  if (armorLeftHours()) amt = Math.floor(amt / 2);
+  const today = nowStr().slice(0, 10);
+  const stolenToday = coinRows.filter(r => r.op === "steal" && String(r.t).slice(0, 10) === today).reduce((t, r) => t + (Number(r.amount) || 0), 0);
+  return Math.max(0, Math.min(amt, PIRATE_RULE.dailyStealCap - stolenToday));
+}
+function pirateBox() {
+  const box = document.getElementById("quiz-content");
+  box.closest(".modal-box").className = "modal-box pirate";
+  return box;
+}
+function openPirate(type) {
+  const P = PIRATES[type];
+  pirate = { type, P, qs: pirateQuestions(P.rounds), idx: 0, right: 0, cannonUsed: false };
+  const box = pirateBox();
+  openModal("quiz-modal");
+  const lose = stealAmount(type), shields = invCount("shield"), scopes = invCount("scope");
+  box.innerHTML = `<div class="pirate-title">海盜來襲！</div>
+    <div class="pirate-who"><span class="pirate-emoji">${P.emoji}</span><div><b>${P.name}</b><div>「${P.line}」</div></div></div>
+    <div class="pirate-stakes">
+      <div class="win">打贏了<b>🪙 +${P.reward}${type === "captain" ? "・懸賞令蓋印章" : ""}</b></div>
+      <div class="lose">輸了<b>錢袋被搶 ${lose} 枚${armorLeftHours() ? "（鐵甲減半）" : ""}・寶庫安全</b></div>
+    </div>
+    <div class="pirate-rule">${type === "captain" ? `共 ${P.rounds} 題，答對 ${P.need} 題就贏` : "答對 1 題就贏"}・每題 ${P.secs + (type === "captain" && invCount("compass") ? 10 : 0)} 秒${type === "captain" && invCount("compass") ? "（航海羅盤 +10 秒）" : ""}・題目優先出你的錯題</div>
+    <div class="pirate-actions">
+      <button class="btn-danger" onclick="pirateFight()">⚔️ 迎戰：答題</button>
+      ${type === "minion" ? `<button class="btn-accent" ${shields ? "" : "disabled"} onclick="pirateUse('shield')">🛡️ 舉起木盾（${shields}）</button>` : ""}
+      <button class="btn-ghost" ${scopes ? "" : "disabled"} onclick="pirateUse('scope')">🔭 用瞭望鏡繞路（${scopes}）</button>
+    </div>`;
+}
+async function pirateUse(id) {
+  try { await coinOp("use", 0, itemById(id).name); } catch (e) { return toast("⚠️ " + e.message); }
+  const box = pirateBox();
+  box.innerHTML = `<div class="pirate-title" style="font-size:2rem">${id === "shield" ? "🛡️ 擋下來了！" : "🔭 成功繞路！"}</div>
+    <p style="text-align:center">${id === "shield" ? "木盾擋住了小嘍囉，錢袋一枚都沒少。" : "你從瞭望鏡看到海盜，提早換了航線。"}這一趟安全，但沒有戰利品。</p>
+    <button class="btn-primary" style="width:100%; padding:12px" onclick="endPirate()">繼續航行</button>`;
+}
+function pirateFight() { pirate.idx = 0; pirate.right = 0; pirateRound(); }
+function pirateRound() {
+  const { P, qs, idx, type } = pirate, q = qs[idx];
+  if (!q) return finishPirate(pirate.right >= Math.min(P.need, qs.length));
+  const secs = P.secs + (type === "captain" && invCount("compass") ? 10 : 0);
+  pirate.deadline = Date.now() + secs * 1000; pirate.cannonUsed = false;
+  const box = pirateBox();
+  box.innerHTML = `<div class="pirate-bar"><span class="round">ROUND ${idx + 1} / ${qs.length}</span>
+      ${stats.byId && stats.byId[q.id] && stats.byId[q.id].wrong ? `<span class="tag">這題你上次答錯過</span>` : ""}
+      <span style="flex:1"></span><span class="pirate-hp">${P.emoji} ${"❤️".repeat(Math.max(0, Math.min(P.need, qs.length) - pirate.right))}</span>
+      <span class="pirate-clock" id="pirate-clock">${secs}</span></div>
+    <div class="pirate-q"><small>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</small><h3>${mathHtml(q.q, q.subject)}</h3></div>
+    <div id="pirate-opts">${q.opts.map((o, i) => `<button class="option-btn" data-i="${i}" onclick="pirateAnswer(${i})">${mathHtml(o, q.subject)}</button>`).join("")}</div>
+    <div class="pirate-actions"><button class="btn-accent" ${invCount("cannon") && q.opts.length > 2 ? "" : "disabled"} onclick="pirateCannon()">💣 發射大砲：刪一個錯誤選項（${invCount("cannon")}）</button></div>`;
+  clearInterval(pirate.timer);
+  pirate.timer = setInterval(() => {
+    const left = Math.ceil((pirate.deadline - Date.now()) / 1000), el = document.getElementById("pirate-clock");
+    if (el) el.textContent = Math.max(0, left);
+    if (left <= 0) pirateAnswer(-1);
+  }, 250);
+}
+async function pirateCannon() {
+  if (pirate.cannonUsed || !invCount("cannon")) return;
+  const q = pirate.qs[pirate.idx];
+  const wrong = [...document.querySelectorAll("#pirate-opts .option-btn")].filter(b => +b.dataset.i !== q.ans && !b.disabled);
+  if (!wrong.length) return;
+  pirate.cannonUsed = true;
+  try { await coinOp("use", 0, "大砲"); } catch (e) { pirate.cannonUsed = false; return toast("⚠️ " + e.message); }
+  const b = wrong[Math.floor(Math.random() * wrong.length)];
+  b.disabled = true; b.style.opacity = ".25"; b.style.textDecoration = "line-through";
+  toast("💣 轟！刪掉一個錯誤選項");
+}
+function pirateAnswer(i) {
+  if (!pirate || pirate.answered === pirate.idx) return;
+  pirate.answered = pirate.idx;
+  clearInterval(pirate.timer);
+  const q = pirate.qs[pirate.idx], ok = i === q.ans;
+  if (ok) pirate.right++;
+  const btns = document.querySelectorAll("#pirate-opts .option-btn");
+  btns.forEach(b => b.disabled = true);
+  btns[q.ans].classList.add("correct");
+  if (i >= 0 && !ok) btns[i].classList.add("wrong");
+  const box = document.getElementById("pirate-opts");
+  box.insertAdjacentHTML("afterend", `<div class="lore-box" style="margin-top:8px">${ok ? "🎯 命中！" : i < 0 ? "⏰ 時間到了！" : "💥 被打中了！"} 正確答案：<b>${mathHtml(stripNum(q.opts[q.ans]), q.subject)}</b>${q.exp ? `<br>📝 ${mathHtml(q.exp, q.subject)}` : ""}</div>
+    <button class="btn-primary" style="width:100%; padding:12px; margin-top:8px" onclick="pirate.idx++; pirateRound()">${pirate.idx + 1 < pirate.qs.length ? "➡️ 下一回合" : "🏁 看戰果"}</button>`);
+}
+async function finishPirate(win) {
+  const { P, type } = pirate, log = pirateLog();
+  let amount = 0;
+  try {
+    if (win) { amount = P.reward; await coinOp("loot", amount, P.name); }
+    else { amount = stealAmount(type); if (amount > 0) await coinOp("steal", amount, P.name); }
+  } catch (e) { toast("⚠️ " + e.message); }
+  log.lossStreak = win ? 0 : (log.lossStreak || 0) + 1; store(pirateKey(), log);
+  const box = pirateBox();
+  box.innerHTML = win
+    ? `<div class="pirate-title win">擊退海盜！</div><p style="text-align:center; font-size:1.1rem">${P.emoji} ${P.name}落荒而逃！你拿到戰利品 <b class="gold-text">🪙 ${amount}</b>${type === "captain" ? "，懸賞令蓋上一個印章！" : "。"}</p>`
+    : `<div class="pirate-title">錢袋被搶了…</div><p style="text-align:center; font-size:1.05rem">${P.name}搶走了 <b>🪙 ${amount}</b>${amount ? "" : "（今天被搶的已經到上限，或錢袋是空的）"}。寶庫裡的金幣都很安全。<br>${log.lossStreak >= 2 ? "下一個海盜會比較弱，加油！" : "把錯題複習好，下次一定贏！"}</p>`;
+  box.insertAdjacentHTML("beforeend", `<div class="lore-box">💡 先把金幣存進寶庫，海盜就搶不走了。</div><button class="btn-primary" style="width:100%; padding:12px" onclick="endPirate()">繼續航行</button>`);
+}
+function endPirate() {
+  if (pirate) clearInterval(pirate.timer);
+  pirate = null;
+  closeModal("quiz-modal");
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
+  renderAll();
 }
 
 function saveRecord(answerRow, sessionRow) {
@@ -2247,6 +2423,7 @@ async function enterSubject(key) {
   await switchView(() => { view = { level: "subject", subject: key }; pos.unit[key] = pos.unit[key] || "DOCK@" + key; });
   const s = WORLD.find(x => x.key === key);
   toast(`${s.icon} 歡迎來到「${s.title}」！選好交通方式，點單元小島出發`);
+  setTimeout(() => maybePirate("sail"), 2500);
   net.heartbeat();
 }
 async function backToWorld() {
@@ -2747,6 +2924,7 @@ function nextQuestion() {
 }
 
 function finishQuiz(lockedOut) {
+  pirateChance = !lockedOut;
   const done = lockedOut ? quizState.idx + 1 : quizState.questions.length;
   const sec = Math.max(5, Math.round((Date.now() - quizState.startTime) / 1000));
   const acc = done ? quizState.correctCount / done : 0;
@@ -2779,6 +2957,7 @@ function finishQuiz(lockedOut) {
 function closeQuiz() {
   closeModal("quiz-modal");
   renderAll();
+  if (pirateChance) { pirateChance = false; setTimeout(() => maybePirate("finish"), 900); }
 }
 
 // =========================================================
