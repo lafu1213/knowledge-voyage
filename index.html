@@ -136,6 +136,9 @@
   }
   body.season-final .modal-box.wreck h2 { font-family: "Noto Serif TC", serif; color: #ffd45c; }
   body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
+  body.season-final .coin-pill { background: linear-gradient(180deg, rgba(60,40,6,.85), rgba(20,12,2,.9)); border-color: #e9b949; color: #ffe48a; }
+  .coin-gain { background: linear-gradient(180deg, #ffe48a, #c98a1b) !important; color: #2a1404 !important; margin-left: 6px; animation: coinPop .6s ease-out; }
+  @keyframes coinPop { 0% { transform: translateY(8px) scale(.6); opacity: 0; } 60% { transform: translateY(-4px) scale(1.15); opacity: 1; } 100% { transform: none; } }
   .pace-note { margin-top: 8px; font-size: .85rem; font-weight: 800; color: var(--ink-soft); text-align: center; }
   .rush-warn { margin: 8px 0; padding: 10px 12px; border-radius: 12px; background: rgba(220,38,38,.18); border: 2px solid #f87171; font-weight: 800; }
 
@@ -1294,14 +1297,15 @@ async function loadData() {
   BANK = hasChinese || FINAL ? cloud : [...builtinQuestions(), ...cloud];
   buildWorld();
 
-  myRows = []; mySessions = [];
+  myRows = []; mySessions = []; coinRows = [];
   if (session.user.role === "student") {
     if (DEMO) {
       const d = load("508_DEMO_DATA_" + session.user.name, { answers: [], sessions: [] });
       myRows = d.answers; mySessions = d.sessions;
+      coinRows = load("508_DEMO_COINS_" + session.user.name, []);
     } else {
       const d = await api("myData");
-      myRows = d.answers; mySessions = d.sessions;
+      myRows = d.answers; mySessions = d.sessions; coinRows = d.coins || [];
       const q = queue();
       const known = new Set(myRows.map(r => r.uid));
       myRows.push(...q.answers.filter(a => !known.has(a.uid)));
@@ -1419,6 +1423,92 @@ async function flushQueue() {
   }
 }
 setInterval(flushQueue, 30000);
+
+// =========================================================
+// 期末：金幣（錢袋＋寶庫）
+// 賺到的金幣由答題紀錄算出來；存入、領出、老師發的金幣記在雲端「金幣帳本」
+// =========================================================
+const COIN = { correct: 5, firstRight: 10, fix: 8, levelUp: 50, star: 30, vaultCap: 300 };
+let coinRows = [];
+/** 每一筆作答賺幾枚金幣（亂答被判 0 分的不給金幣） */
+function coinsForRows(rows) {
+  const seen = new Set(); let total = 0;
+  rows.forEach(r => {
+    const first = !seen.has(r.qId); seen.add(r.qId);
+    if (!r.ok || !(Number(r.pts) > 0)) return;
+    total += r.mode === "訂正" ? COIN.fix : first ? COIN.firstRight : COIN.correct;
+  });
+  return total;
+}
+function coinForAnswer(row) {
+  if (!row.ok || !(row.pts > 0)) return 0;
+  const before = myRows.slice(0, -1).some(r => r.qId === row.qId);
+  return row.mode === "訂正" ? COIN.fix : before ? COIN.correct : COIN.firstRight;
+}
+function coinState() {
+  const lv = getLevelInfo(stats.score).lv;
+  const stars = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
+  const fromAnswers = coinsForRows(myRows), fromLevel = (lv - 1) * COIN.levelUp, fromStars = stars * COIN.star;
+  const sum = op => coinRows.filter(r => r.op === op).reduce((t, r) => t + (Number(r.amount) || 0), 0);
+  const earned = fromAnswers + fromLevel + fromStars, granted = sum("grant");
+  const deposited = sum("deposit"), withdrawn = sum("withdraw"), spent = sum("spend"), stolen = sum("steal");
+  const cap = COIN.vaultCap + 200 * coinRows.filter(r => r.op === "spend" && r.note === "寶庫擴建").length;
+  return {
+    wallet: Math.max(0, earned - deposited + withdrawn - spent - stolen),
+    vault: Math.max(0, deposited - withdrawn + granted), cap,
+    bounty: earned + granted, fromAnswers, fromLevel, fromStars, granted
+  };
+}
+async function coinOp(op, amount, note) {
+  const row = { t: nowStr(), op, amount, note: note || "" };
+  if (DEMO) {
+    coinRows.push(row);
+    store("508_DEMO_COINS_" + session.user.name, coinRows);
+  } else {
+    const r = await api("coins", { op, amount, note: note || "" });
+    coinRows = r.coins || coinRows.concat(row);
+  }
+  renderPills(); renderSide();
+}
+function openVault() {
+  if (!FINAL || isTrial()) return;
+  const c = coinState(), room = Math.max(0, c.cap - c.vault);
+  const box = document.getElementById("quiz-content");
+  openModal("quiz-modal");
+  box.closest(".modal-box").classList.remove("wreck");
+  const btn = (label, js, ok) => `<button class="${ok ? "btn-accent" : "btn-ghost"}" ${ok ? "" : "disabled"} style="padding:10px 14px" onclick="${js}">${label}</button>`;
+  box.innerHTML = `<h2 style="margin-top:0;">🏦 我的金幣</h2>
+    <div class="tiles" style="margin-bottom:12px">
+      <div class="tile-kpi"><b>🪙 ${c.wallet}</b><span>船上錢袋（海盜會搶）</span></div>
+      <div class="tile-kpi"><b>🔒 ${c.vault} / ${c.cap}</b><span>島上寶庫（安全）</span></div>
+      <div class="tile-kpi"><b>📜 ${c.bounty}</b><span>懸賞金（累積賺到的）</span></div>
+      <div class="tile-kpi"><b>🎁 ${c.granted}</b><span>老師給的獎勵</span></div>
+    </div>
+    <div class="lore-box">⚓ <b>存進寶庫</b>的金幣最安全，海盜只能搶船上的錢袋。寶庫一開始最多放 ${COIN.vaultCap} 枚。</div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin:12px 0">
+      ${btn("存入 10", "vaultMove('deposit', 10)", c.wallet >= 10 && room >= 10)}
+      ${btn("存入 50", "vaultMove('deposit', 50)", c.wallet >= 50 && room >= 50)}
+      ${btn(`全部存入（${Math.min(c.wallet, room)}）`, `vaultMove('deposit', ${Math.min(c.wallet, room)})`, Math.min(c.wallet, room) > 0)}
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px">
+      ${btn("領出 10", "vaultMove('withdraw', 10)", c.vault >= 10)}
+      ${btn("領出 50", "vaultMove('withdraw', 50)", c.vault >= 50)}
+    </div>
+    <details class="rules"><summary>🪙 金幣怎麼賺？</summary>
+      答對一題 +${COIN.correct}・第一次就答對 +${COIN.firstRight}・訂正成功 +${COIN.fix}<br>
+      每升一級 +${COIN.levelUp}・每拿到一顆星 +${COIN.star}・老師的獎勵直接進寶庫<br>
+      太快亂答不會給金幣。花金幣不會扣分，等級也不會下降。<br>
+      目前賺到：答題 ${c.fromAnswers}・等級 ${c.fromLevel}・星星 ${c.fromStars}
+    </details>`;
+}
+async function vaultMove(op, amount) {
+  const c = coinState();
+  if (amount <= 0) return;
+  if (op === "deposit" && (amount > c.wallet || c.vault + amount > c.cap)) return toast("⚠️ 錢袋不夠或寶庫放不下了");
+  if (op === "withdraw" && amount > c.vault) return toast("⚠️ 寶庫裡沒有那麼多金幣");
+  try { await coinOp(op, amount); toast(op === "deposit" ? `🔒 已存入寶庫 ${amount} 枚金幣` : `🪙 已從寶庫領出 ${amount} 枚金幣`); openVault(); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
 
 function saveRecord(answerRow, sessionRow) {
   if (!session || session.user.role !== "student") return;   // 老師、家長試玩不列入紀錄
@@ -2075,6 +2165,12 @@ function renderPills() {
       <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>
       <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>`;
   }
+  if (FINAL && u.role === "student" && !isTrial()) {
+    const c = coinState();
+    html += `<span class="pill coin-pill" style="cursor:pointer" onclick="openVault()" title="船上錢袋：海盜會搶">🪙 錢袋 ${c.wallet}</span>
+      <span class="pill coin-pill" style="cursor:pointer" onclick="openVault()" title="島上寶庫：安全">🔒 寶庫 ${c.vault}/${c.cap}</span>
+      <span class="pill coin-pill" style="cursor:pointer" onclick="openVault()" title="懸賞金：累積賺到的金幣">📜 懸賞 ${c.bounty}</span>`;
+  }
   pills.innerHTML = html;
   document.getElementById("btn-dashboard").hidden = u.role === "student";
   const trial = document.getElementById("trial-banner");
@@ -2485,9 +2581,10 @@ function submitAnswer(choice) {
   });
   const lvAfter = getLevelInfo(stats.score).lv;
   const lvNote = isTrial() || lvAfter === lvBefore ? "" : lvAfter > lvBefore
-    ? `<div class="lv-note up">🎉 升級了！現在是 Lv.${lvAfter} ${getLevelInfo(stats.score).title}</div>`
+    ? `<div class="lv-note up">🎉 升級了！現在是 Lv.${lvAfter} ${getLevelInfo(stats.score).title}${FINAL ? `　🪙 +${COIN.levelUp}` : ""}</div>`
     : `<div class="lv-note down">⚠️ 降級了…現在是 Lv.${lvAfter}，把錯題訂正好就能升回來！</div>`;
-  const ptsNote = isTrial() ? "" : `<span class="pts ${pts >= 0 ? "plus" : "minus"}">${fmtPts(pts)} 分</span>${wasRepeat ? `<span style="font-size:.8rem;">（這題以前錯過，一錯再錯扣更多）</span>` : ""}`;
+  const gotCoin = FINAL && !isTrial() ? coinForAnswer(myRows[myRows.length - 1] || {}) : 0;
+  const ptsNote = isTrial() ? "" : `<span class="pts ${pts >= 0 ? "plus" : "minus"}">${fmtPts(pts)} 分</span>${gotCoin ? `<span class="pts plus coin-gain">🪙 +${gotCoin}</span>` : ""}${wasRepeat ? `<span style="font-size:.8rem;">（這題以前錯過，一錯再錯扣更多）</span>` : ""}`;
 
   btns[q.ans].classList.add("correct");
   btns[q.ans].insertAdjacentText("beforeend", " ⬅ 正確答案");
