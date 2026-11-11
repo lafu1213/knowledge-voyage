@@ -137,6 +137,18 @@
   body.season-final .modal-box.wreck h2 { font-family: "Noto Serif TC", serif; color: #ffd45c; }
   body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
   body.season-final .coin-pill { background: linear-gradient(180deg, rgba(60,40,6,.85), rgba(20,12,2,.9)); border-color: #e9b949; color: #ffe48a; }
+  .isle-flag { pointer-events: none; }
+  .isle.conquered .face { stroke: rgba(255,120,120,.75); stroke-width: 2.5; }
+  .isle-flag .flag-cloth { transform-box: fill-box; transform-origin: left center; animation: flagWave 2.6s ease-in-out infinite; }
+  .isle-flag.gold { filter: drop-shadow(0 0 6px rgba(255,212,92,.9)); }
+  .isle-flag .flag-spark { animation: beamPulse 1.6s ease-in-out infinite; }
+  @keyframes flagWave { 0%, 100% { transform: skewY(0deg) scaleX(1); } 50% { transform: skewY(-4deg) scaleX(.94); } }
+  @media (prefers-reduced-motion: reduce) { .isle-flag .flag-cloth, .isle-flag .flag-spark { animation: none; } }
+  .flag-box { margin: 10px 0; padding: 10px 14px; border-radius: 12px; border-left: 5px solid #ef4444; background: rgba(239,68,68,.1); font-size: .9rem; line-height: 1.6; }
+  .flag-box.gold { border-left-color: #f5c451; background: rgba(245,196,81,.15); }
+  .flag-win { display: flex; gap: 12px; align-items: center; text-align: left; margin: 10px 0; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(239,68,68,.25), rgba(127,16,16,.2)); border: 1px solid #f87171; animation: coinPop .8s ease-out; }
+  .flag-win.gold { background: linear-gradient(135deg, rgba(255,228,138,.3), rgba(201,138,27,.2)); border-color: #ffe48a; }
+  .flag-win-icon { font-size: 2.6rem; animation: flagWave 2.6s ease-in-out infinite; }
   .reading-reward { text-align: left; margin: 10px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,228,138,.6); background: linear-gradient(135deg, rgba(255,228,138,.18), rgba(159,224,255,.12)); font-size: .9rem; line-height: 1.6; }
   .treasure-found { display: flex; gap: 12px; align-items: center; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid #ffe48a; animation: coinPop .8s ease-out; }
   .treasure-icon { flex: 0 0 auto; filter: drop-shadow(0 0 10px rgba(255,228,138,.8)); font-size: 2.6rem; }
@@ -1957,7 +1969,7 @@ function shade(hex, amt) {
 
 /** 一座島：淺灘、沙灘、厚度、陸地、亮面、裝飾、主圖示、招牌 */
 function islandSvg(o) {
-  const { id, x, y, r, seed, land, sand, shape, deco = [], icon, label, sub, cls = "", badge = 0, aria, smoke } = o;
+  const { id, x, y, r, seed, land, sand, shape, deco = [], icon, label, sub, cls = "", badge = 0, aria, smoke, flag = 0, flagText = "" } = o;
   const gid = "g-" + seed.replace(/[^\w]/g, "") + Math.round(x);
   const rnd = seeded(seed + "deco");
   const decoSvg = deco.slice(0, r > 70 ? 4 : 3).map((e, i) => {
@@ -1980,6 +1992,7 @@ function islandSvg(o) {
         ${decoSvg}
         ${smoke ? `<text class="t-emoji smoke" x="${f1(x + r * 0.05)}" y="${f1(y - r * 0.45)}" font-size="${f1(r * 0.3)}">💨</text>` : ""}
         <text class="t-emoji" x="${f1(x)}" y="${f1(y + r * 0.12)}" font-size="${f1(r * 0.5)}">${icon}</text>
+        ${flag ? flagSvg(x, y, r, flag, flagText) : ""}
         <rect class="banner-rect" x="${f1(x - bw / 2)}" y="${f1(by)}" width="${f1(bw)}" height="${f1((sub ? r * 0.48 : r * 0.3) * ts)}" rx="${f1(r * 0.12)}"/>
         <text class="banner-text" x="${f1(x)}" y="${f1(by + r * 0.21 * ts)}" font-size="${f1(r * 0.19 * ts)}">${escapeHtml(label)}</text>
         ${sub ? `<text class="banner-text" x="${f1(x)}" y="${f1(by + r * 0.41 * ts)}" font-size="${f1(r * 0.13 * ts)}" opacity="0.88">${escapeHtml(sub)}</text>` : ""}
@@ -2036,7 +2049,7 @@ function routeSvg(a, b, mode, seed) {
   return `<g transform="translate(${f1(s.x)},${f1(s.y)}) rotate(${f1(ang)})">${deck}</g>`;
 }
 
-const SHARED_DEFS = `
+const SHARED_DEFS = `<linearGradient id="flagRed" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset="1" stop-color="#b91c1c"/></linearGradient><linearGradient id="flagGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#ffd45c"/><stop offset="1" stop-color="#c98a1b"/></linearGradient>
   <pattern id="planks" width="9" height="20" patternUnits="userSpaceOnUse">
     <rect width="9" height="20" fill="var(--plank-light)"/><rect x="7" width="2" height="20" fill="var(--plank)"/>
   </pattern>
@@ -2137,6 +2150,34 @@ function unitCoverage(u, st) {
   const r = total ? right / total : 0;
   return { total, done, unseen: total - done, right, stars: r >= 1 ? 3 : r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0 };
 }
+// ===== 插旗：拿下的島會插上自己的旗子 =====
+// 紅旗「拿下」：正確率 ⭐⭐⭐（曾經一場全對）＋完成度 🌟🌟（島上題目答對過 70%）
+// 金旗「完全征服」：正確率 ⭐⭐⭐＋完成度 🌟🌟🌟（島上每一題都答對過）
+function flagLevel(u, st) {
+  st = st || stats;
+  if (!st || !u.questions.length) return 0;
+  const a = (st.stars || {})[u.key] || 0, c = unitCoverage(u, st).stars;
+  return a >= 3 && c >= 3 ? 2 : a >= 3 && c >= 2 ? 1 : 0;
+}
+function subjectFlags(s) {
+  const lv = s.units.map(u => flagLevel(u));
+  return { got: lv.filter(x => x > 0).length, gold: lv.filter(x => x === 2).length, total: s.units.length };
+}
+/** 島上的旗子：level 1 紅旗、2 金旗；text 是旗面上的字（自己的頭像或拿下的數量） */
+function flagSvg(x, y, r, level, text) {
+  const px = x + r * 0.42, top = y - r * 1.02, base = y + r * 0.02, w = r * 0.64, h = r * 0.42;
+  const gold = level === 2;
+  const cloth = `M${f1(px)} ${f1(top)} C${f1(px + w * 0.35)} ${f1(top - h * 0.18)} ${f1(px + w * 0.65)} ${f1(top + h * 0.18)} ${f1(px + w)} ${f1(top)}
+    L${f1(px + w)} ${f1(top + h)} C${f1(px + w * 0.65)} ${f1(top + h * 1.18)} ${f1(px + w * 0.35)} ${f1(top + h * 0.82)} ${f1(px)} ${f1(top + h)}Z`;
+  return `<g class="isle-flag ${gold ? "gold" : ""}" aria-hidden="true">
+    <ellipse cx="${f1(px)}" cy="${f1(base)}" rx="${f1(r * 0.09)}" ry="${f1(r * 0.035)}" fill="rgba(0,0,0,.35)"/>
+    <line x1="${f1(px)}" y1="${f1(base)}" x2="${f1(px)}" y2="${f1(top - r * 0.06)}" stroke="${gold ? "#7a4a0a" : "#3b2410"}" stroke-width="${f1(Math.max(2, r * 0.045))}" stroke-linecap="round"/>
+    <circle cx="${f1(px)}" cy="${f1(top - r * 0.07)}" r="${f1(Math.max(2.5, r * 0.045))}" fill="${gold ? "#fff3b0" : "#ffd45c"}"/>
+    <g class="flag-cloth"><path d="${cloth}" fill="${gold ? "url(#flagGold)" : "url(#flagRed)"}" stroke="${gold ? "#fff3b0" : "#7f1010"}" stroke-width="1.2"/>
+      <text class="t-emoji" x="${f1(px + w * 0.5)}" y="${f1(top + h * 0.72)}" font-size="${f1(h * 0.62)}">${text}</text></g>
+    ${gold ? `<text class="t-emoji flag-spark" x="${f1(px + w * 1.05)}" y="${f1(top - r * 0.02)}" font-size="${f1(r * 0.18)}">✨</text>` : ""}
+  </g>`;
+}
 function unitStars(u, st) { st = st || stats; return ((st.stars || {})[u.key] || 0) + unitCoverage(u, st).stars; }
 /** 一位學生全部的星星：正確率星＋完成度星（老師後台、家長頁也用這個算） */
 function starSummary(st) {
@@ -2180,9 +2221,10 @@ function renderWorld(kw) {
     }
     const s = n.subject, empty = !s.units.length;
     const matches = kw && s.units.some(u => u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
-    const prog = subjectProgress(s);
+    const prog = subjectProgress(s), fl = subjectFlags(s);
     return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "world-" + s.key, land: s.land, sand: s.sand, shape: s.shape, deco: s.deco,
-      icon: s.icon, label: FINAL ? FINAL_SEA[s.key] || s.name : s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}`,
+      icon: s.icon, label: FINAL ? FINAL_SEA[s.key] || s.name : s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}${fl.got ? `・🚩${fl.got}` : ""}`,
+      flag: empty || !fl.got ? 0 : fl.gold === fl.total ? 2 : 1, flagText: fl.got === fl.total ? "👑" : String(fl.got),
       badge: pendingCount(q => q.subject === s.key), cls: (empty ? "empty" : "") + (kw ? (matches ? " hit" : " dim") : "") });
   });
   const reefs = layout().reefs
@@ -2235,7 +2277,7 @@ function renderSubject(kw) {
   const isles = nodes.map((n, i) => {
     if (n.dock) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "dock" + s.key, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
       shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🪵"], icon: "⛵", label: "碼頭", sub: "回世界地圖" });
-    const u = n.unitObj, st = stats.stars[u.key] || 0, cov = unitCoverage(u);
+    const u = n.unitObj, st = stats.stars[u.key] || 0, cov = unitCoverage(u), fl = flagLevel(u);
     const color = s.palette[(i - 1) % s.palette.length];
     const [l1, l2] = splitUnit(u.unit);
     const maxLen = isPortrait() ? 6 : 8;
@@ -2245,8 +2287,9 @@ function renderSubject(kw) {
       shape: Object.assign({}, s.shape, { points: s.shape.sharp ? 5 + (i % 3) : s.shape.points }), deco: shuffleSeeded(s.deco, u.key),
       icon: locked ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
       sub: `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
-      badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (kw ? (matches ? " hit" : " dim") : ""),
-      aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過` });
+      badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (kw ? (matches ? " hit" : " dim") : "") + (fl ? " conquered" : ""),
+      flag: fl, flagText: myEmoji(),
+      aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過${fl === 2 ? "，已完全征服" : fl ? "，已插旗拿下" : ""}` });
   });
   setMapSvg(vb, `
     <defs>${SHARED_DEFS}</defs>
@@ -2622,7 +2665,8 @@ function renderSide() {
   const subjRows = WORLD.map(s => {
     if (!s.units.length) return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span style="opacity:.6">準備中</span></div><div class="bar"><i style="width:0"></i></div></div>`;
     const p = subjectProgress(s);
-    return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span>⭐ ${p.got}/${p.max}</span></div><div class="bar"><i style="width:${p.max ? Math.round(p.got / p.max * 100) : 0}%"></i></div></div>`;
+    const fl = subjectFlags(s);
+    return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span>⭐ ${p.got}/${p.max}　🚩 ${fl.got}/${fl.total}</span></div><div class="bar"><i style="width:${p.max ? Math.round(p.got / p.max * 100) : 0}%"></i></div></div>`;
   }).join("");
 
   if (u.role !== "student") {
@@ -2813,6 +2857,15 @@ function generateQuestions(unit, n, used) {
 // =========================================================
 function isTrial() { return session.user.role !== "student"; }
 
+function flagBox(unit, st, cov) {
+  const fl = flagLevel(unit);
+  if (fl === 2) return `<div class="flag-box gold">👑 <b>完全征服！</b>金旗已經插在這座島上。</div>`;
+  const need = [];
+  if (st < 3) need.push("一場 10 題全部答對（正確率 ⭐⭐⭐）");
+  if (cov.stars < (fl ? 3 : 2)) need.push(fl ? "島上每一題都答對過（完成度 🌟🌟🌟）" : `島上題目答對過 70%（完成度 🌟🌟，目前 ${cov.total ? Math.round(cov.right / cov.total * 100) : 0}%）`);
+  return `<div class="flag-box">${fl ? `🚩 <b>已插旗拿下！</b>再完成：${need.join("、")}，就能換成 👑 金旗「完全征服」。`
+    : `🏳️ <b>還沒插旗</b>：${need.join("、")}，就能在這座島插上你的旗子！`}</div>`;
+}
 function openUnitModal(key) {
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   if (!isTrial() && stats.pending.length >= LOCK_LIMIT) {
@@ -2838,6 +2891,7 @@ function openUnitModal(key) {
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
     ${readingBoost(unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！</div>` : ""}
     ${covBox}
+    ${genOnly || isTrial() ? "" : flagBox(unit, st, cov)}
     <div class="lore-box violet">
       🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
       ${genOnly ? `• 這座島的題目每次都由程式重新產生，數字、句子、選項都會換<br>• 以前在這裡答錯的題目，也會挑一兩題回來複習<br>`
@@ -2859,6 +2913,7 @@ function startQuiz(key) {
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
+  quizState.unitKey = key; quizState.flagBefore = flagLevel(unit);
   renderQuestion();
 }
 
@@ -3045,9 +3100,20 @@ function finishQuiz(lockedOut) {
         <div style="font-size:.85rem; opacity:.9;">目前等級</div><div style="font-size:1.6rem; font-weight:900;">⭐ Lv.${lv.lv}｜${lv.title}</div>
         <div style="font-size:.85rem;">累計 ${stats.score} 分</div></div>`}
       ${reading && !isTrial() ? readingResultHtml(acc, done) : ""}
+      ${flagResultHtml()}
       <button class="btn-primary" style="width:100%; padding:12px;" onclick="${lockedOut ? "openMistakeBook('pending')" : "closeQuiz()"}">${lockedOut ? "🌋 前往錯題島" : "🗺️ 回到地圖"}</button>
     </div>`;
   if (reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
+}
+function flagResultHtml() {
+  if (isTrial() || quizState.mode !== "練習" || !quizState.unitKey) return "";
+  const unit = WORLD.flatMap(s => s.units).find(u => u.key === quizState.unitKey);
+  const now = unit ? flagLevel(unit) : 0;
+  if (!unit || now <= (quizState.flagBefore || 0)) return "";
+  const subj = WORLD.find(s => s.key === unit.subject), fl = subjectFlags(subj);
+  return `<div class="flag-win ${now === 2 ? "gold" : ""}"><div class="flag-win-icon">${now === 2 ? "👑" : "🚩"}</div>
+    <div><b>${now === 2 ? "完全征服！金旗升起！" : "插旗成功！這座島被你拿下了！"}</b><br>
+    <small>${escapeHtml(splitUnit(unit.unit)[1] || unit.unit)}　・　${escapeHtml(unit.subject)}已插旗 ${fl.got}/${fl.total} 座島${fl.got === fl.total ? "，全島制霸！" : ""}</small></div></div>`;
 }
 function readingResultHtml(acc, done) {
   const today = nowStr().slice(0, 10), unit = quizState.unit;
