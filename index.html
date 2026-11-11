@@ -137,6 +137,12 @@
   body.season-final .modal-box.wreck h2 { font-family: "Noto Serif TC", serif; color: #ffd45c; }
   body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
   body.season-final .coin-pill { background: linear-gradient(180deg, rgba(60,40,6,.85), rgba(20,12,2,.9)); border-color: #e9b949; color: #ffe48a; }
+  .reading-reward { text-align: left; margin: 10px 0; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,228,138,.6); background: linear-gradient(135deg, rgba(255,228,138,.18), rgba(159,224,255,.12)); font-size: .9rem; line-height: 1.6; }
+  .treasure-found { display: flex; gap: 12px; align-items: center; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(0,0,0,.25); border: 1px solid #ffe48a; animation: coinPop .8s ease-out; }
+  .treasure-icon { flex: 0 0 auto; filter: drop-shadow(0 0 10px rgba(255,228,138,.8)); font-size: 2.6rem; }
+  .treasure-note { margin-top: 8px; font-size: .85rem; opacity: .9; }
+  .rare-tag { display: inline-block; margin-top: 6px; padding: 3px 8px; border-radius: 8px; font-size: .74rem; font-weight: 900; background: rgba(255,228,138,.2); color: #ffe48a; border: 1px dashed #ffe48a; }
+  .rare-card { box-shadow: 0 0 18px rgba(255,228,138,.25); }
   .coin-gain { background: linear-gradient(180deg, #ffe48a, #c98a1b) !important; color: #2a1404 !important; margin-left: 6px; animation: coinPop .6s ease-out; }
   @keyframes coinPop { 0% { transform: translateY(8px) scale(.6); opacity: 0; } 60% { transform: translateY(-4px) scale(1.15); opacity: 1; } 100% { transform: none; } }
   .shop .shop-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; padding-right: 44px; }
@@ -1122,9 +1128,22 @@ function answerPoints(q, ok, mode, combo) {
   const R = SCORE_RULES;
   if (mode === "訂正") return ok ? R.fixOk : R.fixWrong;
   if (mode === "複習") return ok ? R.reviewOk : R.reviewWrong;
-  if (ok) return R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus);
+  if (ok) return (R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus)) * (readingBoost(q.unit) ? READ.ptsMul : 1);
   const before = stats.byId[q.id];
   return before && before.wrong > 0 ? R.wrongAgain : R.wrongFirst;
+}
+// ===== 期末閱讀島加碼：答對分數 ×2、金幣 ×2、80% 以上再送金幣，全對有機會撈到稀有寶物 =====
+const READ = { ptsMul: 2, coinMul: 2, bonusCoins: 40, perfectChance: 0.5, goodChance: 0.25, minQ: 3 };
+function isReadingUnit(unit) { return /閱讀/.test(String(unit || "")); }
+function readingBoost(unit) { return FINAL && isReadingUnit(unit); }
+/** 閱讀島 80% 以上的場次，每個島每天最多算一次獎勵金幣 */
+function readingBonusCoins(sessions) {
+  const seen = new Set();
+  sessions.forEach(x => {
+    if (!isReadingUnit(x.unit) || !(x.total >= READ.minQ) || x.correct / x.total < 0.8) return;
+    seen.add(x.unit + "|" + String(x.t).slice(0, 10));
+  });
+  return seen.size * READ.bonusCoins;
 }
 function sessionBonus(correct, total) {
   if (!total) return 0;
@@ -1536,28 +1555,28 @@ function coinsForRows(rows) {
   rows.forEach(r => {
     const first = !seen.has(r.qId); seen.add(r.qId);
     if (!r.ok || !(Number(r.pts) > 0)) return;
-    total += r.mode === "訂正" ? COIN.fix : first ? COIN.firstRight : COIN.correct;
+    total += (r.mode === "訂正" ? COIN.fix : first ? COIN.firstRight : COIN.correct) * (readingBoost(r.unit) ? READ.coinMul : 1);
   });
   return total;
 }
 function coinForAnswer(row) {
   if (!row.ok || !(row.pts > 0)) return 0;
   const before = myRows.slice(0, -1).some(r => r.qId === row.qId);
-  return row.mode === "訂正" ? COIN.fix : before ? COIN.correct : COIN.firstRight;
+  return (row.mode === "訂正" ? COIN.fix : before ? COIN.correct : COIN.firstRight) * (readingBoost(row.unit) ? READ.coinMul : 1);
 }
 function coinState() {
   const lv = getLevelInfo(stats.score).lv;
   const stars = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
   const fromAnswers = coinsForRows(myRows), fromLevel = (lv - 1) * COIN.levelUp, fromStars = stars * COIN.star;
   const sum = op => coinRows.filter(r => r.op === op).reduce((t, r) => t + (Number(r.amount) || 0), 0);
-  const loot = sum("loot");
-  const earned = fromAnswers + fromLevel + fromStars + loot, granted = sum("grant");
+  const loot = sum("loot"), fromReading = FINAL ? readingBonusCoins(mySessions) : 0;
+  const earned = fromAnswers + fromLevel + fromStars + loot + fromReading, granted = sum("grant");
   const deposited = sum("deposit"), withdrawn = sum("withdraw"), spent = sum("spend"), stolen = sum("steal");
   const cap = COIN.vaultCap + 200 * coinRows.filter(r => r.op === "spend" && (r.note === "寶庫擴建" || r.note === "vault")).length;
   return {
     wallet: Math.max(0, earned - deposited + withdrawn - spent - stolen),
     vault: Math.max(0, deposited - withdrawn + granted), cap,
-    bounty: earned + granted, fromAnswers, fromLevel, fromStars, granted, loot, stolen
+    bounty: earned + granted, fromAnswers, fromLevel, fromStars, fromReading, granted, loot, stolen
   };
 }
 async function coinOp(op, amount, note) {
@@ -1598,8 +1617,9 @@ function openVault() {
     <details class="rules"><summary>🪙 金幣怎麼賺？</summary>
       答對一題 +${COIN.correct}・第一次就答對 +${COIN.firstRight}・訂正成功 +${COIN.fix}<br>
       每升一級 +${COIN.levelUp}・每拿到一顆星 +${COIN.star}・老師的獎勵直接進寶庫<br>
+      📖 閱讀島：答對的金幣 ×${READ.coinMul}，一場答對 80% 以上再送 ${READ.bonusCoins}（每島每天一次）<br>
       太快亂答不會給金幣。花金幣不會扣分，等級也不會下降。<br>
-      目前賺到：答題 ${c.fromAnswers}・等級 ${c.fromLevel}・星星 ${c.fromStars}
+      目前賺到：答題 ${c.fromAnswers}・等級 ${c.fromLevel}・星星 ${c.fromStars}・閱讀獎勵 ${c.fromReading}
     </details>`;
 }
 // =========================================================
@@ -1619,20 +1639,26 @@ const SHOP = [
   { id: "compass", name: "航海羅盤", price: 80, lv: 15, tier: 3, desc: "打黑帆船長時多 10 秒作答時間",
     icon: '<circle cx="28" cy="28" r="22" fill="#1A0E02" stroke="#FFE48A" stroke-width="2.5"/><path d="M28 10l5 18-5 18-5-18z" fill="#FFD45C"/><path d="M28 10l5 18h-10z" fill="#FF3B52"/>' }
 ];
+// 閱讀島限定的稀有寶物：商店買不到，只能在閱讀島答得好撈到
+const RARE = [
+  { id: "pearl", name: "珍珠護符", tier: 3, rare: true, desc: "閱讀島限定！遇到任何海盜都能擋下一次，連黑帆船長也擋得住",
+    icon: '<circle cx="28" cy="30" r="20" fill="#1b3a5a" stroke="#FFE48A" stroke-width="2.5"/><path d="M14 30c0-10 6-16 14-16s14 6 14 16" fill="none" stroke="#9FE0FF" stroke-width="2.5"/><circle cx="28" cy="32" r="9" fill="#F4F1FF" stroke="#FFE48A" stroke-width="2"/><circle cx="25" cy="29" r="3" fill="#fff"/>' }
+];
 const DECOR = [
   { id: "sail-orange", kind: "sail", name: "夕陽橘船帆", price: 80, color: "#ff8a3d" },
   { id: "flag-star", kind: "flag", name: "星星旗幟", price: 120, color: "#7fb8ff" },
-  { id: "head-whale", kind: "head", name: "鯨魚船頭像", price: 300, color: "#9ff0ff" }
+  { id: "head-whale", kind: "head", name: "鯨魚船頭像", price: 300, color: "#9ff0ff" },
+  { id: "sail-star", kind: "sail", name: "星光船帆", rare: true, color: "#ffe48a" }
 ];
 const TIER = { 1: ["普通", "tier-1"], 2: ["稀有", "tier-2"], 3: ["傳說", "tier-3"] };
-function itemById(id) { return SHOP.concat(DECOR).find(x => x.id === id || x.name === id); }
+function itemById(id) { return SHOP.concat(RARE, DECOR).find(x => x.id === id || x.name === id); }
 /** 背包：買過的數量減掉用過的；限時道具看購買時間 */
 function inventory() {
   const inv = {};
   coinRows.forEach(r => {
     const it = itemById(r.note);
     if (!it) return;
-    if (r.op === "spend") { inv[it.id] = inv[it.id] || { n: 0, last: "" }; inv[it.id].n++; inv[it.id].last = r.t; }
+    if (r.op === "spend" || r.op === "treasure") { inv[it.id] = inv[it.id] || { n: 0, last: "" }; inv[it.id].n++; inv[it.id].last = r.t; }
     if (r.op === "use" && inv[it.id]) inv[it.id].n--;
   });
   return inv;
@@ -1668,13 +1694,18 @@ function openShop() {
     const own = !!inv[d.id];
     return `<div class="deco-card" style="--deco:${d.color}"><b>${d.name}</b>
       ${own ? `<button class="btn-ghost" onclick="equipDecor('${d.kind}','${d.id}')">${myDecor()[d.kind] && myDecor()[d.kind].id === d.id ? "✅ 使用中" : "換上"}</button>`
-            : `<button class="buy" ${c.wallet < d.price ? "disabled" : ""} onclick="buyItem('${d.id}')">🪙 ${d.price}</button>`}</div>`;
+            : d.rare ? `<span class="rare-tag">📖 閱讀島限定</span>` : `<button class="buy" ${c.wallet < d.price ? "disabled" : ""} onclick="buyItem('${d.id}')">🪙 ${d.price}</button>`}</div>`;
   }).join("");
   box.innerHTML = `<div class="shop-head"><h2>⚓ 港口商店</h2>
       <span class="pill coin-pill">🪙 錢袋 ${c.wallet}</span><span class="pill coin-pill">🔒 寶庫 ${c.vault}/${c.cap}</span>
       <button class="btn-ghost" onclick="openVault()">🏦 存提金幣</button></div>
     ${c.wallet < 40 && c.vault ? `<div class="lore-box">💡 買東西要用錢袋裡的金幣。錢袋不夠時，可以先到「🏦 存提金幣」從寶庫領出來。</div>` : ""}
     <div class="shop-grid">${SHOP.map(card).join("")}</div>
+    <h3 class="gold-text" style="margin:16px 0 8px">📖 閱讀島限定寶物（買不到！）</h3>
+    <div class="shop-grid">${RARE.map(it => `<div class="shop-card tier-3 rare-card"><span class="tier">稀有</span>${itemIcon(it, 50)}<h4>${it.name}</h4><p>${it.desc}</p>
+      ${inv[it.id] && inv[it.id].n ? `<div class="own">背包裡有 ${inv[it.id].n} 個</div>` : ""}<span class="rare-tag">閱讀島一場答對 80% 以上就有機會撈到</span></div>`).join("")}
+      <div class="shop-card tier-3 rare-card"><span class="tier">稀有</span><div style="font-size:2.4rem">⛵</div><h4>星光船帆</h4><p>金色星光的船帆。第一次在閱讀島全部答對就能得到！</p>
+      ${inv["sail-star"] ? `<div class="own">已經擁有</div>` : ""}<span class="rare-tag">閱讀島第一次全對必得</span></div></div>
     <h3 class="gold-text" style="margin:16px 0 8px">⛵ 船的裝飾</h3><div class="deco-grid">${deco}</div>
     <p style="font-size:.82rem; color:var(--ink-soft); margin:12px 0 0">道具只能在打海盜或對戰時使用，一般練習不能用；花金幣不會扣分，等級也不會下降。</p>`;
 }
@@ -1698,7 +1729,7 @@ function equipDecor(kind, id, quiet) {
 }
 function backpackCard() {
   const inv = inventory();
-  const items = SHOP.filter(it => !it.instant && it.id !== "armor").map(it => {
+  const items = SHOP.filter(it => !it.instant && it.id !== "armor").concat(RARE).map(it => {
     const n = inv[it.id] ? inv[it.id].n : 0;
     return `<div class="bp-slot ${TIER[it.tier][1]}${n ? "" : " empty"}" title="${it.desc}">${itemIcon(it, 30)}<b>${it.name}</b><span>× ${n}</span></div>`;
   }).join("");
@@ -1792,13 +1823,14 @@ function openPirate(type) {
       <button class="btn-danger" onclick="pirateFight()">⚔️ 迎戰：答題</button>
       ${type === "minion" ? `<button class="btn-accent" ${shields ? "" : "disabled"} onclick="pirateUse('shield')">🛡️ 舉起木盾（${shields}）</button>` : ""}
       <button class="btn-ghost" ${scopes ? "" : "disabled"} onclick="pirateUse('scope')">🔭 用瞭望鏡繞路（${scopes}）</button>
+      ${invCount("pearl") ? `<button class="btn-accent" onclick="pirateUse('pearl')">🐚 珍珠護符（${invCount("pearl")}）</button>` : ""}
     </div>`;
 }
 async function pirateUse(id) {
   try { await coinOp("use", 0, itemById(id).name); } catch (e) { return toast("⚠️ " + e.message); }
   const box = pirateBox();
-  box.innerHTML = `<div class="pirate-title" style="font-size:2rem">${id === "shield" ? "🛡️ 擋下來了！" : "🔭 成功繞路！"}</div>
-    <p style="text-align:center">${id === "shield" ? "木盾擋住了小嘍囉，錢袋一枚都沒少。" : "你從瞭望鏡看到海盜，提早換了航線。"}這一趟安全，但沒有戰利品。</p>
+  box.innerHTML = `<div class="pirate-title" style="font-size:2rem">${id === "shield" ? "🛡️ 擋下來了！" : id === "pearl" ? "🐚 珍珠護符發光了！" : "🔭 成功繞路！"}</div>
+    <p style="text-align:center">${id === "shield" ? "木盾擋住了小嘍囉，錢袋一枚都沒少。" : id === "pearl" ? `${pirate.P.name}被珍珠的光芒嚇跑了，錢袋一枚都沒少。` : "你從瞭望鏡看到海盜，提早換了航線。"}這一趟安全，但沒有戰利品。</p>
     <button class="btn-primary" style="width:100%; padding:12px" onclick="endPirate()">繼續航行</button>`;
 }
 function pirateFight() { pirate.idx = 0; pirate.right = 0; pirateRound(); }
@@ -2804,6 +2836,7 @@ function openUnitModal(key) {
   document.getElementById("quiz-content").innerHTML = `
     <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
+    ${readingBoost(unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！</div>` : ""}
     ${covBox}
     <div class="lore-box violet">
       🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
@@ -2917,7 +2950,7 @@ function renderQuestion() {
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
     ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
     ${quizState.mode === "複習" ? `<div class="trial-note" style="background:#e0e7ff;color:#3730a3">📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong} 並回到待訂正</div>` : ""}
-    ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 課文（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
+    ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
     ${listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject)}</h3>
@@ -2988,7 +3021,8 @@ function finishQuiz(lockedOut) {
   const done = lockedOut ? quizState.idx + 1 : quizState.questions.length;
   const sec = Math.max(5, Math.round((Date.now() - quizState.startTime) / 1000));
   const acc = done ? quizState.correctCount / done : 0;
-  const bonus = sessionBonus(quizState.correctCount, done);
+  const reading = quizState.mode === "練習" && readingBoost(quizState.unit);
+  const bonus = sessionBonus(quizState.correctCount, done) * (reading && quizState.correctCount / done >= 0.8 ? READ.ptsMul : 1);
   const score = bonus;
   saveRecord(null, {
     t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
@@ -3010,8 +3044,44 @@ function finishQuiz(lockedOut) {
       ${isTrial() ? "" : `<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:#fff; padding:16px; border-radius:16px; margin:12px 0;">
         <div style="font-size:.85rem; opacity:.9;">目前等級</div><div style="font-size:1.6rem; font-weight:900;">⭐ Lv.${lv.lv}｜${lv.title}</div>
         <div style="font-size:.85rem;">累計 ${stats.score} 分</div></div>`}
+      ${reading && !isTrial() ? readingResultHtml(acc, done) : ""}
       <button class="btn-primary" style="width:100%; padding:12px;" onclick="${lockedOut ? "openMistakeBook('pending')" : "closeQuiz()"}">${lockedOut ? "🌋 前往錯題島" : "🗺️ 回到地圖"}</button>
     </div>`;
+  if (reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
+}
+function readingResultHtml(acc, done) {
+  const today = nowStr().slice(0, 10), unit = quizState.unit;
+  const already = mySessions.filter(x => x.unit === unit && String(x.t).slice(0, 10) === today && x.total >= READ.minQ && x.correct / x.total >= 0.8).length > 1;
+  return `<div class="reading-reward">📖 <b>閱讀島加碼</b>：答對分數和金幣都 ×2${acc >= 0.8 && done >= READ.minQ ? `，結算獎勵也 ×2${already ? "（今天這座島的 🪙 +" + READ.bonusCoins + " 已經領過了）" : `，再送 🪙 +${READ.bonusCoins}`}` : "。一場答對 80% 以上，還會再送金幣、有機會撈到稀有寶物！"}
+    <div id="treasure-slot"></div></div>`;
+}
+/** 閱讀島寶物：一天最多一件；第一次全對必得星光船帆，其他時候全對 50%、80% 以上 25% 撈到珍珠護符 */
+async function maybeTreasure(acc, done) {
+  if (done < READ.minQ || acc < 0.8) return;
+  if (paceState().lastAt > quizState.startTime) return;   // 這一場有亂答就不給寶物
+  const today = nowStr().slice(0, 10);
+  if (coinRows.some(r => r.op === "treasure" && String(r.t).slice(0, 10) === today)) {
+    const slot = document.getElementById("treasure-slot");
+    if (slot) slot.innerHTML = `<div class="treasure-note">🐚 今天已經撈過一件稀有寶物了，明天再來挑戰！</div>`;
+    return;
+  }
+  const inv = inventory();
+  let item = null;
+  if (acc === 1 && !inv["sail-star"]) item = "星光船帆";
+  else if (Math.random() < (acc === 1 ? READ.perfectChance : READ.goodChance) || window.TREASURE_TEST) item = "珍珠護符";
+  const slot = () => document.getElementById("treasure-slot");
+  if (!item) { if (slot()) slot().innerHTML = `<div class="treasure-note">🌊 這次沒有撈到寶物……${acc === 1 ? "" : "全部答對機會更大喔！"}</div>`; return; }
+  try {
+    if (!DEMO) await flushQueue();   // 先把這一場的紀錄送上雲端，後端才能確認
+    await coinOp("treasure", 0, item);
+    const it = itemById(item);
+    if (it.kind) equipDecor(it.kind, it.id, true);
+    if (slot()) slot().innerHTML = `<div class="treasure-found"><div class="treasure-icon">${it.icon ? itemIcon(it, 64) : "⛵"}</div>
+      <div><b>🎉 撈到稀有寶物：${item}！</b><br><small>${it.desc || "已經換到你的船上了！"}</small></div></div>`;
+    toast(`🎉 閱讀島寶物：${item}！`, 4500);
+  } catch (e) {
+    if (slot()) slot().innerHTML = `<div class="treasure-note">⚠️ 寶物沒有送出：${escapeHtml(e.message)}</div>`;
+  }
 }
 
 function closeQuiz() {
