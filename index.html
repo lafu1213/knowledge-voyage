@@ -145,6 +145,8 @@
   @keyframes flagWave { 0%, 100% { transform: skewY(0deg) scaleX(1); } 50% { transform: skewY(-4deg) scaleX(.94); } }
   @media (prefers-reduced-motion: reduce) { .isle-flag .flag-cloth, .isle-flag .flag-spark { animation: none; } }
   .flag-box { margin: 10px 0; padding: 10px 14px; border-radius: 12px; border-left: 5px solid #ef4444; background: rgba(239,68,68,.1); font-size: .9rem; line-height: 1.6; }
+  .flag-box.ready { border-left-color: #f5c451; background: rgba(245,196,81,.12); }
+  .flag-box .bar { margin-top: 6px; }
   .flag-box.gold { border-left-color: #f5c451; background: rgba(245,196,81,.15); }
   .flag-win { display: flex; gap: 12px; align-items: center; text-align: left; margin: 10px 0; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(239,68,68,.25), rgba(127,16,16,.2)); border: 1px solid #f87171; animation: coinPop .8s ease-out; }
   .flag-win.gold { background: linear-gradient(135deg, rgba(255,228,138,.3), rgba(201,138,27,.2)); border-color: #ffe48a; }
@@ -2148,16 +2150,16 @@ function unitCoverage(u, st) {
   const done = u.questions.filter(q => rec(q.id)).length;
   const right = u.questions.filter(q => rec(q.id) && rec(q.id).correct > 0).length;
   const r = total ? right / total : 0;
-  return { total, done, unseen: total - done, right, stars: r >= 1 ? 3 : r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0 };
+  // 平常練習最多拿到 🌟🌟；通過島嶼挑戰考才拿到全部星星
+  const stars = conquered(u, st) ? 3 : r >= 0.7 ? 2 : r >= 0.4 ? 1 : 0;
+  return { total, done, unseen: total - done, right, stars };
 }
 // ===== 插旗：拿下的島會插上自己的旗子 =====
-// 紅旗「拿下」：正確率 ⭐⭐⭐（曾經一場全對）＋完成度 🌟🌟（島上題目答對過 70%）
-// 金旗「完全征服」：正確率 ⭐⭐⭐＋完成度 🌟🌟🌟（島上每一題都答對過）
+// 島上題目都練習過，再通過 10 題全對的「島嶼挑戰考」，就插上金旗、拿到全部星星
 function flagLevel(u, st) {
   st = st || stats;
-  if (!st || !u.questions.length) return 0;
-  const a = (st.stars || {})[u.key] || 0, c = unitCoverage(u, st).stars;
-  return a >= 3 && c >= 3 ? 2 : a >= 3 && c >= 2 ? 1 : 0;
+  if (!st) return 0;
+  return conquered(u, st) ? 2 : 0;
 }
 function subjectFlags(s) {
   const lv = s.units.map(u => flagLevel(u));
@@ -2178,12 +2180,62 @@ function flagSvg(x, y, r, level, text) {
     ${gold ? `<text class="t-emoji flag-spark" x="${f1(px + w * 1.05)}" y="${f1(top - r * 0.02)}" font-size="${f1(r * 0.18)}">✨</text>` : ""}
   </g>`;
 }
-function unitStars(u, st) { st = st || stats; return ((st.stars || {})[u.key] || 0) + unitCoverage(u, st).stars; }
+// ===== 島嶼挑戰考：島上的題目都練習過，再考一次 10 題，全對就拿到這座島全部的星星並插旗 =====
+const CHALLENGE = { size: 10, cooldownMin: 30, virtualSessions: 3 };
+const CHALLENGE_TAG = "挑戰考：";
+function challengeKey(key) { const i = key.indexOf("｜"); return key.slice(0, i + 1) + CHALLENGE_TAG + key.slice(i + 1); }
+function conquered(u, st) { st = st || stats; return !!st && ((st.stars || {})[challengeKey(u.key)] || 0) >= 3; }
+/** 正確率星：平常練習最多 ⭐⭐，通過挑戰考才是 ⭐⭐⭐ */
+function accStars(u, st) { st = st || stats; return conquered(u, st) ? 3 : Math.min(2, (st.stars || {})[u.key] || 0); }
+function unitStars(u, st) { st = st || stats; return accStars(u, st) + unitCoverage(u, st).stars; }
+/** 挑戰考的狀態：done 已征服；need 還差幾題（或幾場）沒練習；wait 失敗後要等幾分鐘 */
+function challengeState(u) {
+  if (conquered(u)) return { done: true };
+  const ck = CHALLENGE_TAG + u.unit;
+  const fails = mySessions.filter(x => x.subject === u.subject && x.unit === ck);
+  const last = fails.length ? fails[fails.length - 1] : null;
+  const wait = last ? Math.ceil(CHALLENGE.cooldownMin - (Date.now() - new Date(String(last.t).replace(" ", "T") + "+08:00").getTime()) / 60000) : 0;
+  if (u.virtual && u.virtual.only) {
+    const n = mySessions.filter(x => x.subject === u.subject && x.unit === u.unit).length;
+    return { need: Math.max(0, CHALLENGE.virtualSessions - n), needKind: "場", wait: Math.max(0, wait), tries: fails.length };
+  }
+  return { need: unitCoverage(u).unseen, needKind: "題", wait: Math.max(0, wait), tries: fails.length };
+}
+/** 挑戰考出題：一半是做過的題目（優先挑以前錯過的），一半由系統出題；系統出不了題的島，就從島上題目重新抽 */
+function buildChallenge(unit) {
+  const picked = [], used = new Set(), half = Math.ceil(CHALLENGE.size / 2);
+  const take = (qs, n) => qs.forEach(q => { if (picked.length < n && q && !used.has(q.id)) { used.add(q.id); picked.push(prepareQuestion(q)); } });
+  if (unit.virtual && unit.virtual.only) {
+    const wrongHere = stats.questions.filter(x => unitKey(x.subject, x.unit) === unit.key && x.wrong > 0);
+    take(questionObjects(shuffle(wrongHere).slice(0, 2)), CHALLENGE.size);
+    take(generateVirtual(unit.virtual, CHALLENGE.size - picked.length, used), CHALLENGE.size);
+    return shuffle(picked);
+  }
+  const rec = q => stats.byId[q.id];
+  const done = shuffle(unit.questions.filter(rec));
+  take(done.filter(q => rec(q).wrong > 0), Math.min(half, 3));   // 以前錯過的題目最多 3 題
+  take(done, half);                                                // 其餘做過的題目補到一半
+  take(generateQuestions(unit, CHALLENGE.size - picked.length, used), CHALLENGE.size);   // 系統出題
+  take(shuffle(unit.questions), CHALLENGE.size);                   // 系統出不了題時，從島上題目重新抽
+  return shuffle(picked);
+}
+function startChallenge(key) {
+  if (guardLocked()) return;
+  const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
+  const cs = challengeState(unit);
+  if (cs.done) return toast("👑 這座島已經征服了！");
+  if (cs.need) return toast(`📘 還有 ${cs.need} ${cs.needKind}沒練習，先把島上的題目都練習過再來挑戰！`);
+  if (cs.wait) return toast(`⏳ 挑戰失敗後要休息一下，${cs.wait} 分鐘後才能再挑戰。先去訂正錯題吧！`);
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box challenge";
+  quizState = newQuizState("挑戰", unit.subject, unit.unit, buildChallenge(unit));
+  quizState.unitKey = key; quizState.flagBefore = flagLevel(unit);
+  renderQuestion();
+}
 /** 一位學生全部的星星：正確率星＋完成度星（老師後台、家長頁也用這個算） */
 function starSummary(st) {
   const units = WORLD.flatMap(s => s.units);
   let acc = 0, comp = 0;
-  units.forEach(u => { acc += (st.stars || {})[u.key] || 0; comp += unitCoverage(u, st).stars; });
+  units.forEach(u => { acc += accStars(u, st); comp += unitCoverage(u, st).stars; });
   return { acc, comp, total: acc + comp, max: units.length * 6 };
 }
 /** 後台名單只有答對過的題號清單時，組成可以算星星的資料 */
@@ -2277,7 +2329,7 @@ function renderSubject(kw) {
   const isles = nodes.map((n, i) => {
     if (n.dock) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "dock" + s.key, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
       shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🪵"], icon: "⛵", label: "碼頭", sub: "回世界地圖" });
-    const u = n.unitObj, st = stats.stars[u.key] || 0, cov = unitCoverage(u), fl = flagLevel(u);
+    const u = n.unitObj, st = accStars(u), cov = unitCoverage(u), fl = flagLevel(u);
     const color = s.palette[(i - 1) % s.palette.length];
     const [l1, l2] = splitUnit(u.unit);
     const maxLen = isPortrait() ? 6 : 8;
@@ -2858,13 +2910,12 @@ function generateQuestions(unit, n, used) {
 function isTrial() { return session.user.role !== "student"; }
 
 function flagBox(unit, st, cov) {
-  const fl = flagLevel(unit);
-  if (fl === 2) return `<div class="flag-box gold">👑 <b>完全征服！</b>金旗已經插在這座島上。</div>`;
-  const need = [];
-  if (st < 3) need.push("一場 10 題全部答對（正確率 ⭐⭐⭐）");
-  if (cov.stars < (fl ? 3 : 2)) need.push(fl ? "島上每一題都答對過（完成度 🌟🌟🌟）" : `島上題目答對過 70%（完成度 🌟🌟，目前 ${cov.total ? Math.round(cov.right / cov.total * 100) : 0}%）`);
-  return `<div class="flag-box">${fl ? `🚩 <b>已插旗拿下！</b>再完成：${need.join("、")}，就能換成 👑 金旗「完全征服」。`
-    : `🏳️ <b>還沒插旗</b>：${need.join("、")}，就能在這座島插上你的旗子！`}</div>`;
+  const cs = challengeState(unit);
+  if (cs.done) return `<div class="flag-box gold">👑 <b>已經征服！</b>你的金旗插在這座島上，全部 6 顆星都拿到了。</div>`;
+  const rule = `島上題目全部練習過後，就能參加 <b>🏁 島嶼挑戰考</b>：${CHALLENGE.size} 題（一半是你做過的題目，另一半由系統出新題或從島上重新抽題），<b>全部答對</b>就拿到這座島全部的星星，並插上你的旗子！平常練習最多拿到 ⭐⭐🌟🌟。`;
+  if (cs.need) return `<div class="flag-box">🏳️ ${rule}<br>📘 還有 <b>${cs.need}</b> ${cs.needKind}沒練習${cs.needKind === "題" ? `<div class="bar"><i style="width:${cov.total ? Math.round(cov.done / cov.total * 100) : 0}%"></i></div>` : "。"}</div>`;
+  return `<div class="flag-box ready">🏁 ${rule}${cs.tries ? `<br>已經挑戰 ${cs.tries} 次，再接再厲！` : ""}
+    <button class="btn-danger" style="width:100%; margin-top:8px; padding:12px; font-size:1.02rem" ${cs.wait ? "disabled" : ""} data-key="${escapeHtml(unit.key)}" onclick="startChallenge(this.dataset.key)">${cs.wait ? `⏳ ${cs.wait} 分鐘後可以再挑戰` : "🏁 開始島嶼挑戰考"}</button></div>`;
 }
 function openUnitModal(key) {
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
@@ -2875,15 +2926,15 @@ function openUnitModal(key) {
   const hasGen = !!unit.virtual || (unit.subject === "國語" && (CHAR_FACTS.some(f => f.unit === unit.unit) || /字音|字形|部首/.test(unit.unit)));
   const genOnly = unit.virtual && unit.virtual.only;
   const pend = pendingCount(q => unitKey(q.subject, q.unit) === key);
-  const cov = unitCoverage(unit), st = stats.stars[unit.key] || 0;
+  const cov = unitCoverage(unit), st = accStars(unit);
   const covBox = genOnly || !cov.total ? "" : `
     <div class="lore-box" style="border-left-color:#f59e0b">
       ${cov.unseen ? `🆕 <b>還有 <span style="color:var(--danger)">${cov.unseen}</span> 題你還沒做過</b>，這次會優先出現！<br>` : `🎉 <b>這座島的題目你全部都做過了！</b><br>`}
       📘 已做過 ${cov.done}／${cov.total} 題，答對過 ${cov.right} 題
       <div class="bar"><i style="width:${Math.round(cov.done / cov.total * 100)}%"></i></div>
       <div style="margin-top:6px; font-size:.86rem">
-        正確率星 ${"⭐".repeat(st)}${"☆".repeat(3 - st)}：單場 10 題答對 40%／70%／全對<br>
-        完成度星 ${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}：本島題目答對過 40%／70%／全部
+        正確率星 ${"⭐".repeat(st)}${"☆".repeat(3 - st)}：單場 10 題答對 40%／70%；第 3 顆要通過挑戰考<br>
+        完成度星 ${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}：本島題目答對過 40%／70%；第 3 顆要通過挑戰考
       </div>
     </div>`;
   document.getElementById("quiz-content").innerHTML = `
@@ -2891,7 +2942,7 @@ function openUnitModal(key) {
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
     ${readingBoost(unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！</div>` : ""}
     ${covBox}
-    ${genOnly || isTrial() ? "" : flagBox(unit, st, cov)}
+    ${isTrial() ? "" : flagBox(unit, st, cov)}
     <div class="lore-box violet">
       🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
       ${genOnly ? `• 這座島的題目每次都由程式重新產生，數字、句子、選項都會換<br>• 以前在這裡答錯的題目，也會挑一兩題回來複習<br>`
@@ -3080,7 +3131,7 @@ function finishQuiz(lockedOut) {
   const bonus = sessionBonus(quizState.correctCount, done) * (reading && quizState.correctCount / done >= 0.8 ? READ.ptsMul : 1);
   const score = bonus;
   saveRecord(null, {
-    t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
+    t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "挑戰" ? CHALLENGE_TAG + quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
     total: done, correct: quizState.correctCount, score, sid: quizState.sid
   });
   const lv = getLevelInfo(stats.score);
@@ -3088,7 +3139,8 @@ function finishQuiz(lockedOut) {
   document.getElementById("quiz-content").innerHTML = `
     <div style="text-align:center;">
       <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
-      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= CHALLENGE.size ? "🏁 挑戰考全對！" : `🏁 挑戰考答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      ${quizState.mode === "挑戰" && !(acc === 1 && done >= CHALLENGE.size) && !isTrial() && !lockedOut ? `<div class="flag-box">挑戰考要 ${CHALLENGE.size} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${CHALLENGE.cooldownMin} 分鐘後再來挑戰！</div>` : ""}
       ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
       <div class="lore-box" style="text-align:left;">
         • 答對 <b>${quizState.correctCount} / ${done}</b> 題（正確率 ${Math.round(acc * 100)}%）<br>
@@ -3106,13 +3158,13 @@ function finishQuiz(lockedOut) {
   if (reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
 }
 function flagResultHtml() {
-  if (isTrial() || quizState.mode !== "練習" || !quizState.unitKey) return "";
+  if (isTrial() || (quizState.mode !== "練習" && quizState.mode !== "挑戰") || !quizState.unitKey) return "";
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === quizState.unitKey);
   const now = unit ? flagLevel(unit) : 0;
   if (!unit || now <= (quizState.flagBefore || 0)) return "";
   const subj = WORLD.find(s => s.key === unit.subject), fl = subjectFlags(subj);
   return `<div class="flag-win ${now === 2 ? "gold" : ""}"><div class="flag-win-icon">${now === 2 ? "👑" : "🚩"}</div>
-    <div><b>${now === 2 ? "完全征服！金旗升起！" : "插旗成功！這座島被你拿下了！"}</b><br>
+    <div><b>${now === 2 ? "征服成功！金旗升起，全部星星到手！" : "插旗成功！這座島被你拿下了！"}</b><br>
     <small>${escapeHtml(splitUnit(unit.unit)[1] || unit.unit)}　・　${escapeHtml(unit.subject)}已插旗 ${fl.got}/${fl.total} 座島${fl.got === fl.total ? "，全島制霸！" : ""}</small></div></div>`;
 }
 function readingResultHtml(acc, done) {
