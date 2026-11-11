@@ -1142,19 +1142,27 @@ function answerPoints(q, ok, mode, combo) {
   const R = SCORE_RULES;
   if (mode === "訂正") return ok ? R.fixOk : R.fixWrong;
   if (mode === "複習") return ok ? R.reviewOk : R.reviewWrong;
-  if (ok) return (R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus)) * (readingBoost(q.unit) ? READ.ptsMul : 1);
+  if (ok) return (R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus)) * (readingBoost(q.subject, q.unit) ? READ.ptsMul : 1);
   const before = stats.byId[q.id];
   return before && before.wrong > 0 ? R.wrongAgain : R.wrongFirst;
 }
 // ===== 期末閱讀島加碼：答對分數 ×2、金幣 ×2、80% 以上再送金幣，全對有機會撈到稀有寶物 =====
 const READ = { ptsMul: 2, coinMul: 2, bonusCoins: 40, perfectChance: 0.5, goodChance: 0.25, minQ: 3 };
-function isReadingUnit(unit) { return /閱讀/.test(String(unit || "")); }
-function readingBoost(unit) { return FINAL && isReadingUnit(unit); }
+// 「閱讀島」：各科都一樣——島名有閱讀、短文、文章、Reading，或島上一半以上的題目附有文章
+const READING_NAME = /閱讀|短文|文章|reading/i;
+let READING_KEYS = new Set();
+function computeReadingUnits() {
+  const by = {};
+  BANK.forEach(q => { const k = unitKey(q.subject, q.unit), b = by[k] || (by[k] = { n: 0, p: 0, unit: q.unit }); b.n++; if (q.passage) b.p++; });
+  READING_KEYS = new Set(Object.keys(by).filter(k => READING_NAME.test(by[k].unit) || (by[k].n >= 3 && by[k].p / by[k].n >= 0.5)));
+}
+function isReadingUnit(subject, unit) { return READING_KEYS.has(unitKey(subject, unit)) || READING_NAME.test(String(unit || "")); }
+function readingBoost(subject, unit) { return isReadingUnit(subject, unit); }
 /** 閱讀島 80% 以上的場次，每個島每天最多算一次獎勵金幣 */
 function readingBonusCoins(sessions) {
   const seen = new Set();
   sessions.forEach(x => {
-    if (!isReadingUnit(x.unit) || !(x.total >= READ.minQ) || x.correct / x.total < 0.8) return;
+    if (!isReadingUnit(x.subject, x.unit) || !(x.total >= READ.minQ) || x.correct / x.total < 0.8) return;
     seen.add(x.unit + "|" + String(x.t).slice(0, 10));
   });
   return seen.size * READ.bonusCoins;
@@ -1456,6 +1464,7 @@ async function loadData() {
 }
 
 function buildWorld() {
+  computeReadingUnits();
   let order = [...SUBJECTS.map(s => s.key)];
   BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
   WORLD = order.slice(0, 7).map((key, i) => {
@@ -1569,14 +1578,14 @@ function coinsForRows(rows) {
   rows.forEach(r => {
     const first = !seen.has(r.qId); seen.add(r.qId);
     if (!r.ok || !(Number(r.pts) > 0)) return;
-    total += (r.mode === "訂正" ? COIN.fix : first ? COIN.firstRight : COIN.correct) * (readingBoost(r.unit) ? READ.coinMul : 1);
+    total += (r.mode === "訂正" ? COIN.fix : first ? COIN.firstRight : COIN.correct) * (readingBoost(r.subject, r.unit) ? READ.coinMul : 1);
   });
   return total;
 }
 function coinForAnswer(row) {
   if (!row.ok || !(row.pts > 0)) return 0;
   const before = myRows.slice(0, -1).some(r => r.qId === row.qId);
-  return (row.mode === "訂正" ? COIN.fix : before ? COIN.correct : COIN.firstRight) * (readingBoost(row.unit) ? READ.coinMul : 1);
+  return (row.mode === "訂正" ? COIN.fix : before ? COIN.correct : COIN.firstRight) * (readingBoost(row.subject, row.unit) ? READ.coinMul : 1);
 }
 function coinState() {
   const lv = getLevelInfo(stats.score).lv;
@@ -2940,7 +2949,8 @@ function openUnitModal(key) {
   document.getElementById("quiz-content").innerHTML = `
     <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
-    ${readingBoost(unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！</div>` : ""}
+    ${readingBoost(unit.subject, unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>${FINAL ? `答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！`
+      : `答對的分數 ×${READ.ptsMul}；一場答對 80% 以上，結算獎勵也 ×${READ.ptsMul}！`}</div>` : ""}
     ${covBox}
     ${isTrial() ? "" : flagBox(unit, st, cov)}
     <div class="lore-box violet">
@@ -3127,7 +3137,7 @@ function finishQuiz(lockedOut) {
   const done = lockedOut ? quizState.idx + 1 : quizState.questions.length;
   const sec = Math.max(5, Math.round((Date.now() - quizState.startTime) / 1000));
   const acc = done ? quizState.correctCount / done : 0;
-  const reading = quizState.mode === "練習" && readingBoost(quizState.unit);
+  const reading = quizState.mode === "練習" && readingBoost(quizState.subject, quizState.unit);
   const bonus = sessionBonus(quizState.correctCount, done) * (reading && quizState.correctCount / done >= 0.8 ? READ.ptsMul : 1);
   const score = bonus;
   saveRecord(null, {
@@ -3151,11 +3161,11 @@ function finishQuiz(lockedOut) {
       ${isTrial() ? "" : `<div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:#fff; padding:16px; border-radius:16px; margin:12px 0;">
         <div style="font-size:.85rem; opacity:.9;">目前等級</div><div style="font-size:1.6rem; font-weight:900;">⭐ Lv.${lv.lv}｜${lv.title}</div>
         <div style="font-size:.85rem;">累計 ${stats.score} 分</div></div>`}
-      ${reading && !isTrial() ? readingResultHtml(acc, done) : ""}
+      ${reading && !isTrial() ? (FINAL ? readingResultHtml(acc, done) : `<div class="reading-reward">📖 <b>閱讀島加碼</b>：答對分數 ×${READ.ptsMul}${acc >= 0.8 && done >= READ.minQ ? `，結算獎勵也 ×${READ.ptsMul}` : "，一場答對 80% 以上結算獎勵也加倍！"}</div>`) : ""}
       ${flagResultHtml()}
       <button class="btn-primary" style="width:100%; padding:12px;" onclick="${lockedOut ? "openMistakeBook('pending')" : "closeQuiz()"}">${lockedOut ? "🌋 前往錯題島" : "🗺️ 回到地圖"}</button>
     </div>`;
-  if (reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
+  if (FINAL && reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
 }
 function flagResultHtml() {
   if (isTrial() || (quizState.mode !== "練習" && quizState.mode !== "挑戰") || !quizState.unitKey) return "";
