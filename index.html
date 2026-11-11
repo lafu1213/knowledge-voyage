@@ -1241,9 +1241,13 @@ function questionImageUrl(q) {
   return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
 }
 function questionImageHtml(q) {
-  const url = questionImageUrl(q);
-  if (!url) return "";
-  return `<div class="diagram-card"><img src="${escapeHtml(url)}" alt="題目附圖" loading="lazy" style="max-width:100%; max-height:420px; border-radius:8px; cursor:zoom-in;" onclick="window.open(this.src,'_blank')" onerror="this.parentNode.innerHTML='⚠️ 圖片載入失敗，請確認雲端檔案已設為「知道連結的任何人可檢視」'"></div>`;
+  // 一題可以有好幾張圖（用「｜」分開），例如左邊是正方體、右邊是四個選項
+  const urls = diagramParts(q).filter(x => /^https?:\/\//i.test(x)).map(raw => {
+    const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
+    return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
+  });
+  if (!urls.length) return "";
+  return `<div class="diagram-card">${urls.map(url => `<img src="${escapeHtml(url)}" alt="題目附圖" loading="lazy" style="max-width:100%; max-height:420px; border-radius:8px; cursor:zoom-in; margin:4px; vertical-align:middle;" onclick="window.open(this.src,'_blank')" onerror="this.outerHTML='<div>⚠️ 圖片載入失敗，請確認雲端檔案已設為「知道連結的任何人可檢視」</div>'">`).join("")}</div>`;
 }
 
 // ---- 英聽：用瀏覽器內建的英語朗讀念出「聽：」後面的原文 ----
