@@ -147,6 +147,21 @@
   .guide-table td, .guide-table th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
   .guide-table .num { text-align: right; white-space: nowrap; }
   .guide-note { font-size: .84rem; opacity: .85; }
+  .isle.closed-isle .face { filter: grayscale(.85) brightness(.75); }
+  .isle.closed-isle .banner-rect { fill: rgba(60,60,70,.85); }
+  .lock-box { margin: 10px 0; padding: 10px 14px; border-radius: 12px; border: 1px dashed #7fb8ff; background: rgba(127,184,255,.1); font-size: .9rem; }
+  .lock-box.closed { border-color: #f87171; background: rgba(248,113,113,.12); }
+  .lock-box button { padding: 6px 12px; font-size: .84rem; }
+  .isl-subj { margin-bottom: 12px; }
+  .isl-head { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .isl-head button { padding: 3px 10px; font-size: .78rem; }
+  .isl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+  .isl-chip { display: flex; border: 1px solid rgba(34,197,94,.5); border-radius: 10px; overflow: hidden; background: rgba(34,197,94,.1); }
+  .isl-chip.closed { border-color: rgba(248,113,113,.6); background: rgba(248,113,113,.12); opacity: .85; }
+  .isl-chip button { background: transparent; border: 0; color: inherit; padding: 7px 10px; font-size: .84rem; cursor: pointer; }
+  .isl-chip .isl-name { flex: 1; text-align: left; }
+  .isl-chip .isl-only { border-left: 1px solid var(--line); }
+  .assigned-card .assigned-chip { display: block; width: 100%; text-align: left; margin: 4px 0; padding: 8px 10px; border-radius: 10px; border: 1px solid #f5c451; background: rgba(245,196,81,.12); color: inherit; font-size: .88rem; cursor: pointer; }
   .isle-flag { pointer-events: none; }
   .isle.conquered .face { stroke: rgba(255,120,120,.75); stroke-width: 2.5; }
   .isle-flag .flag-cloth { transform-box: fill-box; transform-origin: left center; animation: flagWave 2.6s ease-in-out infinite; }
@@ -1484,7 +1499,7 @@ async function loadData() {
   stats = aggregate(myRows, mySessions);
   profile = { emoji: "", color: "" };
   try { const r = await net.loadProfile(); if (r && r.profile) profile = r.profile; } catch (e) {}
-  if (FINAL) await loadBridgeRules();
+  await loadBridgeRules();
 }
 
 function buildWorld() {
@@ -2255,6 +2270,7 @@ function buildChallenge(unit) {
 }
 function startChallenge(key) {
   if (guardLocked()) return;
+  if (closedForMe(WORLD.flatMap(s => s.units).find(u => u.key === key))) return toast("🔒 這座島目前關閉中");
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   const cs = challengeState(unit);
   if (cs.done) return toast("👑 這座島已經征服了！");
@@ -2305,13 +2321,14 @@ function renderWorld(kw) {
         label: "錯題島", sub: `待訂正 ${pend}・歷史 ${stats.wrongEver.length}`, cls: (hot ? "alarm" : "") + (kw && !"錯題島".includes(kw) ? " dim" : ""),
         aria: `錯題島，待訂正 ${pend} 題` });
     }
-    const s = n.subject, empty = !s.units.length;
+    const s = n.subject, empty = !s.units.length, openN = openUnitsOf(s).length, allClosed = !empty && !openN;
     const matches = kw && s.units.some(u => u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
     const prog = subjectProgress(s), fl = subjectFlags(s);
     return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "world-" + s.key, land: s.land, sand: s.sand, shape: s.shape, deco: s.deco,
-      icon: s.icon, label: FINAL ? FINAL_SEA[s.key] || s.name : s.name, sub: empty ? "題目準備中" : `${s.units.length} 單元・⭐${prog.got}/${prog.max}${fl.got ? `・🚩${fl.got}` : ""}`,
+      icon: allClosed ? "🔒" : s.icon, label: FINAL ? FINAL_SEA[s.key] || s.name : s.name,
+      sub: empty ? "題目準備中" : allClosed ? "🔒 老師暫時關閉" : `${openN < s.units.length ? `開放 ${openN}/${s.units.length} 島` : `${s.units.length} 單元`}・⭐${prog.got}/${prog.max}${fl.got ? `・🚩${fl.got}` : ""}`,
       flag: empty || !fl.got ? 0 : fl.gold === fl.total ? 2 : 1, flagText: fl.got === fl.total ? "👑" : String(fl.got),
-      badge: pendingCount(q => q.subject === s.key), cls: (empty ? "empty" : "") + (kw ? (matches ? " hit" : " dim") : "") });
+      badge: pendingCount(q => q.subject === s.key), cls: (empty ? "empty" : "") + (allClosed ? " closed-isle" : "") + (kw ? (matches ? " hit" : " dim") : "") });
   });
   const reefs = layout().reefs
     .map(([x, y, r], i) => `<path d="${blobPath(x, y, r, "reef" + i, { points: 8, wobble: 0.5 })}" fill="var(--shore)" opacity="0.8"/><text class="t-emoji" x="${x}" y="${y + 6}" font-size="${r * 0.9}">${["🌴", "🪨", "🐚", "🐋", "🏝️", "⛵"][i]}</text>`).join("");
@@ -2371,9 +2388,9 @@ function renderSubject(kw) {
     const matches = kw && (u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
     return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: s.sand,
       shape: Object.assign({}, s.shape, { points: s.shape.sharp ? 5 + (i % 3) : s.shape.points }), deco: shuffleSeeded(s.deco, u.key),
-      icon: locked ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
-      sub: `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
-      badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (kw ? (matches ? " hit" : " dim") : "") + (fl ? " conquered" : ""),
+      icon: locked || islandClosed(u) ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
+      sub: islandClosed(u) ? "🔒 老師暫時關閉" : `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
+      badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (islandClosed(u) ? " closed-isle" : "") + (kw ? (matches ? " hit" : " dim") : "") + (fl ? " conquered" : ""),
       flag: fl, flagText: myEmoji(),
       aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過${fl === 2 ? "，已完全征服" : fl ? "，已插旗拿下" : ""}` });
   });
@@ -2603,6 +2620,7 @@ async function onIslandClick(id) {
   if (view.level === "world") {
     const s = WORLD.find(x => x.key === id);
     if (s && !s.units.length) { toast(`${s.name}的題目還在準備中，敬請期待！`); return; }
+    if (s && session.user.role === "student" && !openUnitsOf(s).length) { toast(`🔒 老師暫時關閉了${s.key}全部的島，先去其他開放的島吧！`, 4500); return; }
     const mode = await travelTo(id);
     await maybeVoyageEvent(mode);
     pos.world = id;
@@ -2764,6 +2782,7 @@ function renderSide() {
           <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
         ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span></button>
         <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
+        ${u.role === "teacher" ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('islands')">🏝️ 島嶼開關（開放 ${WORLD.flatMap(s => s.units).filter(x => !islandClosed(x)).length}／${WORLD.flatMap(s => s.units).length}）</button>` : ""}
         <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
         <button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openGuide()">📜 遊戲說明（孩子看到的規則）</button>
         <div class="trial-note">👀 試玩模式：答題不列入紀錄</div>
@@ -2795,6 +2814,7 @@ function renderSide() {
         <div class="tile-kpi" style="cursor:pointer" onclick="openMistakeBook('history')"><b>📚 ${stats.wrongEver.length}</b><span>歷史錯題</span></div>
       </div>
     </div>
+    ${assignedCard()}
     ${shipCard}
     ${FINAL ? mailCard() : ""}
     ${FINAL ? backpackCard() : ""}
@@ -2868,8 +2888,8 @@ function buildSession(unit) {
   take(pickLeastSeen(unit.questions, SESSION_SIZE - picked.length, used));
   if (picked.length < SESSION_SIZE) {
     const i = s.units.indexOf(unit);
-    const near = [s.units[i - 1], s.units[i + 1]].filter(Boolean);
-    const far = s.units.filter(u => u !== unit && !near.includes(u));
+    const near = [s.units[i - 1], s.units[i + 1]].filter(u => u && !islandClosed(u));
+    const far = s.units.filter(u => u !== unit && !near.includes(u) && !islandClosed(u));
     for (const group of [near, far]) {
       pickLeastSeen(group.flatMap(u => u.questions), SESSION_SIZE - picked.length, used)
         .forEach(q => take([q], { crossFrom: splitUnit(q.unit)[1] || q.unit }));
@@ -2946,6 +2966,85 @@ function generateQuestions(unit, n, used) {
 // =========================================================
 function isTrial() { return session.user.role !== "student"; }
 
+// ===== 老師的島嶼開關：關閉的島學生不能登島，地圖上會顯示 🔒 =====
+function closedList() { return (bridgeState.rules && bridgeState.rules.closed) || []; }
+function islandClosed(u) { return closedList().includes(u.key); }
+function closedForMe(u) { return !!session && session.user.role === "student" && islandClosed(u); }
+function openUnitsOf(s) { return s.units.filter(u => !islandClosed(u)); }
+function onIslandsChanged() {
+  if (!session) return;
+  if (!walking) renderMap();
+  renderSide();
+  if (session.user.role === "student") {
+    const open = WORLD.flatMap(s => s.units).filter(u => !islandClosed(u));
+    toast(closedList().length ? `📌 老師調整了開放的島：現在開放 ${open.length} 座島` : "📌 老師把所有的島都開放了！", 4500);
+  }
+}
+async function setClosed(list, msg) {
+  try {
+    bridgeState.rules = (await bridgeCall("setRules", { rules: { closed: [...new Set(list)] } })).rules;
+    renderMap(); renderSide();
+    if (document.getElementById("bridge-modal").classList.contains("open") && bridgeState.tab === "islands") renderBridge();
+    if (msg) toast(msg + "，學生畫面約 5 秒內會更新", 4000);
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+function toggleIsland(key) {
+  const c = closedList(), u = WORLD.flatMap(s => s.units).find(x => x.key === key);
+  const name = u ? splitUnit(u.unit)[1] || u.unit : key;
+  if (c.includes(key)) setClosed(c.filter(k => k !== key), `🔓 已開放「${name}」`);
+  else setClosed(c.concat(key), `🔒 已關閉「${name}」`);
+}
+function onlyIsland(key) {
+  const u = WORLD.flatMap(s => s.units).find(x => x.key === key);
+  const others = WORLD.flatMap(s => s.units).map(x => x.key).filter(k => k !== key);
+  // 保留不在這條航線上的設定（期中、期末的島分開管理）
+  const here = new Set(WORLD.flatMap(s => s.units).map(x => x.key));
+  setClosed(closedList().filter(k => !here.has(k)).concat(others), `🎯 只開放「${splitUnit(u.unit)[1] || u.unit}」`);
+}
+function setSubjectIslands(subject, open) {
+  const keys = WORLD.find(s => s.key === subject).units.map(u => u.key);
+  setClosed(open ? closedList().filter(k => !keys.includes(k)) : closedList().concat(keys), `${open ? "🔓 已開放" : "🔒 已關閉"}${subject}全部的島`);
+}
+function openAllIslands() {
+  const here = new Set(WORLD.flatMap(s => s.units).map(x => x.key));
+  setClosed(closedList().filter(k => !here.has(k)), "🔓 已開放這條航線全部的島");
+}
+/** 學生側邊欄：老師只開放少數幾座島時，直接列出來 */
+function assignedCard() {
+  const all = WORLD.flatMap(s => s.units), open = all.filter(u => !islandClosed(u));
+  if (!closedList().length || open.length === all.length) return "";
+  return `<div class="card assigned-card"><h3>📌 老師指定練習</h3>
+    ${open.length ? (open.length <= 6 ? open.map(u => `<button class="assigned-chip" data-key="${escapeHtml(u.key)}" onclick="goAssigned(this.dataset.key)">${u.icon} ${escapeHtml(u.subject)}・${escapeHtml(splitUnit(u.unit)[1] || u.unit)}</button>`).join("")
+      : `<div class="me-title">目前開放 ${open.length} 座島，🔒 的島暫時不能進去。</div>`) : `<div class="me-title">老師暫時關閉了所有的島，可以先去錯題島訂正。</div>`}</div>`;
+}
+async function goAssigned(key) {
+  const u = WORLD.flatMap(s => s.units).find(x => x.key === key);
+  if (!u) return;
+  if (view.level !== "subject" || view.subject !== u.subject) await enterSubject(u.subject);
+  openUnitModal(key);
+}
+function teacherIslandBox(unit) {
+  const closed = islandClosed(unit);
+  return `<div class="lock-box ${closed ? "closed" : ""}">
+    <b>${closed ? "🔒 這座島目前關閉中" : "🔓 這座島目前開放中"}</b>（老師才看得到這裡）
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+      <button class="${closed ? "btn-accent" : "btn-danger"}" data-key="${escapeHtml(unit.key)}" onclick="toggleIsland(this.dataset.key); closeModal('quiz-modal')">${closed ? "🔓 開放這座島" : "🔒 關閉這座島"}</button>
+      <button class="btn-ghost" data-key="${escapeHtml(unit.key)}" onclick="onlyIsland(this.dataset.key); closeModal('quiz-modal')">🎯 只開放這座島</button>
+      <button class="btn-ghost" onclick="closeModal('quiz-modal'); openBridge('islands')">🏝️ 島嶼開關總表</button>
+    </div></div>`;
+}
+function islandsAdminHtml() {
+  const c = closedList();
+  return `<div class="lore-box">點島名就能開關。🔒 關閉的島，學生在地圖上看得到但進不去；錯題島（訂正）永遠開放。設定會在學生畫面約 5 秒內更新。</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px">
+      <button class="btn-accent" onclick="openAllIslands()">🔓 全部開放</button>
+      <span style="align-self:center; font-size:.86rem">目前開放 ${WORLD.flatMap(s => s.units).filter(u => !c.includes(u.key)).length}／${WORLD.flatMap(s => s.units).length} 座島</span></div>
+    ${WORLD.filter(s => s.units.length).map(s => `<div class="isl-subj"><div class="isl-head"><b>${s.icon} ${escapeHtml(s.key)}</b>
+        <button class="btn-ghost" onclick="setSubjectIslands('${escapeHtml(s.key)}', true)">全開</button><button class="btn-ghost" onclick="setSubjectIslands('${escapeHtml(s.key)}', false)">全關</button></div>
+      <div class="isl-grid">${s.units.map(u => { const cl = c.includes(u.key); return `<div class="isl-chip ${cl ? "closed" : ""}">
+        <button class="isl-name" data-key="${escapeHtml(u.key)}" onclick="toggleIsland(this.dataset.key)">${cl ? "🔒" : "🔓"} ${escapeHtml(u.unit)}</button>
+        <button class="isl-only" data-key="${escapeHtml(u.key)}" onclick="onlyIsland(this.dataset.key)" title="只開放這座島">🎯</button></div>`; }).join("")}</div></div>`).join("")}`;
+}
 function flagBox(unit, st, cov) {
   const cs = challengeState(unit);
   if (cs.done) return `<div class="flag-box gold">👑 <b>已經征服！</b>你的金旗插在這座島上，全部 6 顆星都拿到了。</div>`;
@@ -2956,6 +3055,10 @@ function flagBox(unit, st, cov) {
 }
 function openUnitModal(key) {
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
+  if (closedForMe(unit)) {
+    toast(`🔒 老師暫時關閉了「${splitUnit(unit.unit)[1] || unit.unit}」，先去練習開放的島吧！`, 4500);
+    return;
+  }
   if (!isTrial() && stats.pending.length >= LOCK_LIMIT) {
     toast(`⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 ${WRECK_ICON} ${WRECK}訂正！`, 4500);
     return;
@@ -2980,6 +3083,7 @@ function openUnitModal(key) {
     ${readingBoost(unit.subject, unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>${FINAL ? `答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！`
       : `答對的分數 ×${READ.ptsMul}；一場答對 80% 以上，結算獎勵也 ×${READ.ptsMul}！`}</div>` : ""}
     ${covBox}
+    ${session.user.role === "teacher" ? teacherIslandBox(unit) : ""}
     ${isTrial() ? "" : flagBox(unit, st, cov)}
     <div class="lore-box violet">
       🎲 <b>每次登島隨機抽 ${SESSION_SIZE} 題，每次都不一樣：</b><br>
@@ -2999,6 +3103,7 @@ function newQuizState(mode, subject, unit, questions) {
 
 function startQuiz(key) {
   if (guardLocked()) return;
+  if (closedForMe(WORLD.flatMap(s => s.units).find(u => u.key === key))) return toast("🔒 這座島目前關閉中");
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
   quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
@@ -3538,7 +3643,7 @@ const net = {
     (r.messages || []).forEach(m => { if (!known.has(m.id)) this.messages.push(m); });
     this.messages = this.messages.slice(-40);
     this.battle = r.battle || null;
-    applyBridgePulse(r.bridge || (DEMO && FINAL ? demoBridge("pulse") : null));
+    applyBridgePulse(r.bridge || (DEMO ? demoBridge("pulse") : null));
     const sig = this.others.map(o => o.name + o.place + o.emoji).join("|");
     if (sig !== this.sig) { this.sig = sig; renderSide(); }
     if (!walking) renderAvatars();
@@ -3557,8 +3662,9 @@ const net = {
 // =========================================================
 const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
   peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set() };
-const BRIDGE_TABS = [["overview", "🧭 總覽"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true };
+const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
+const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands");
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [] };
 
 function bridgeCall(op, data = {}) { return DEMO ? Promise.resolve(demoBridge(op, data)) : api("bridge", Object.assign({ op }, data)); }
 async function loadBridgeRules() {
@@ -3583,8 +3689,13 @@ function pirateStatusText(r = rulesNow()) {
 
 /** 每 4 秒的回報帶回來的：未讀私訊、老師解除扣押、航海規則 */
 function applyBridgePulse(p) {
-  if (!p || !FINAL || !session) return;
-  if (p.rules) bridgeState.rules = p.rules;
+  if (!p || !session) return;
+  if (p.rules) {
+    const before = JSON.stringify(closedList());
+    bridgeState.rules = p.rules;
+    if (JSON.stringify(closedList()) !== before) onIslandsChanged();
+  }
+  if (!FINAL) return;
   const before = bridgeState.unread;
   bridgeState.unread = p.unread || 0;
   if (bridgeState.unread > before) {
@@ -3609,12 +3720,13 @@ function reportPace(why, count) {
 
 function openBridge(tab) {
   if (tab) bridgeState.tab = tab;
+  if (!BRIDGE_TABS.some(t => t[0] === bridgeState.tab)) bridgeState.tab = BRIDGE_TABS[0][0];
   openModal("bridge-modal");
   if (session.user.role === "student") { bridgeState.peer = "老師"; refreshDm(); return; }
   renderBridge();
 }
 function bridgeShell(body) {
-  return `<h2 style="margin-top:0;">⚓ 老師艦橋 <small style="font-size:.8rem; opacity:.75">期末航線的指揮台</small></h2>
+  return `<h2 style="margin-top:0;">⚓ 老師艦橋 <small style="font-size:.8rem; opacity:.75">${FINAL ? "期末航線的指揮台" : "期中航線"}</small></h2>
     <div class="bridge-tabs">${BRIDGE_TABS.map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}</button>`).join("")}</div>
     <div id="bridge-body">${body}</div>`;
 }
@@ -3627,7 +3739,9 @@ async function renderBridge() {
   const t = bridgeState.tab;
   const set = html => { if (bridgeState.tab === t) box.innerHTML = bridgeShell(html); };
   try {
-    if (t === "overview") {
+    if (t === "islands") {
+      set(islandsAdminHtml());
+    } else if (t === "overview") {
       set(bridgeLoading());
       const [pace, mk] = await Promise.all([bridgeCall("paceList"), bridgeCall("mistakes", { season: "final" })]);
       bridgeState.pace = pace.rows; bridgeState.mistakes = mk.mistakes;
@@ -3872,7 +3986,7 @@ function demoBridge(op, d) {
   };
   if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES };
   if (op === "rules") return { rules: db.rules || DEFAULT_RULES };
-  if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, d.rules); save(); return { rules: db.rules }; }
+  if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, db.rules || {}, d.rules); save(); return { rules: db.rules }; }
   if (op === "dmSend") { db.dms.push({ t: nowStr(), from: me, to: me === "老師" ? d.to : "老師", text: d.text, read: false }); save(); return thread(me === "老師" ? d.to : "老師"); }
   if (op === "dmList") {
     if (me !== "老師") return thread("老師");
@@ -3919,6 +4033,7 @@ function guideSections() {
       <li>答錯的題目會放進 <b>${FINAL ? WRECK_ICON + " " + WRECK : "🌋 錯題島"}</b>，要再答對一次才算訂正好。</li>
       <li>⚠️ 待訂正的錯題達到 <b>${LOCK_LIMIT} 題</b>時，單元小島會<b>暫時鎖住</b>，要先去訂正，錯題少於 ${LOCK_LIMIT} 題才能再登島。</li>
       <li>錯題島還有「📚 歷史錯題複習」，可以把以前錯過的題目再練一次。</li>
+      <li>🔒 老師有時會<b>暫時關閉</b>某些島，只讓大家練習指定的單元。關閉的島在地圖上是灰色加上 🔒，點了進不去；右邊的「📌 老師指定練習」會列出開放的島，點一下就能直接前往。</li>
       <li>右上角 🌗 可以切換白天、夜晚的畫面。</li>
     </ol>`]);
   L.push(["score", "➕ 分數與等級", `
