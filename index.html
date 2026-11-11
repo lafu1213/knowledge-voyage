@@ -2780,7 +2780,7 @@ function renderSide() {
   const pct = lv.lv >= MAX_LEVEL ? 100 : Math.round((stats.score - floor) / (nextAt - floor) * 100);
   const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0;
   const starsTotal = WORLD.flatMap(s => s.units).reduce((t, u) => t + unitStars(u), 0);
-  const recent = mySessions.slice(-4).reverse();
+  const recent = mySessions.filter(x => x.unit !== VOYAGE.unit).slice(-4).reverse();
   const shipCard = FINAL ? myShipCard(lv.lv) : "";
   side.innerHTML = `
     <div class="card">
@@ -3650,7 +3650,7 @@ async function renderBridge() {
       const r = rulesNow();
       set(`<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-pirate" ${r.pirateOn ? "checked" : ""}> <span><b>🏴‍☠️ 海盜出沒</b><br><small>關掉後，所有學生都不會再遇到海盜（考前、上課專心時可以先關）。</small></span></label>
-        <label class="bridge-switch"><input type="checkbox" id="rule-events" ${r.eventsOn !== false ? "checked" : ""}> <span><b>🌊 航行突發事件</b><br><small>前往小島的路上可能遇到風浪、危險或同學出的謎題，要答對生活常識題才能登島（不加分也不扣分）。</small></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-events" ${r.eventsOn !== false ? "checked" : ""}> <span><b>🌊 航行突發事件</b><br><small>前往小島的路上可能遇到風浪、危險或同學出的謎題，要答對生活常識題才能登島（一次答對 +8、答錯只扣一次 −3、錯後答對 +4）。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-after" ${r.afterSchoolOnly ? "checked" : ""}> <span><b>🏫 只在放學後出現</b><br><small>週一到週五的上課時間，海盜不會出現；週末不限。</small></span></label>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 14px 32px; font-size:.9rem">上課時間 <input type="time" id="rule-start" value="${r.schoolStart}"> 到 <input type="time" id="rule-end" value="${r.schoolEnd}"></div>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
@@ -3935,6 +3935,9 @@ function guideSections() {
       ${row("⚔️ 相遇對戰：答對", sign(R.battleOk))}
       ${row("⚔️ 相遇對戰：答錯", R.battleWrong)}
       ${row(`📖 閱讀島：答對的分數`, "×" + READ.ptsMul)}
+      ${row("🌊 航行事件：一次就答對", sign(VOYAGE.ptsFirst))}
+      ${row("🌊 航行事件：答錯（每個事件只扣一次）", VOYAGE.ptsWrong)}
+      ${row("🌊 航行事件：答錯後再答對", sign(VOYAGE.ptsLater))}
     </tbody></table>
     <h4>一場結束的結算</h4>
     <table class="guide-table"><tbody>
@@ -4015,7 +4018,8 @@ function guideSections() {
       <li>前往小島的路上，有時會遇到<b>突發事件</b>：風浪、濃霧、暗礁、亂流、塞車、吊橋搖晃……也可能是<b>同學出的謎題</b>或漂流瓶。</li>
       <li>遇到事件時，系統會出一題<b>生活常識題</b>（安全、交通、健康、環保、禮貌、時間和金錢），不是課本上的題目。</li>
       <li><b>答對</b>就解除危機、順利登島；<b>答錯</b>會看到正確答案和說明，然後換下一題，直到答對為止。</li>
-      <li>航行事件<b>不加分也不扣分</b>。每天最多遇到 ${VOYAGE.perDay} 次，兩次之間至少隔 ${VOYAGE.gapMinutes} 分鐘。${FINAL ? "老師可以在老師艦橋關掉航行事件。" : ""}</li>
+      <li>計分：<b>一次就答對 +${VOYAGE.ptsFirst}</b>；答錯<b>只扣一次 ${VOYAGE.ptsWrong}</b>（之後再答錯不會再扣）；答錯之後再答對 <b>+${VOYAGE.ptsLater}</b>，比一次就答對少一點。航行事件不算星星，也不會放進錯題島。</li>
+      <li>每天最多遇到 ${VOYAGE.perDay} 次，兩次之間至少隔 ${VOYAGE.gapMinutes} 分鐘。${FINAL ? "老師可以在老師艦橋關掉航行事件。" : ""}</li>
     </ul>`]);
   L.push(["battle", "⚔️ 對戰與聊天", `
     <ul class="guide-list">
@@ -4046,9 +4050,10 @@ function openGuide(tab) {
 
 // =========================================================
 // 航行突發事件：前往小島的路上可能遇到風浪、危險或同學出的謎題
-// 系統出生活常識題（不用課本內容），答錯就換下一題，答對才能順利登島；不加分也不扣分
+// 系統出生活常識題（不用課本內容），答錯就換下一題，答對才能順利登島
+// 一次就答對 +8；答錯只扣一次 −3（之後再錯不再扣）；錯過之後再答對 +4
 // =========================================================
-const VOYAGE = { chance: 0.25, perDay: 6, gapMinutes: 3 };
+const VOYAGE = { chance: 0.25, perDay: 6, gapMinutes: 3, ptsFirst: 8, ptsLater: 4, ptsWrong: -3, unit: "航行事件" };
 const VOYAGE_SCENES = {
   walk: [["🌉", "吊橋搖搖晃晃！", "要先答對問題，橋上的守橋人才會幫你把橋固定好。"],
          ["🚧", "前面道路施工！", "工人叔叔說：答對問題，就帶你走安全的便道。"],
@@ -4188,7 +4193,7 @@ function maybeVoyageEvent(mode) {
   st.count++; st.last = Date.now(); store(voyageKey(), st);
   return new Promise(resolve => {
     const [icon, title, line] = voyageScene(mode);
-    voyage = { icon, title, line, tries: 0, seen: new Set(), resolve, cur: null };
+    voyage = { icon, title, line, tries: 0, seen: new Set(), resolve, cur: null, pts: 0 };
     const box = document.getElementById("quiz-content");
     box.closest(".modal-box").className = "modal-box voyage";
     openModal("quiz-modal");
@@ -4200,7 +4205,7 @@ function voyageRound() {
   v.cur = lifeQuestion(v.seen);
   document.getElementById("quiz-content").innerHTML = `
     <div class="voyage-head"><span class="voyage-icon">${v.icon}</span><div><b>${escapeHtml(v.title)}</b><div>${escapeHtml(v.line)}</div></div></div>
-    ${v.tries ? `<div class="voyage-tries">第 ${v.tries + 1} 題・別灰心，再試一次！</div>` : `<div class="voyage-tries">答對就能繼續前進，答錯會換下一題（不加分也不扣分）</div>`}
+    ${v.tries ? `<div class="voyage-tries">第 ${v.tries + 1} 題・別灰心，再試一次！</div>` : `<div class="voyage-tries">一次就答對 <b>+${VOYAGE.ptsFirst}</b> 分；答錯會換下一題（只扣一次 ${VOYAGE.ptsWrong} 分），之後答對 <b>+${VOYAGE.ptsLater}</b> 分</div>`}
     <h3 style="margin:14px 0 10px; line-height:1.6">${escapeHtml(v.cur.q)}</h3>
     <div id="voyage-opts">${v.cur.opts.map((o, i) => `<button class="option-btn" onclick="voyageAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
     <div id="voyage-fb"></div>`;
@@ -4209,17 +4214,27 @@ function voyageAnswer(i) {
   const v = voyage, ok = i === v.cur.ans;
   document.querySelectorAll("#voyage-opts .option-btn").forEach((b, k) => { b.disabled = true; if (k === v.cur.ans) b.classList.add("correct"); else if (k === i) b.classList.add("wrong"); });
   const fb = document.getElementById("voyage-fb");
+  const scored = !isTrial();
   if (ok) {
-    fb.innerHTML = `<div class="voyage-ok">✅ 答對了！${escapeHtml(v.cur.exp)}<br><b>危機解除，繼續前進！</b></div>
+    const add = v.tries ? VOYAGE.ptsLater : VOYAGE.ptsFirst;
+    v.pts += add;
+    fb.innerHTML = `<div class="voyage-ok">✅ 答對了！${escapeHtml(v.cur.exp)}<br><b>危機解除，繼續前進！</b>${scored ? ` <span class="pts plus">${fmtPts(add)} 分</span>${v.tries ? `<small>（一次就答對是 +${VOYAGE.ptsFirst}）</small>` : ""}` : ""}</div>
       <button class="btn-primary" style="width:100%; padding:12px; margin-top:10px" onclick="voyageDone()">⛵ 繼續航行</button>`;
   } else {
-    v.tries++;
-    fb.innerHTML = `<div class="voyage-no">❌ 不對喔！${escapeHtml(v.cur.exp)}</div>
+    const minus = v.tries === 0 ? VOYAGE.ptsWrong : 0;   // 同一個事件只扣一次
+    v.tries++; v.pts += minus;
+    fb.innerHTML = `<div class="voyage-no">❌ 不對喔！${escapeHtml(v.cur.exp)}${scored ? (minus ? ` <span class="pts minus">${fmtPts(minus)} 分</span><small>（這個事件只扣這一次）</small>` : `<small>（不會再扣分）</small>`) : ""}</div>
       <button class="btn-accent" style="width:100%; padding:12px; margin-top:10px" onclick="voyageRound()">🔁 換一題再試</button>`;
   }
 }
 function voyageDone() {
   const r = voyage && voyage.resolve;
+  if (voyage && !isTrial() && voyage.pts) {
+    // 記成一筆「航行事件」場次：只計分，不算星星，也不會放進錯題島
+    saveRecord(null, { t: nowStr(), subject: "航行", unit: VOYAGE.unit, total: 0, correct: 0, score: voyage.pts, sid: (FINAL ? FINAL_SID : "") + uid() });
+    toast(`🌊 航行事件 ${fmtPts(voyage.pts)} 分`);
+    renderPills(); renderSide();
+  }
   voyage = null; voyageLastAt = Date.now();
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   closeModal("quiz-modal");
