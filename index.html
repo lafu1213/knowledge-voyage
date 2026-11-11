@@ -192,6 +192,15 @@
   @media (max-width: 700px) { .shop-grid, .deco-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .modal-box.pirate { background: radial-gradient(ellipse at 30% 0%, #5a0c1e 0%, #240611 45%, #07030a 100%) !important; color: #fff3d6; border: 3px solid #ff6b7b; box-shadow: 0 0 40px rgba(255,59,82,.45), 0 20px 50px rgba(0,0,0,.7); }
   .modal-box.pirate .close-btn { display: none; }
+  .modal-box.voyage .close-btn { display: none; }
+  .modal-box.voyage { border: 3px solid #7fd8ff; box-shadow: 0 0 36px rgba(127,216,255,.4), 0 20px 50px rgba(0,0,0,.5); }
+  .voyage-head { display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg, rgba(56,189,248,.22), rgba(14,116,144,.18)); }
+  .voyage-head b { font-size: 1.2rem; }
+  .voyage-icon { font-size: 3rem; animation: flagWave 2s ease-in-out infinite; }
+  .voyage-tries { margin-top: 10px; font-size: .85rem; opacity: .85; }
+  .voyage-ok, .voyage-no { margin-top: 10px; padding: 10px 12px; border-radius: 12px; line-height: 1.6; }
+  .voyage-ok { background: rgba(34,197,94,.18); border: 1px solid rgba(34,197,94,.5); }
+  .voyage-no { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.45); }
   .pirate-title { text-align: center; font: 900 2.6rem "Noto Serif TC", serif; letter-spacing: 10px; color: #ffe3a0; text-shadow: 0 0 22px rgba(255,40,60,.85), 0 3px 0 #3a0008; animation: pirateGlow 1.2s ease-in-out infinite; }
   .pirate-title.win { color: #bff5d6; text-shadow: 0 0 22px rgba(95,227,154,.8); }
   @keyframes pirateGlow { 50% { text-shadow: 0 0 40px rgba(255,40,60,1), 0 3px 0 #3a0008; } }
@@ -1814,6 +1823,7 @@ function maybePirate(trigger) {
   if (!FINAL || !session || session.user.role !== "student" || isTrial() || pirate) return;
   if (document.querySelector(".modal-overlay.open")) return;
   if (!pirateAllowed()) return;   // 老師艦橋：海盜關閉，或上課時間
+  if (voyage || Date.now() - voyageLastAt < 60000) return;   // 剛遇過航行事件，先讓孩子喘口氣
   if (pirateProtected() || guardLocked && paceState().lockUntil > Date.now()) return;
   const log = pirateLog();
   if (log.count >= PIRATE_RULE.perDay || Date.now() - log.last < PIRATE_RULE.gapMinutes * 60000) return;
@@ -2594,12 +2604,14 @@ async function onIslandClick(id) {
     const s = WORLD.find(x => x.key === id);
     if (s && !s.units.length) { toast(`${s.name}的題目還在準備中，敬請期待！`); return; }
     const mode = await travelTo(id);
+    await maybeVoyageEvent(mode);
     pos.world = id;
     afterArrive(mode);
     if (id === "BOSS") openMistakeBook();
     else enterSubject(id);
   } else {
     const mode = await travelTo(id);
+    if (!id.startsWith("DOCK@")) await maybeVoyageEvent(mode);
     pos.unit[view.subject] = id;
     afterArrive(mode);
     if (id.startsWith("DOCK@")) backToWorld();
@@ -3546,7 +3558,7 @@ const net = {
 const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
   peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set() };
 const BRIDGE_TABS = [["overview", "🧭 總覽"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00" };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true };
 
 function bridgeCall(op, data = {}) { return DEMO ? Promise.resolve(demoBridge(op, data)) : api("bridge", Object.assign({ op }, data)); }
 async function loadBridgeRules() {
@@ -3638,6 +3650,7 @@ async function renderBridge() {
       const r = rulesNow();
       set(`<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-pirate" ${r.pirateOn ? "checked" : ""}> <span><b>🏴‍☠️ 海盜出沒</b><br><small>關掉後，所有學生都不會再遇到海盜（考前、上課專心時可以先關）。</small></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-events" ${r.eventsOn !== false ? "checked" : ""}> <span><b>🌊 航行突發事件</b><br><small>前往小島的路上可能遇到風浪、危險或同學出的謎題，要答對生活常識題才能登島（不加分也不扣分）。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-after" ${r.afterSchoolOnly ? "checked" : ""}> <span><b>🏫 只在放學後出現</b><br><small>週一到週五的上課時間，海盜不會出現；週末不限。</small></span></label>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 14px 32px; font-size:.9rem">上課時間 <input type="time" id="rule-start" value="${r.schoolStart}"> 到 <input type="time" id="rule-end" value="${r.schoolEnd}"></div>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
@@ -3673,7 +3686,7 @@ async function renderBridge() {
 }
 
 async function saveRules() {
-  const rules = { pirateOn: document.getElementById("rule-pirate").checked, afterSchoolOnly: document.getElementById("rule-after").checked,
+  const rules = { pirateOn: document.getElementById("rule-pirate").checked, afterSchoolOnly: document.getElementById("rule-after").checked, eventsOn: document.getElementById("rule-events").checked,
     schoolStart: document.getElementById("rule-start").value || "07:40", schoolEnd: document.getElementById("rule-end").value || "16:00" };
   try {
     bridgeState.rules = (await bridgeCall("setRules", { rules })).rules;
@@ -3997,6 +4010,13 @@ function guideSections() {
         <li>第 3 次：船被<b>扣押 ${PACE.lockMinutes} 分鐘</b>，不能答題。老師也看得到亂答紀錄，可以幫你解除。</li>
       </ul>`]);
   }
+  L.push(["voyage", "🌊 航行事件", `
+    <ul class="guide-list">
+      <li>前往小島的路上，有時會遇到<b>突發事件</b>：風浪、濃霧、暗礁、亂流、塞車、吊橋搖晃……也可能是<b>同學出的謎題</b>或漂流瓶。</li>
+      <li>遇到事件時，系統會出一題<b>生活常識題</b>（安全、交通、健康、環保、禮貌、時間和金錢），不是課本上的題目。</li>
+      <li><b>答對</b>就解除危機、順利登島；<b>答錯</b>會看到正確答案和說明，然後換下一題，直到答對為止。</li>
+      <li>航行事件<b>不加分也不扣分</b>。每天最多遇到 ${VOYAGE.perDay} 次，兩次之間至少隔 ${VOYAGE.gapMinutes} 分鐘。${FINAL ? "老師可以在老師艦橋關掉航行事件。" : ""}</li>
+    </ul>`]);
   L.push(["battle", "⚔️ 對戰與聊天", `
     <ul class="guide-list">
       <li>地圖上會看到正在線上的同學。點同學可以邀請他來一場<b>知識對決</b>：同一題比答案，答對 ${sign(R.battleOk)}、答錯 ${R.battleWrong}。</li>
@@ -4022,6 +4042,188 @@ function openGuide(tab) {
     <div class="guide-tabs">${L.map(([k, t]) => `<button class="${k === guideTab ? "btn-primary" : "btn-ghost"}" onclick="openGuide('${k}')">${t}</button>`).join("")}</div>
     <div class="guide-body">${cur[2]}</div>`;
   openModal("guide-modal");
+}
+
+// =========================================================
+// 航行突發事件：前往小島的路上可能遇到風浪、危險或同學出的謎題
+// 系統出生活常識題（不用課本內容），答錯就換下一題，答對才能順利登島；不加分也不扣分
+// =========================================================
+const VOYAGE = { chance: 0.25, perDay: 6, gapMinutes: 3 };
+const VOYAGE_SCENES = {
+  walk: [["🌉", "吊橋搖搖晃晃！", "要先答對問題，橋上的守橋人才會幫你把橋固定好。"],
+         ["🚧", "前面道路施工！", "工人叔叔說：答對問題，就帶你走安全的便道。"],
+         ["🐐", "一群山羊擋住小路！", "牧羊人說：答對問題，就把羊趕到旁邊讓你過。"]],
+  bus: [["🛞", "遊覽車爆胎了！", "司機正在換輪胎，答對問題就能幫忙遞工具、早點出發。"],
+        ["🚦", "前面大塞車！", "交通警察說：答對問題，就帶你們改走別條路。"],
+        ["🌧️", "突然下大雨，路面濕滑！", "答對問題，司機就能放心地慢慢開過去。"]],
+  plane: [["🌪️", "飛機遇到亂流！", "機長請大家繫好安全帶，答對問題就能飛出亂流區。"],
+          ["⛈️", "前方有雷雨雲！", "塔台說：答對問題，就給你一條安全的航線。"],
+          ["🦅", "一群老鷹在跑道附近！", "答對問題，地勤人員就會把鳥群趕走，讓飛機降落。"]],
+  swim: [["🌊", "大浪打過來了！", "救生員說：答對問題，就帶你游到浪小的地方。"],
+         ["🪼", "前面有一群水母！", "答對問題，海龜就會幫你帶路繞過水母。"],
+         ["🌀", "小漩渦出現了！", "答對問題，海豚就會把你推出漩渦。"]],
+  boat: [["🌊", "風浪來襲，船身搖晃！", "船長說：答對問題，就能把船穩穩地開過去。"],
+         ["🌫️", "海上起了濃霧！", "燈塔看守員說：答對問題，就點亮燈塔幫你指路。"],
+         ["🪨", "前面有暗礁！", "答對問題，領航員就會帶你繞過暗礁。"],
+         ["🐋", "一隻大鯨魚擋在航道上！", "答對問題，鯨魚就會讓出一條路給你。"]]
+};
+// 生活常識題：安全、交通、健康、環保、生活、自然、禮貌（小學生的基本認知）
+const LIFE_QS = [
+  ["過馬路時，應該走哪裡最安全？", ["斑馬線（行人穿越道）", "車子比較少的地方", "路中間", "停著的車子後面"], "過馬路要走斑馬線，看清楚紅綠燈和左右來車。"],
+  ["行人號誌的小綠人開始閃爍時，表示什麼？", ["快要變紅燈了，還沒過的人不要再走", "可以慢慢散步過去", "車子要停下來等很久", "可以在路上玩"], "小綠人閃爍代表快變紅燈，還沒走的人要在路邊等下一次。"],
+  ["騎腳踏車時，一定要戴什麼保護自己？", ["安全帽", "太陽眼鏡", "耳機", "帽子"], "安全帽可以保護頭部，騎腳踏車一定要戴。"],
+  ["坐汽車時，坐好後第一件事應該做什麼？", ["繫上安全帶", "把頭伸出窗外", "站在座位上", "打開車門"], "繫好安全帶，緊急煞車時才不會受傷。"],
+  ["下公車時，要注意什麼？", ["等車停好再下車，注意後方的機車", "車還在開就跳下去", "從車頭前面衝過馬路", "邊下車邊滑手機"], "要等車子停穩，下車時注意後方有沒有機車。"],
+  ["在家裡聞到瓦斯味，應該先做什麼？", ["打開窗戶，不要開關電器，到屋外打電話求救", "趕快打開電燈看清楚", "點火柴找漏氣的地方", "躲進房間關門"], "開關電器可能產生火花，要先開窗通風，到屋外求救。"],
+  ["發生火災時，臺灣要撥打哪一個電話？", ["119", "110", "113", "165"], "119 是消防和救護車，110 是報警。"],
+  ["遇到壞人或需要報警時，要撥打哪一個電話？", ["110", "119", "104", "1999"], "110 是報警專線。"],
+  ["發生地震時，在教室裡應該怎麼做？", ["趴下、掩護、穩住，躲在桌子下保護頭部", "馬上衝出教室", "站在窗戶旁邊", "搭電梯下樓"], "地震時先「趴下、掩護、穩住」，等搖晃停了再依老師指示疏散。"],
+  ["發生火災逃生時，下列哪個做法正確？", ["壓低身體，用濕毛巾摀住口鼻往外逃", "搭電梯比較快", "躲到衣櫃裡", "先回去拿玩具"], "濃煙往上飄，要壓低身體逃生，火災時不能搭電梯。"],
+  ["陌生人說要帶你去買糖果，你應該怎麼做？", ["拒絕，並馬上告訴爸媽或老師", "跟他走，因為他很友善", "先吃糖果再說", "告訴他家裡的地址"], "不跟陌生人走，也不要透露個人資料，要告訴信任的大人。"],
+  ["在網路上，下列哪一種資料不應該隨便告訴別人？", ["家裡住址和電話", "喜歡的顏色", "喜歡的卡通", "今天的天氣"], "住址、電話、密碼都是個人資料，要保護好。"],
+  ["在游泳池或海邊玩水，下列哪個做法最安全？", ["在有救生員的地方，並且先做暖身運動", "一個人偷偷去溪邊玩", "吃得很飽馬上下水", "去插著「禁止戲水」牌子的地方"], "要在有救生員的地方玩水，下水前先暖身。"],
+  ["看到有人溺水，小朋友應該怎麼做？", ["大聲呼救、丟救生圈或打 119，不要自己跳下去", "馬上跳下去救他", "裝作沒看到", "拍照上傳"], "「叫叫伸拋划，千萬不要游」，自己下水救人很危險。"],
+  ["用剪刀時，要怎麼拿著走路才安全？", ["握住刀刃，刀尖朝下", "刀尖朝前邊走邊揮", "放在口袋裡跑步", "拿著剪刀追同學"], "拿剪刀走路要握住刀刃、刀尖朝下。"],
+  ["插頭插座附近，下列哪件事很危險？", ["用濕濕的手去拔插頭", "用乾的手拔插頭", "拔插頭時抓住插頭本體", "不用的電器拔掉插頭"], "水會導電，濕手碰插頭容易觸電。"],
+  ["吃飯前、上完廁所後，應該要做什麼？", ["用肥皂洗手", "直接吃東西", "用衣服擦一擦", "只用水沖一下指甲"], "用肥皂洗手可以把細菌洗掉，預防生病。"],
+  ["正確洗手的口訣「濕、搓、沖、捧、擦」，其中「搓」至少要搓多久？", ["20 秒", "1 秒", "3 秒", "5 分鐘"], "搓手要搓 20 秒以上，手心手背和指縫都要搓到。"],
+  ["咳嗽或打噴嚏時，應該怎麼做？", ["用衛生紙或手肘遮住口鼻", "對著同學的臉", "用手抓著空氣", "大聲打完就好"], "遮住口鼻才不會把病菌傳給別人。"],
+  ["每天晚上睡覺前要做什麼，牙齒才會健康？", ["刷牙", "吃糖果", "喝汽水", "吃宵夜後直接睡"], "睡前刷牙可以防止蛀牙。"],
+  ["小學生每天大約要睡多久比較健康？", ["9～12 小時", "3 小時", "5 小時", "不用睡也可以"], "國小學童建議每天睡 9 到 12 小時，身體才長得好。"],
+  ["下列哪一種飲料最適合口渴時多喝？", ["白開水", "含糖汽水", "珍珠奶茶", "咖啡"], "白開水最健康，含糖飲料喝多了容易蛀牙、變胖。"],
+  ["看書或用平板時，下列哪個習慣對眼睛最好？", ["每 30 分鐘休息 10 分鐘，看看遠方", "在黑暗中看螢幕", "眼睛貼著螢幕看", "一直看三個小時不休息"], "用眼 30 分鐘休息 10 分鐘，多到戶外看遠方。"],
+  ["營養均衡的一餐，應該怎麼吃？", ["有飯、有菜、有肉或豆類，還有水果", "只吃炸雞", "只吃零食", "只喝飲料"], "各種食物都吃一點，營養才均衡。"],
+  ["運動前應該先做什麼，比較不容易受傷？", ["暖身運動", "吃很多東西", "馬上全力衝刺", "躺下來休息"], "暖身可以讓肌肉準備好，減少受傷。"],
+  ["夏天到戶外玩，怎麼預防中暑？", ["多喝水、戴帽子、待在陰涼處休息", "中午在大太陽下一直跑", "穿厚外套", "都不要喝水"], "多喝水、遮陽、適時休息可以預防中暑。"],
+  ["寶特瓶喝完後，應該丟到哪裡？", ["資源回收（塑膠類）", "一般垃圾", "廚餘桶", "丟在路邊"], "寶特瓶可以回收再利用，倒乾淨後放進塑膠類回收。"],
+  ["吃剩的菜和果皮，應該丟到哪裡？", ["廚餘桶", "資源回收桶", "馬桶", "水溝"], "剩菜、果皮是廚餘，可以做成堆肥或養豬。"],
+  ["下列哪一種電池丟法才正確？", ["拿到電池回收箱回收", "丟進一般垃圾", "丟到河裡", "埋在花盆裡"], "電池有重金屬，要拿到回收箱，不能亂丟。"],
+  ["下列哪個做法可以節約用水？", ["刷牙時關掉水龍頭，用杯子裝水", "水龍頭一直開著", "用很多水沖地板玩", "洗澡洗一個小時"], "刷牙用漱口杯、隨手關水龍頭，就能省下很多水。"],
+  ["離開教室時，應該順手做什麼來節約能源？", ["關燈、關電扇", "把燈全部打開", "打開冷氣讓教室涼涼的", "把窗戶都打破"], "隨手關燈、關電器可以節省電。"],
+  ["去買東西時，怎麼做比較環保？", ["自己帶購物袋和水壺", "每次都拿新的塑膠袋", "買很多用不到的東西", "用很多免洗餐具"], "自備購物袋、水壺和餐具，可以減少垃圾。"],
+  ["出去郊遊，產生的垃圾應該怎麼處理？", ["帶回家分類丟", "丟在草叢裡", "丟到河裡", "埋在沙灘上"], "「垃圾不落地」，自己的垃圾自己帶回去。"],
+  ["下列哪一種行為會傷害海洋動物？", ["把塑膠袋丟到海裡", "撿起沙灘上的垃圾", "自備餐具", "參加淨灘活動"], "海龜常把塑膠袋當成水母吃下去，會生病甚至死亡。"],
+  ["一天有幾個小時？", ["24 小時", "12 小時", "60 小時", "100 小時"], "一天有 24 小時，一小時有 60 分鐘。"],
+  ["一個星期有幾天？", ["7 天", "5 天", "10 天", "30 天"], "星期一到星期日，共 7 天。"],
+  ["一年有幾個月？", ["12 個月", "10 個月", "24 個月", "52 個月"], "一年有 12 個月，大約 52 個星期。"],
+  ["太陽從哪一個方向升起？", ["東方", "西方", "南方", "北方"], "太陽從東方升起、西方落下。"],
+  ["下雨天出門，最需要帶什麼？", ["雨傘或雨衣", "太陽眼鏡", "扇子", "游泳圈"], "下雨要帶雨具，也要小心路滑。"],
+  ["颱風天時，下列哪個做法最正確？", ["待在家裡，不要到海邊或山區", "去海邊看大浪", "到河邊釣魚", "到山上露營"], "颱風天風雨很大，待在安全的室內最好。"],
+  ["天空打雷閃電時，在戶外應該怎麼做？", ["離開空曠的地方，不要躲在大樹下", "躲在大樹下", "站在操場中間", "爬到高處看閃電"], "大樹和高處容易被雷打到，要到建築物裡面。"],
+  ["冬天寒流來時，怎麼做最正確？", ["穿保暖的衣服，戴帽子和圍巾", "穿短袖短褲出門", "吃冰淇淋取暖", "不用管它"], "寒流來時要注意保暖，預防感冒。"],
+  ["植物要長大，除了陽光，還需要什麼？", ["水和空氣", "糖果", "電", "音樂"], "植物需要陽光、水和空氣才能生長。"],
+  ["下列哪一種動物是哺乳類，會喝媽媽的奶長大？", ["鯨魚", "鯊魚", "青蛙", "金魚"], "鯨魚雖然住在海裡，但用肺呼吸、喝奶長大，是哺乳類。"],
+  ["蜜蜂對大自然有什麼幫助？", ["幫花朵傳播花粉", "專門吃蚊子", "幫忙下雨", "讓太陽變亮"], "蜜蜂採蜜時會幫花傳播花粉，植物才會結果。"],
+  ["同學跌倒受傷了，你應該怎麼做？", ["關心他，並請老師或健康中心幫忙", "在旁邊笑他", "假裝沒看到", "拍照給大家看"], "互相關心、找大人幫忙，才是好同學。"],
+  ["別人幫助你時，應該說什麼？", ["謝謝", "走開", "不關你的事", "什麼都不說"], "說「謝謝」是基本的禮貌。"],
+  ["不小心撞到別人時，應該說什麼？", ["對不起", "你自己擋路", "哈哈哈", "快讓開"], "不小心碰到人，要說「對不起」。"],
+  ["搭捷運或公車時，看到老人家或孕婦，應該怎麼做？", ["主動讓座", "假裝睡覺", "把包包放在旁邊座位", "大聲講電話"], "主動讓座給需要的人，是有禮貌的表現。"],
+  ["在圖書館裡，應該怎麼做？", ["輕聲細語，看完的書放回原位", "大聲聊天", "在書上畫畫", "邊吃零食邊翻書"], "圖書館要保持安靜，愛惜書本。"],
+  ["想借同學的文具時，應該怎麼做？", ["先問同學可不可以借", "直接拿走", "趁他不在時拿", "用完就丟掉"], "借東西要先問，用完要還，還要說謝謝。"],
+  ["聽到有同學被欺負，你可以怎麼做？", ["告訴老師或信任的大人", "跟著一起欺負他", "假裝不知道", "拍影片傳給大家"], "看到霸凌要告訴大人，一起保護同學。"],
+  ["跟同學意見不同時，最好的做法是什麼？", ["好好說出自己的想法，也聽聽對方的", "大聲罵對方", "動手推人", "以後都不跟他說話"], "好好溝通、互相尊重，才能解決問題。"],
+  ["用零用錢買東西前，最好先想什麼？", ["這是我需要的，還是只是想要的", "買越多越好", "先把錢全部花光", "跟同學比誰買得貴"], "分清楚「需要」和「想要」，才能把錢用在對的地方。"],
+  ["把零用錢存進撲滿或銀行，有什麼好處？", ["以後需要時有錢可以用", "錢會變不見", "會被罰錢", "沒有任何好處"], "存錢可以累積起來，買真正需要的東西。"],
+  ["下列哪一種是正確的用餐禮儀？", ["嘴巴裡有食物時不說話", "邊吃邊大聲講話", "用手抓菜", "把不喜歡的菜丟到地上"], "吃東西時不說話，也比較不會噎到。"],
+  ["手機或平板的密碼，可以告訴誰？", ["只告訴爸爸媽媽", "網路上認識的朋友", "班上每一位同學", "路上的陌生人"], "密碼要保密，只能讓爸媽知道。"],
+  ["在網路上看到不舒服或嚇人的訊息，應該怎麼做？", ["關掉畫面，告訴爸媽或老師", "轉傳給同學看", "回罵對方", "一直看下去"], "遇到不舒服的內容，要告訴信任的大人。"],
+  ["遊戲玩太久，應該怎麼做？", ["設定時間，時間到就休息", "一直玩到半夜", "不吃飯繼續玩", "偷偷躲起來玩"], "跟爸媽約好時間，玩一下也要讓眼睛和身體休息。"],
+  ["上下樓梯時，下列哪個做法最安全？", ["靠右慢慢走，不推擠", "從扶手上溜下來", "兩階兩階跳著走", "在樓梯上追逐"], "上下樓梯靠右走、不推擠，才不會跌倒。"],
+  ["下列哪一個不是蔬菜？", ["蘋果", "高麗菜", "紅蘿蔔", "菠菜"], "蘋果是水果。"],
+  ["月亮會發光，是因為什麼？", ["反射太陽的光", "月亮自己會發熱", "月亮上有電燈", "星星照亮它"], "月亮本身不會發光，是反射太陽光。"],
+  ["冰塊放在太陽下，會變成什麼？", ["水", "石頭", "鹽", "沙子"], "冰遇熱會融化成水。"],
+  ["要讓衣服快點乾，下列哪個方法最好？", ["掛在有陽光、通風的地方", "揉成一團放在角落", "放進冰箱", "泡在水裡"], "陽光和風會讓水分蒸發得比較快。"]
+];
+let voyage = null, voyageLastAt = 0;
+function voyageKey() { return "508_VOYAGE_" + session.user.name; }
+function voyageAllowed() {
+  if (!session || session.user.role !== "student" || isTrial() || pirate) return false;
+  if (document.querySelector(".modal-overlay.open")) return false;
+  if (FINAL && bridgeState.rules && bridgeState.rules.eventsOn === false) return false;
+  if (window.VOYAGE_TEST) return true;
+  const today = nowStr().slice(0, 10), log = load(voyageKey(), null);
+  const st = log && log.day === today ? log : { day: today, count: 0, last: 0 };
+  if (st.count >= VOYAGE.perDay || Date.now() - st.last < VOYAGE.gapMinutes * 60000) return false;
+  return Math.random() < VOYAGE.chance;
+}
+/** 系統出的生活題：固定題庫＋程式算的時間、金錢題 */
+function lifeQuestion(seen) {
+  const gen = [
+    () => { const h = 7 + Math.floor(Math.random() * 10), m = [0, 15, 30, 45][Math.floor(Math.random() * 4)], add = [15, 30, 45, 60, 90][Math.floor(Math.random() * 5)];
+      const t = h * 60 + m + add, f = x => { const H = Math.floor(x / 60) % 24; return `${H < 12 ? "上午" : "下午"} ${H > 12 ? H - 12 : H} 點${x % 60 ? ` ${x % 60} 分` : "整"}`; };
+      return [`船在 ${f(h * 60 + m)} 出發，航行 ${add} 分鐘後到達，到達時是幾點？`, [f(t), f(t + 15), f(t - 15), f(h * 60 + m + add * 2)], `${f(h * 60 + m)} 再過 ${add} 分鐘，就是 ${f(t)}。`]; },
+    () => { const p = [15, 25, 35, 45, 55, 65, 75, 85][Math.floor(Math.random() * 8)], pay = p < 50 ? 50 : 100;
+      return [`在港口小店買一瓶 ${p} 元的水，付了 ${pay} 元，可以找回幾元？`, [`${pay - p} 元`, `${pay - p + 10} 元`, `${pay - p - 5} 元`, `${p} 元`], `${pay} － ${p} ＝ ${pay - p}（元）。`]; },
+    () => { const n = 3 + Math.floor(Math.random() * 5), each = [2, 3, 4, 5][Math.floor(Math.random() * 4)];
+      return [`救生艇上有 ${n} 個人，每人要分 ${each} 瓶水，總共要準備幾瓶？`, [`${n * each} 瓶`, `${n + each} 瓶`, `${n * each + each} 瓶`, `${n * each - 1} 瓶`], `${n} × ${each} ＝ ${n * each}（瓶）。`]; }
+  ];
+  let q;
+  if (Math.random() < 0.25) q = gen[Math.floor(Math.random() * gen.length)]();
+  else {
+    const pool = LIFE_QS.filter(x => !seen.has(x[0]));
+    q = pickRandom(pool.length ? pool : LIFE_QS);
+  }
+  seen.add(q[0]);
+  const right = q[1][0], opts = shuffle([...new Set(q[1])]);
+  return { q: q[0], opts, ans: opts.indexOf(right), exp: q[2] };
+}
+function voyageScene(mode) {
+  const others = (net.others || []).filter(o => o.name !== session.user.name);
+  const mates = others.length ? others : rosterList.filter(a => a.role === "student" && a.name !== session.user.name);
+  if (mates.length && Math.random() < 0.3) {
+    const m = pickRandom(mates), who = shortName(m.name);
+    return pickRandom([
+      ["🧩", `${who} 在橋頭出了一道謎題！`, `${who} 笑著說：「答對我的問題，才讓你過去喔！」`],
+      ["🍾", `海上漂來 ${who} 丟的漂流瓶！`, `瓶子裡有一張紙條：「解開這道題，就送你一陣順風！」`],
+      ["🎣", `${who} 的釣魚線纏住你的船了！`, `${who} 說：「幫我答對一題，我就幫你把線解開！」`]
+    ]);
+  }
+  return pickRandom(VOYAGE_SCENES[mode] || VOYAGE_SCENES.boat);
+}
+/** 在出發之後、登島之前呼叫：沒有事件就馬上繼續；有事件就等孩子答對才繼續 */
+function maybeVoyageEvent(mode) {
+  if (mode === "here" || !voyageAllowed()) return Promise.resolve();
+  const today = nowStr().slice(0, 10), log = load(voyageKey(), null);
+  const st = log && log.day === today ? log : { day: today, count: 0, last: 0 };
+  st.count++; st.last = Date.now(); store(voyageKey(), st);
+  return new Promise(resolve => {
+    const [icon, title, line] = voyageScene(mode);
+    voyage = { icon, title, line, tries: 0, seen: new Set(), resolve, cur: null };
+    const box = document.getElementById("quiz-content");
+    box.closest(".modal-box").className = "modal-box voyage";
+    openModal("quiz-modal");
+    voyageRound();
+  });
+}
+function voyageRound() {
+  const v = voyage;
+  v.cur = lifeQuestion(v.seen);
+  document.getElementById("quiz-content").innerHTML = `
+    <div class="voyage-head"><span class="voyage-icon">${v.icon}</span><div><b>${escapeHtml(v.title)}</b><div>${escapeHtml(v.line)}</div></div></div>
+    ${v.tries ? `<div class="voyage-tries">第 ${v.tries + 1} 題・別灰心，再試一次！</div>` : `<div class="voyage-tries">答對就能繼續前進，答錯會換下一題（不加分也不扣分）</div>`}
+    <h3 style="margin:14px 0 10px; line-height:1.6">${escapeHtml(v.cur.q)}</h3>
+    <div id="voyage-opts">${v.cur.opts.map((o, i) => `<button class="option-btn" onclick="voyageAnswer(${i})">${escapeHtml(o)}</button>`).join("")}</div>
+    <div id="voyage-fb"></div>`;
+}
+function voyageAnswer(i) {
+  const v = voyage, ok = i === v.cur.ans;
+  document.querySelectorAll("#voyage-opts .option-btn").forEach((b, k) => { b.disabled = true; if (k === v.cur.ans) b.classList.add("correct"); else if (k === i) b.classList.add("wrong"); });
+  const fb = document.getElementById("voyage-fb");
+  if (ok) {
+    fb.innerHTML = `<div class="voyage-ok">✅ 答對了！${escapeHtml(v.cur.exp)}<br><b>危機解除，繼續前進！</b></div>
+      <button class="btn-primary" style="width:100%; padding:12px; margin-top:10px" onclick="voyageDone()">⛵ 繼續航行</button>`;
+  } else {
+    v.tries++;
+    fb.innerHTML = `<div class="voyage-no">❌ 不對喔！${escapeHtml(v.cur.exp)}</div>
+      <button class="btn-accent" style="width:100%; padding:12px; margin-top:10px" onclick="voyageRound()">🔁 換一題再試</button>`;
+  }
+}
+function voyageDone() {
+  const r = voyage && voyage.resolve;
+  voyage = null; voyageLastAt = Date.now();
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
+  closeModal("quiz-modal");
+  if (r) r();
 }
 
 // ── 聊天室 ──
