@@ -137,6 +137,16 @@
   body.season-final .modal-box.wreck h2 { font-family: "Noto Serif TC", serif; color: #ffd45c; }
   body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
   body.season-final .coin-pill { background: linear-gradient(180deg, rgba(60,40,6,.85), rgba(20,12,2,.9)); border-color: #e9b949; color: #ffe48a; }
+  .guide-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .guide-tabs button { padding: 6px 12px; font-size: .85rem; }
+  .guide-body { font-size: .93rem; line-height: 1.75; }
+  .guide-body h4 { margin: 14px 0 6px; }
+  .guide-list { padding-left: 1.3em; margin: 6px 0; }
+  .guide-list li { margin: 4px 0; }
+  .guide-table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: .9rem; }
+  .guide-table td, .guide-table th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .guide-table .num { text-align: right; white-space: nowrap; }
+  .guide-note { font-size: .84rem; opacity: .85; }
   .isle-flag { pointer-events: none; }
   .isle.conquered .face { stroke: rgba(255,120,120,.75); stroke-width: 2.5; }
   .isle-flag .flag-cloth { transform-box: fill-box; transform-origin: left center; animation: flagWave 2.6s ease-in-out infinite; }
@@ -703,6 +713,7 @@
     <div class="pills" id="pills"></div>
     <div class="pills">
       <button class="btn-accent" id="btn-dashboard" onclick="openDashboard()" hidden>📊 後台</button>
+      <button class="btn-ghost" onclick="openGuide()" title="遊戲說明">📜 說明</button>
       <button class="btn-ghost" onclick="toggleNight()">🌗</button>
       <button class="btn-ghost" onclick="logout()">登出</button>
     </div>
@@ -761,6 +772,10 @@
 </div>
 <div class="modal-overlay" id="dash-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('dash-modal')" aria-label="關閉">✕</button><div id="dash-content"></div></div>
+</div>
+
+<div class="modal-overlay" id="guide-modal">
+  <div class="modal-box wide"><button class="close-btn" onclick="closeModal('guide-modal')" aria-label="關閉">✕</button><div id="guide-content"></div></div>
 </div>
 
 <div class="modal-overlay" id="bridge-modal">
@@ -2738,6 +2753,7 @@ function renderSide() {
         ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span></button>
         <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
         <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
+        <button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openGuide()">📜 遊戲說明（孩子看到的規則）</button>
         <div class="trial-note">👀 試玩模式：答題不列入紀錄</div>
       </div>
       ${onlineCard}
@@ -2772,7 +2788,7 @@ function renderSide() {
     ${FINAL ? backpackCard() : ""}
     ${onlineCard}
     <div class="card"><h3>🏝️ 各科大島進度</h3>${subjRows}</div>
-    <div class="card rules"><details><summary>📏 計分規則（會扣分喔！）</summary>
+    <div class="card rules"><button class="btn-accent" style="width:100%; padding:10px; margin-bottom:8px" onclick="openGuide()">📜 遊戲說明：分數、星星、插旗${FINAL ? "、金幣、海盜" : ""}全部看這裡</button><details><summary>📏 計分規則（會扣分喔！）</summary>
       ✅ 答對 +${SCORE_RULES.correct}，連續答對每多一題再 +${SCORE_RULES.comboBonus}<br>
       ❌ 第一次答錯 ${SCORE_RULES.wrongFirst}；以前錯過又錯 ${SCORE_RULES.wrongAgain}<br>
       👾 錯題訂正：答對 +${SCORE_RULES.fixOk}，又錯 ${SCORE_RULES.fixWrong}<br>
@@ -3871,6 +3887,141 @@ function demoBridge(op, d) {
     return { mistakes: Object.values(byQ).filter(q => q.wrong).map(q => Object.assign(q, { students: Object.values(q.who).filter(w => w.wrong) })) };
   }
   throw new Error("未知的艦橋動作");
+}
+
+// =========================================================
+// 遊戲說明：所有規則集中在這裡，數字直接讀程式的設定，改規則時說明會跟著變
+// =========================================================
+let guideTab = "start";
+function guideSections() {
+  const R = SCORE_RULES, L = [];
+  const row = (a, b) => `<tr><td>${a}</td><td class="num"><b>${b}</b></td></tr>`;
+  const sign = n => (n > 0 ? "+" : "") + n;
+  const lvRows = [1, 20, 50, 99, 100, 120, 150, MAX_LEVEL].map(lv => `<tr><td>Lv.${lv}</td><td class="num">${levelStartScore(lv)} 分</td><td>${escapeHtml(getLevelInfo(levelStartScore(lv)).title)}</td></tr>`).join("");
+  L.push(["start", "🧭 怎麼玩", `
+    <ol class="guide-list">
+      <li>登入後先選<b>交通方式</b>（🚶走路、🚌遊覽車、✈️飛機、🏊游泳、⛴️搭船），再點一座<b>大島</b>（一個科目）。</li>
+      <li>大島上有很多<b>單元小島</b>，點小島就能登島闖關。每次闖關隨機出 <b>${SESSION_SIZE} 題</b>，沒做過、做得少的題目優先出現，選項順序每次都會重新洗牌。</li>
+      <li>小島題目不夠 ${SESSION_SIZE} 題時，會從旁邊的小島抽「跨單元複習」。</li>
+      <li>答錯的題目會放進 <b>${FINAL ? WRECK_ICON + " " + WRECK : "🌋 錯題島"}</b>，要再答對一次才算訂正好。</li>
+      <li>⚠️ 待訂正的錯題達到 <b>${LOCK_LIMIT} 題</b>時，單元小島會<b>暫時鎖住</b>，要先去訂正，錯題少於 ${LOCK_LIMIT} 題才能再登島。</li>
+      <li>錯題島還有「📚 歷史錯題複習」，可以把以前錯過的題目再練一次。</li>
+      <li>右上角 🌗 可以切換白天、夜晚的畫面。</li>
+    </ol>`]);
+  L.push(["score", "➕ 分數與等級", `
+    <h4>每一題</h4>
+    <table class="guide-table"><tbody>
+      ${row("✅ 答對", sign(R.correct))}
+      ${row(`🔥 連續答對，每多一題再加（最多再加 ${R.comboMax}）`, sign(R.comboBonus))}
+      ${row("❌ 第一次答錯", R.wrongFirst)}
+      ${row("❌❌ 以前就錯過的題目又答錯", R.wrongAgain)}
+      ${row(`${FINAL ? WRECK_ICON : "🌋"} 錯題訂正：答對`, sign(R.fixOk))}
+      ${row(`${FINAL ? WRECK_ICON : "🌋"} 錯題訂正：又答錯`, R.fixWrong)}
+      ${row("📚 歷史錯題複習：答對", sign(R.reviewOk))}
+      ${row("📚 歷史錯題複習：又答錯", R.reviewWrong)}
+      ${row("⚔️ 相遇對戰：答對", sign(R.battleOk))}
+      ${row("⚔️ 相遇對戰：答錯", R.battleWrong)}
+      ${row(`📖 閱讀島：答對的分數`, "×" + READ.ptsMul)}
+    </tbody></table>
+    <h4>一場結束的結算</h4>
+    <table class="guide-table"><tbody>
+      ${row("💯 全部答對", sign(R.perfect))}${row("👍 答對 80% 以上", sign(R.good))}${row("😵 答對不到 40%", R.poor)}
+      ${row("📖 閱讀島答對 80% 以上：結算獎勵", "×" + READ.ptsMul)}
+    </tbody></table>
+    <p class="guide-note">總分最低是 0 分。分數掉下來，等級也會跟著降。</p>
+    <h4>等級</h4>
+    <p>1～99 級：每 <b>${LEVEL_STEP} 分</b>升一級。100 級以後每一級要的分數愈來愈多，最高 <b>${MAX_LEVEL} 級</b>。每到某些等級會換新稱號${FINAL ? "，也會換更大的船" : ""}。</p>
+    <table class="guide-table"><thead><tr><th>等級</th><th class="num">需要總分</th><th>稱號</th></tr></thead><tbody>${lvRows}</tbody></table>
+    ${FINAL ? `<p>⛵ 我的船：${SHIPS.map(s => `Lv.${s.lv} ${s.name}`).join("、")}。</p>` : ""}`]);
+  L.push(["stars", "⭐ 星星與插旗", `
+    <p>每座單元小島最多 <b>6 顆星</b>：3 顆<b>正確率星 ⭐</b> ＋ 3 顆<b>完成度星 🌟</b>。</p>
+    <table class="guide-table"><thead><tr><th>星星</th><th>怎麼拿</th></tr></thead><tbody>
+      <tr><td>⭐ 第 1 顆</td><td>單場 ${SESSION_SIZE} 題答對 40% 以上</td></tr>
+      <tr><td>⭐⭐ 第 2 顆</td><td>單場答對 70% 以上</td></tr>
+      <tr><td>🌟 第 1 顆</td><td>島上所有題目裡，答對過 40%</td></tr>
+      <tr><td>🌟🌟 第 2 顆</td><td>島上所有題目裡，答對過 70%</td></tr>
+      <tr><td>⭐⭐⭐🌟🌟🌟 全部</td><td>通過 <b>🏁 島嶼挑戰考</b></td></tr>
+    </tbody></table>
+    <h4>🏁 島嶼挑戰考</h4>
+    <ol class="guide-list">
+      <li>島上<b>每一題都練習過</b>以後，登島視窗會出現紅色的「🏁 開始島嶼挑戰考」按鈕（全部由程式出題的島，練習 ${CHALLENGE.virtualSessions} 場後就能挑戰）。</li>
+      <li>挑戰考共 <b>${CHALLENGE.size} 題</b>：一半是你做過的題目（優先挑以前錯過的），另一半由系統出新題或從島上重新抽題。</li>
+      <li><b>${CHALLENGE.size} 題全部答對</b>：拿到這座島全部 6 顆星，並插上你的 👑 <b>金旗</b>！</li>
+      <li>沒有全對：答錯的題目會進錯題島，<b>${CHALLENGE.cooldownMin} 分鐘後</b>才能再挑戰。</li>
+    </ol>
+    <h4>🚩 插旗</h4>
+    <p>通過挑戰考的小島會插上金旗，旗面是你的頭像，一眼就看得出你征服了哪些島。世界地圖的大島會寫出「🚩 已插旗幾座」，一科全部征服時旗面變成 👑。右邊的「各科大島進度」也看得到每科插旗的數量。</p>
+    ${FINAL ? `<p class="guide-note">🪙 每拿到一顆星送 ${COIN.star} 枚金幣。</p>` : ""}`]);
+  L.push(["read", "📖 閱讀島", `
+    <p>島名有「閱讀、短文、文章、Reading」，或島上一半以上的題目附有文章，就是<b>閱讀島</b>，每一科都一樣。閱讀題需要耐心讀完文章，所以有加碼：</p>
+    <ul class="guide-list">
+      <li>答對的分數 <b>×${READ.ptsMul}</b>；一場答對 80% 以上，結算獎勵也 <b>×${READ.ptsMul}</b>。</li>
+      ${FINAL ? `<li>答對的金幣 <b>×${READ.coinMul}</b>；一場答對 80% 以上再送 <b>🪙 ${READ.bonusCoins}</b>（同一座島每天一次）。</li>
+      <li>🎁 <b>稀有寶物</b>（商店買不到，一天最多一件）：
+        <br>⛵ <b>星光船帆</b>：第一次在閱讀島全部答對必得。
+        <br>🐚 <b>珍珠護符</b>：之後全對有 ${Math.round(READ.perfectChance * 100)}%、答對 80% 以上有 ${Math.round(READ.goodChance * 100)}% 的機會撈到，可以擋下任何一次海盜（連黑帆船長也擋得住）。</li>
+      <li>那一場如果有亂答，就不會給寶物。</li>` : `<li>期末航線還有金幣加倍和稀有寶物喔！</li>`}
+    </ul>`]);
+  if (FINAL) {
+    const shop = SHOP.map(it => `<tr><td>${it.name}</td><td class="num">🪙 ${it.price}</td><td class="num">Lv.${it.lv}</td><td>${escapeHtml(it.desc)}</td></tr>`).join("")
+      + DECOR.filter(d => !d.rare).map(d => `<tr><td>${d.name}</td><td class="num">🪙 ${d.price}</td><td class="num">—</td><td>船的裝飾</td></tr>`).join("");
+    L.push(["coin", "🪙 金幣與商店", `
+      <table class="guide-table"><tbody>
+        ${row("答對一題", "+" + COIN.correct)}${row("第一次做就答對", "+" + COIN.firstRight)}${row("錯題訂正成功", "+" + COIN.fix)}
+        ${row("每升一級", "+" + COIN.levelUp)}${row("每拿到一顆星", "+" + COIN.star)}${row("📖 閱讀島答對", "×" + READ.coinMul)}
+        ${row("打贏小嘍囉／黑帆船長", `+${PIRATES.minion.reward}／+${PIRATES.captain.reward}`)}
+      </tbody></table>
+      <ul class="guide-list">
+        <li>🪙 <b>船上錢袋</b>：賺到的金幣先放這裡，<b>海盜會搶</b>。</li>
+        <li>🔒 <b>島上寶庫</b>：存進去最安全，一開始最多放 ${COIN.vaultCap} 枚，買「寶庫擴建」每次 +200。老師發的金幣直接進寶庫。</li>
+        <li>買東西要用錢袋的金幣。花金幣<b>不會扣分</b>，等級也不會下降。太快亂答的題目不給金幣。</li>
+      </ul>
+      <h4>⚓ 港口商店</h4>
+      <table class="guide-table"><thead><tr><th>道具</th><th class="num">價錢</th><th class="num">解鎖</th><th>用途</th></tr></thead><tbody>${shop}</tbody></table>
+      <p class="guide-note">道具只能在打海盜、對戰時使用。🐚 珍珠護符、⛵ 星光船帆是閱讀島限定寶物，買不到。</p>`]);
+    L.push(["pirate", "🏴‍☠️ 海盜", `
+      <ul class="guide-list">
+        <li>闖關結束、或登上大島時，有機會遇到海盜：每天最多 <b>${PIRATE_RULE.perDay} 次</b>，兩次之間至少隔 ${PIRATE_RULE.gapMinutes} 分鐘。剛開始玩的前 ${PIRATE_RULE.newbieDays} 天不會遇到。</li>
+        <li>🦜 <b>${PIRATES.minion.name}</b>：答對 ${PIRATES.minion.need} 題就贏，贏了 🪙 +${PIRATES.minion.reward}；輸了錢袋被搶 ${Math.round(PIRATES.minion.rate * 100)}%（最多 ${PIRATES.minion.max} 枚）。</li>
+        <li>🏴‍☠️ <b>${PIRATES.captain.name}</b>：${PIRATES.captain.rounds} 題答對 ${PIRATES.captain.need} 題就贏，贏了 🪙 +${PIRATES.captain.reward}；輸了被搶 ${Math.round(PIRATES.captain.rate * 100)}%（最多 ${PIRATES.captain.max} 枚）。等級 5 以上才會遇到船長。</li>
+        <li>每題 ${PIRATES.minion.secs} 秒，題目優先出你的錯題。一天最多被搶 ${PIRATE_RULE.dailyStealCap} 枚，<b>寶庫裡的金幣永遠安全</b>。</li>
+        <li>可以用道具：🛡️ 木盾擋小嘍囉、🔭 瞭望鏡繞路、💣 大砲刪掉一個錯的選項、🧭 羅盤多 10 秒、🛡️ 鐵甲船身被搶減半、🐚 珍珠護符擋任何海盜。</li>
+        <li>老師可以在「老師艦橋」關掉海盜，或設定只在放學後出現。</li>
+      </ul>`]);
+    L.push(["pace", "⏱️ 作答節奏", `
+      <ul class="guide-list">
+        <li>每題至少停留 <b>${PACE.minSeconds} 秒</b>才能按下一題，先把詳解看完。</li>
+        <li><b>亂答</b>是指：題目出現 ${PACE.fastSeconds} 秒內就作答（題目長會多給幾秒），或連續 5 題都點同一個位置而且幾乎都錯。</li>
+        <li>當天第 1 次亂答：那題<b>不加分，答錯扣分加倍</b>。</li>
+        <li>第 2 次：接下來 <b>${PACE.doubleCount} 題</b>答錯都加倍扣分。</li>
+        <li>第 3 次：船被<b>扣押 ${PACE.lockMinutes} 分鐘</b>，不能答題。老師也看得到亂答紀錄，可以幫你解除。</li>
+      </ul>`]);
+  }
+  L.push(["battle", "⚔️ 對戰與聊天", `
+    <ul class="guide-list">
+      <li>地圖上會看到正在線上的同學。點同學可以邀請他來一場<b>知識對決</b>：同一題比答案，答對 ${sign(R.battleOk)}、答錯 ${R.battleWrong}。</li>
+      <li>不想被打擾時，可以把上面的「接受挑戰」切成「關」，專心練習。</li>
+      <li>聊天室可以跟同學打招呼，不禮貌的字會被自動遮掉，老師也看得到聊天紀錄。</li>
+      ${FINAL ? `<li>📩 有問題可以點右邊的「老師來信」私下問老師，只有老師看得到。</li>` : ""}
+    </ul>`]);
+  L.push(["roles", "👨‍👩‍👧 家長與老師", `
+    <ul class="guide-list">
+      <li><b>學生</b>：答題會記錄分數、星星${FINAL ? "、金幣" : ""}，所有紀錄都存在雲端，換一台電腦登入也看得到。</li>
+      <li><b>家長</b>：可以試玩（不列入紀錄），按「📊 看孩子的學習紀錄」查看孩子答對、答錯、訂正和星星。</li>
+      <li><b>老師</b>：可以試玩，按「📊 開啟全班後台」看全班成績（期中、期末分開）${FINAL ? "；「⚓ 老師艦橋」可以發金幣、私訊、看亂答紀錄、看分科錯題、開關海盜" : ""}。</li>
+    </ul>`]);
+  return L;
+}
+function openGuide(tab) {
+  if (tab) guideTab = tab;
+  const L = guideSections();
+  if (!L.some(x => x[0] === guideTab)) guideTab = "start";
+  const cur = L.find(x => x[0] === guideTab);
+  document.getElementById("guide-content").innerHTML = `
+    <h2 style="margin-top:0;">📜 遊戲說明 <small style="font-size:.8rem; opacity:.75">${FINAL ? "寶藏海・期末航線" : "知識大航海・期中航線"}</small></h2>
+    <div class="guide-tabs">${L.map(([k, t]) => `<button class="${k === guideTab ? "btn-primary" : "btn-ghost"}" onclick="openGuide('${k}')">${t}</button>`).join("")}</div>
+    <div class="guide-body">${cur[2]}</div>`;
+  openModal("guide-modal");
 }
 
 // ── 聊天室 ──
