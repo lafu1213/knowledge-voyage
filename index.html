@@ -108,7 +108,13 @@
     background: linear-gradient(180deg, #1e3a6e, #0b1a36); color: #fff; border: 2px solid #7fb8ff;
     box-shadow: 0 0 12px rgba(127,184,255,.25), 0 4px 0 #050c1c; font-family: "Noto Serif TC", serif; font-weight: 900; font-size: 1.05rem;
   }
-  body.season-final .option-btn:hover:not(:disabled) { box-shadow: 0 0 22px rgba(127,184,255,.6), 0 4px 0 #050c1c; }
+  body.season-final .option-btn:hover:not(:disabled) { background: linear-gradient(180deg, #27508f, #10244a); color: #fff; border-color: #a9d0ff; box-shadow: 0 0 22px rgba(127,184,255,.6), 0 4px 0 #050c1c; }
+  /* 手機、平板沒有滑鼠：不要 hover 效果（iPhone 會把剛點過位置的按鈕一直當成 hover，變成白底看不到字） */
+  @media (hover: none) {
+    .option-btn:hover:not(:disabled) { background: rgba(255,255,255,0.92); border-color: #cbd5e1; }
+    body.season-final .option-btn:hover:not(:disabled) { background: linear-gradient(180deg, #1e3a6e, #0b1a36); border-color: #7fb8ff; box-shadow: 0 0 12px rgba(127,184,255,.25), 0 4px 0 #050c1c; }
+    .option-btn:active:not(:disabled) { transform: scale(.98); }
+  }
   body.season-final .option-btn:disabled { opacity: 1; }
   body.season-final .option-btn:disabled:not(.correct):not(.wrong) { opacity: .6; }
   body.season-final .option-btn.correct { background: linear-gradient(180deg, #1e7a4a, #0a3a20) !important; border-color: #7ff5b0 !important; box-shadow: 0 0 20px rgba(127,245,176,.55); color: #fff !important; }
@@ -397,6 +403,15 @@
   @keyframes waveDrift { from { transform: translateX(-12px); } to { transform: translateX(12px); } }
   .shore { fill: var(--shore); stroke: rgba(255,255,255,0.55); stroke-width: 2; }
   .isle { cursor: pointer; outline: none; transition: opacity 0.3s; }
+  /* 換地圖時，島一座接一座彈出來（時間錯開、有彈性） */
+  #map-svg.pop .isle { animation: islePop .72s cubic-bezier(.34, 1.56, .64, 1) backwards; animation-delay: calc(var(--i, 0) * 75ms + 60ms); transform-box: fill-box; transform-origin: 50% 65%; }
+  @keyframes islePop { 0% { opacity: 0; transform: translateY(26px) scale(.55); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+  /* 群島：外圈一圈慢慢轉的虛線光環，看得出裡面還有好幾座小島 */
+  .grp-ring { fill: none; stroke-width: 3; stroke-dasharray: 2 13; stroke-linecap: round; opacity: .85; transform-box: fill-box; transform-origin: center; animation: ringSpin 26s linear infinite; }
+  .grp-ring.r2 { stroke-width: 1.6; stroke-dasharray: 26 10; opacity: .45; animation-duration: 40s; animation-direction: reverse; }
+  .grp-mini { opacity: .95; }
+  @keyframes ringSpin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #map-svg.pop .isle, .grp-ring { animation: none; } }
   .isle .lift { transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
   .isle:hover .lift, .isle:focus-visible .lift { transform: translateY(-9px); }
   .isle:focus-visible .face { stroke: #fde047; stroke-width: 6; }
@@ -1332,6 +1347,67 @@ function splitUnit(unit) {
   const e = String(unit).match(/^((?:Unit|Review|Lesson)\s*\d+|第\S+?單元)\s+(.+)$/i);   // 英文單元：Unit 1 The Best Drink → Unit 1・The Best Drink
   return e ? [e[1], e[2]] : ["", unit];
 }
+// ── 單元很多的科目：先分成「群島」（例如 第6單元、第七課），點進去才看到各單元的小島 ──
+const GROUP_MIN = 7;   // 一科超過 7 座島才分群
+// 每個群島有自己的主題：顏色、地形、裝飾都不一樣
+const GROUP_THEMES = [
+  { name: "珊瑚灣", icon: "🐠", land: ["#5eead4", "#0f766e"], sand: "#fde68a", deco: ["🪸", "🐚", "🐠", "🌊"], shape: { points: 9, wobble: 0.38 }, ring: "#99f6e4" },
+  { name: "火山島", icon: "🌋", land: ["#fb923c", "#9a3412"], sand: "#fed7aa", deco: ["🔥", "🪨", "🌋", "💎"], shape: { points: 7, wobble: 0.45 }, ring: "#fdba74" },
+  { name: "雪峰島", icon: "🏔️", land: ["#bfdbfe", "#3b82f6"], sand: "#f8fafc", deco: ["❄️", "⛄", "🏔️", "🐧"], shape: { points: 6, wobble: 0.3, sharp: true }, ring: "#e0f2fe" },
+  { name: "叢林島", icon: "🌴", land: ["#86efac", "#166534"], sand: "#fef08a", deco: ["🌴", "🦜", "🍌", "🐒"], shape: { points: 10, wobble: 0.42 }, ring: "#bbf7d0" },
+  { name: "櫻花島", icon: "🌸", land: ["#f9a8d4", "#be185d"], sand: "#fce7f3", deco: ["🌸", "🎐", "🍡", "🦋"], shape: { points: 8, wobble: 0.34 }, ring: "#fbcfe8" },
+  { name: "水晶島", icon: "💎", land: ["#c4b5fd", "#5b21b6"], sand: "#ede9fe", deco: ["💎", "🔮", "✨", "🌙"], shape: { points: 6, wobble: 0.25, sharp: true }, ring: "#ddd6fe" },
+  { name: "沙丘島", icon: "🏜️", land: ["#fcd34d", "#b45309"], sand: "#fef3c7", deco: ["🐪", "🌵", "🏺", "☀️"], shape: { points: 9, wobble: 0.3 }, ring: "#fde68a" },
+  { name: "極光島", icon: "🌌", land: ["#67e8f9", "#1e3a8a"], sand: "#cffafe", deco: ["🌌", "⭐", "🐋", "🛸"], shape: { points: 8, wobble: 0.4 }, ring: "#a5f3fc" }
+];
+function groupKeyOf(u) {
+  const [l1] = splitUnit(u.unit);
+  if (l1) return l1;
+  const m = String(u.unit).match(/^(第[\d一二三四五六七八九十百]+[課單元章回])/);
+  return m ? m[1] : "";
+}
+/** 幾個單元名稱共同的詞，例如「異分母分數」「面積」；找不到就空白 */
+function commonWords(names) {
+  const strip = n => n.replace(/^[\dA-Za-z０-９]+[-－.][\d０-９]+\s*/, "").replace(/[（(][^）)]*[）)]/g, "");
+  const list = names.map(strip).filter(Boolean);
+  if (list.length < 2) return "";
+  const first = list[0];
+  for (let len = Math.min(8, first.length); len >= 2; len--) {
+    for (let i = 0; i + len <= first.length; i++) {
+      const w = first.slice(i, i + len);
+      if (/[的與和及、，,\s]/.test(w[0]) || /[的與和及、，,\s]/.test(w[w.length - 1])) continue;
+      if (list.every(n => n.includes(w))) return w;
+    }
+  }
+  return "";
+}
+/** 這一科的群島；單元少、或分不出群的科目回傳 null */
+function unitGroups(s) {
+  const sig = s.units.map(u => u.key).join("|");
+  if (s._groupSig === sig) return s._groups;
+  let out = null;
+  if (s.units.length >= GROUP_MIN) {
+    const by = new Map();
+    s.units.forEach(u => { const k = groupKeyOf(u) || "其他"; if (!by.has(k)) by.set(k, []); by.get(k).push(u); });
+    if (by.size >= 2 && by.size < s.units.length) {
+      out = [...by.entries()].map(([key, units], i) => {
+        const theme = GROUP_THEMES[(i + (seeded("grp" + s.key)() * GROUP_THEMES.length | 0)) % GROUP_THEMES.length];
+        const words = commonWords(units.map(u => splitUnit(u.unit)[1] || u.unit));
+        return { id: "GRP@" + s.key + "@" + key, key, units, theme, words, title: words ? `${key}・${words}` : `${key}・${theme.name}` };
+      });
+    }
+  }
+  s._groupSig = sig; s._groups = out;
+  return out;
+}
+function groupOf(s, unitKeyStr) { const gs = unitGroups(s); return gs ? gs.find(g => g.units.some(u => u.key === unitKeyStr)) || null : null; }
+function curGroup() { const s = WORLD.find(x => x.key === view.subject); return s && view.group ? (unitGroups(s) || []).find(g => g.key === view.group) || null : null; }
+/** 從地點代號找出科目：W:數學、U:數學｜單元、U:DOCK@數學、U:GRP@數學@第6單元、U:UP@數學@第6單元 */
+function subjOfPlaceId(id) {
+  if (id.startsWith("DOCK@")) return id.slice(5);
+  if (id.startsWith("GRP@") || id.startsWith("UP@")) return id.split("@")[1];
+  return id.split("｜")[0];
+}
 function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -2050,7 +2126,7 @@ function shade(hex, amt) {
 
 /** 一座島：淺灘、沙灘、厚度、陸地、亮面、裝飾、主圖示、招牌 */
 function islandSvg(o) {
-  const { id, x, y, r, seed, land, sand, shape, deco = [], icon, label, sub, cls = "", badge = 0, aria, smoke, flag = 0, flagText = "" } = o;
+  const { id, x, y, r, seed, land, sand, shape, deco = [], icon, label, sub, cls = "", badge = 0, aria, smoke, flag = 0, flagText = "", ring = null } = o;
   const gid = "g-" + seed.replace(/[^\w]/g, "") + Math.round(x);
   const rnd = seeded(seed + "deco");
   const decoSvg = deco.slice(0, r > 70 ? 4 : 3).map((e, i) => {
@@ -2063,6 +2139,9 @@ function islandSvg(o) {
   return `
     <g class="isle ${cls}" data-id="${escapeHtml(id)}" tabindex="0" role="button" aria-label="${escapeHtml(aria || label)}">
       <defs>${gradient(gid, land)}</defs>
+      ${ring ? `<circle class="grp-ring" cx="${f1(x)}" cy="${f1(y + 4)}" r="${f1(r * 1.5)}" stroke="${ring.color}"/><circle class="grp-ring r2" cx="${f1(x)}" cy="${f1(y + 4)}" r="${f1(r * 1.64)}" stroke="${ring.color}"/>
+        ${Array.from({ length: Math.min(6, ring.count) }, (_, k) => { const a = -Math.PI * 0.95 + k * (Math.PI * 1.9 / Math.max(1, Math.min(6, ring.count) - 1 || 1)); const mx = x + Math.cos(a) * r * 1.38, my = y + Math.sin(a) * r * 1.18 + 6;
+          return `<path class="grp-mini" d="${blobPath(mx, my, r * 0.17, seed + "m" + k, shape)}" fill="${k % 2 ? land[0] : sand}" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>`; }).join("")}` : ""}
       <path d="${blobPath(x, y + 5, r * 1.3, seed + "h", shape)}" fill="rgba(255,255,255,0.2)"/>
       <path d="${blobPath(x, y + 3, r * 1.1, seed + "s", shape)}" fill="${sand}"/>
       <g class="lift">
@@ -2373,25 +2452,39 @@ function renderWorld(kw) {
 }
 
 // ── 科目地圖：單元小島沿著自然的海岸線散布，大小依題目多寡而不同 ──
+// 群島（科目層）：島少但比較大，間距拉開
+const GROUP_ANCHORS = [[95, 560], [290, 360], [530, 540], [560, 220], [800, 400], [820, 130], [300, 120], [930, 620], [130, 780]];
 const UNIT_ANCHORS = [[110, 600], [270, 470], [195, 255], [385, 135], [478, 358], [650, 228], [828, 132], [885, 372], [705, 478], [548, 618], [828, 620], [372, 598], [606, 86]];
-function subjectLayout(s) {
-  const rnd = seeded("layout-" + s.key);
+function subjectLayout(s, g) {
+  if (g === undefined) g = view.subject === s.key ? curGroup() : null;
+  const rnd = seeded("layout-" + s.key + (g ? "@" + g.key : ""));
   const flip = rnd() > 0.5;
-  const nodes = [{ id: "DOCK@" + s.key, dock: true }, ...s.units.map(u => ({ id: u.key, unitObj: u }))];
+  const groups = g ? null : unitGroups(s);
+  const items = g ? g.units.map(u => ({ id: u.key, unitObj: u }))
+    : groups ? groups.map(x => x.units.length === 1 ? { id: x.units[0].key, unitObj: x.units[0] } : { id: x.id, groupObj: x })
+    : s.units.map(u => ({ id: u.key, unitObj: u }));
+  const nodes = [g ? { id: "UP@" + s.key + "@" + g.key, dock: true, up: true } : { id: "DOCK@" + s.key, dock: true }, ...items];
+  const A = groups ? GROUP_ANCHORS : UNIT_ANCHORS;
   nodes.forEach((n, i) => {
-    let [ax, ay] = i < UNIT_ANCHORS.length ? UNIT_ANCHORS[i] : [130 + ((i - UNIT_ANCHORS.length) % 5) * 190, 760 + Math.floor((i - UNIT_ANCHORS.length) / 5) * 180];
+    let [ax, ay] = i < A.length ? A[i] : [130 + ((i - A.length) % 5) * 190, 760 + Math.floor((i - A.length) / 5) * 180];
     if (flip) ax = 1000 - ax;
     if (isPortrait()) [ax, ay] = [ay, ax];   // 手機直式：整張圖轉成直向
-    n.x = ax + (rnd() - 0.5) * 50;
-    n.y = ay + (rnd() - 0.5) * 40;
-    n.r = (n.dock ? 48 : 48 + Math.min(24, n.unitObj.questions.length / 3) + rnd() * 6) * (isPortrait() ? 1.12 : 1);
+    n.x = ax + (rnd() - 0.5) * (groups ? 24 : 50);
+    n.y = ay + (rnd() - 0.5) * (groups ? 20 : 40);
+    n.r = (n.dock ? 48 : n.groupObj ? 62 + Math.min(14, n.groupObj.units.length * 2.5) + rnd() * 4 : 48 + Math.min(24, n.unitObj.questions.length / 3) + rnd() * 6) * (isPortrait() ? 1.12 : 1);
     n.idx = i;
+    if (n.groupObj) {   // 群島的光環比較大，不要超出地圖
+      const W = isPortrait() ? 720 : 1000, m = n.r * 1.7;
+      n.x = Math.max(m, Math.min(W - m, n.x));
+    }
   });
-  const maxY = Math.max(...nodes.map(n => n.y + n.r));
+  const ext = n => n.groupObj ? n.r * 1.75 : n.r;
+  const maxY = Math.max(...nodes.map(n => n.y + ext(n)));
+  const minY = Math.min(...nodes.map(n => n.y - ext(n)));
   // 地圖高度跟著島的數量走，單元少的科目不會空出一大片海
   const vb = isPortrait()
-    ? { x: 0, y: 30, w: 720, h: Math.max(640, maxY + 60) - 30 }
-    : { x: 0, y: 20, w: 1000, h: Math.max(560, maxY + 50) - 20 };
+    ? { x: 0, y: Math.min(30, minY - 20), w: 720, h: Math.max(640, maxY + 60) - Math.min(30, minY - 20) }
+    : { x: 0, y: Math.min(20, minY - 20), w: 1000, h: Math.max(560, maxY + 50) - Math.min(20, minY - 20) };
   // 相鄰單元之間：大多是橋或公路；另外加幾條航線、泳道當捷徑
   const routes = [];
   for (let i = 1; i < nodes.length; i++) routes.push([nodes[i - 1].id, nodes[i].id, rnd() < 0.7 ? "walk" : "bus"]);
@@ -2402,24 +2495,47 @@ function subjectLayout(s) {
   return { nodes, vb, routes };
 }
 
+function unitMatches(u, kw) { return !!kw && (u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw))); }
 function renderSubject(kw) {
   const s = WORLD.find(x => x.key === view.subject);
-  const { nodes, vb, routes } = subjectLayout(s);
+  const g = curGroup();
+  const { nodes, vb, routes } = subjectLayout(s, g);
   const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
   const locked = stats.pending.length >= LOCK_LIMIT;
+  const th = g ? g.theme : null;
   const isles = nodes.map((n, i) => {
+    if (n.dock && n.up) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "up" + n.id, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
+      shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🧭"], icon: "⛵", label: "碼頭", sub: `回${s.name}` });
     if (n.dock) return islandSvg({ id: n.id, x: n.x, y: n.y, r: n.r, seed: "dock" + s.key, land: ["#fde68a", "#d97706"], sand: "#fef9c3",
       shape: { points: 10, wobble: 0.3 }, deco: ["⚓", "🪵"], icon: "⛵", label: "碼頭", sub: "回世界地圖" });
+    if (n.groupObj) {
+      const G = n.groupObj, T = G.theme;
+      const prog = G.units.reduce((t, u) => t + unitStars(u), 0), max = G.units.length * 6;
+      const flags = G.units.filter(u => flagLevel(u)).length, openN = G.units.filter(u => !islandClosed(u)).length;
+      const unseen = G.units.reduce((t, u) => t + unitCoverage(u).unseen, 0);
+      const hit = kw && G.units.some(u => unitMatches(u, kw));
+      const maxLen = isPortrait() ? 9 : 12;
+      const label = G.title.length > maxLen ? G.title.slice(0, maxLen) + "…" : G.title;
+      return islandSvg({ id: G.id, x: n.x, y: n.y, r: n.r, seed: G.id, land: T.land, sand: T.sand, shape: T.shape, deco: T.deco,
+        icon: !openN ? "🔒" : locked ? "🔒" : T.icon, label,
+        sub: !openN ? "🔒 老師暫時關閉" : `${T.name}・${G.units.length} 島・⭐${prog}/${max}${flags ? `・🚩${flags}` : ""}${unseen && !isPortrait() ? `・🆕${unseen}` : ""}`,
+        badge: pendingCount(q => G.units.some(u => u.key === unitKey(q.subject, q.unit))),
+        cls: "group-isle" + (!openN ? " closed-isle" : "") + (locked ? " locked" : "") + (kw ? (hit ? " hit" : " dim") : ""),
+        flag: flags ? (flags === G.units.length ? 2 : 1) : 0, flagText: flags === G.units.length ? "👑" : String(flags),
+        ring: { color: T.ring, count: G.units.length },
+        aria: `${G.title}，${T.name}，裡面有 ${G.units.length} 座單元小島，星星 ${prog}／${max}` });
+    }
     const u = n.unitObj, st = accStars(u), cov = unitCoverage(u), fl = flagLevel(u);
-    const color = s.palette[(i - 1) % s.palette.length];
+    const color = th ? shade(th.land[0], ((i % 3) - 1) * 0.12) : s.palette[(i - 1) % s.palette.length];
     const [l1, l2] = splitUnit(u.unit);
-    const maxLen = isPortrait() ? 6 : 8;
+    const maxLen = g ? (isPortrait() ? 8 : 11) : isPortrait() ? 6 : 8;
     const name = l2.length > maxLen ? l2.slice(0, maxLen) + "…" : l2;
     const matches = kw && (u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
-    return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: s.sand,
-      shape: Object.assign({}, s.shape, { points: s.shape.sharp ? 5 + (i % 3) : s.shape.points }), deco: shuffleSeeded(s.deco, u.key),
-      icon: locked || islandClosed(u) ? "🔒" : u.icon, label: l1 && !isPortrait() ? `${l1}・${name}` : name,
-      sub: islandClosed(u) ? "🔒 老師暫時關閉" : `${isPortrait() && l1 ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
+    const shp = th ? th.shape : s.shape;
+    return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: th ? th.sand : s.sand,
+      shape: Object.assign({}, shp, { points: shp.sharp ? 5 + (i % 3) : shp.points }), deco: shuffleSeeded(th ? th.deco : s.deco, u.key),
+      icon: locked || islandClosed(u) ? "🔒" : u.icon, label: l1 && !isPortrait() && !g ? `${l1}・${name}` : name,
+      sub: islandClosed(u) ? "🔒 老師暫時關閉" : `${isPortrait() && l1 && !g ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
       badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (islandClosed(u) ? " closed-isle" : "") + (kw ? (matches ? " hit" : " dim") : "") + (fl ? " conquered" : ""),
       flag: fl, flagText: myEmoji(),
       aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過${fl === 2 ? "，已完全征服" : fl ? "，已插旗拿下" : ""}` });
@@ -2430,7 +2546,7 @@ function renderSubject(kw) {
     <g>${wavesSvg(vb, nodes, 18)}</g>
     <g>${routes.map(([a, b, m], i) => routeSvg(byId[a], byId[b], m, s.key + i)).join("")}</g>
     <g>${isles.join("")}</g>
-    <text x="${vb.x + vb.w - 20}" y="${vb.y + 34}" text-anchor="end" class="sea-title" font-size="${22 * textScale()}">${s.icon} ${escapeHtml(s.title)}</text>`, s);
+    <text x="${vb.x + vb.w - 20}" y="${vb.y + 34}" text-anchor="end" class="sea-title" font-size="${22 * textScale()}">${g ? `${g.theme.icon} ${escapeHtml(g.title)}` : `${s.icon} ${escapeHtml(s.title)}`}</text>`, s);
   document.querySelectorAll("#map-svg .isle[data-id]").forEach(g => bindActivate(g, () => onIslandClick(g.dataset.id)));
   renderAvatars();
 }
@@ -2479,7 +2595,9 @@ function currentNodes() {
   if (view.level === "world") return { nodes: worldNodes(), routes: worldRoutes(), vb: worldVB() };
   return subjectLayout(WORLD.find(x => x.key === view.subject));
 }
-function myPlaceId() { return view.level === "world" ? pos.world : (pos.unit[view.subject] || "DOCK@" + view.subject); }
+function posKey() { return view.group ? view.subject + "@" + view.group : view.subject; }
+function dockIdNow() { return view.group ? "UP@" + view.subject + "@" + view.group : "DOCK@" + view.subject; }
+function myPlaceId() { return view.level === "world" ? pos.world : (pos.unit[posKey()] || dockIdNow()); }
 function myPlace() { return (view.level === "world" ? "W:" : "U:") + myPlaceId(); }
 function spotOf(n, k = -1) {
   if (k < 0) return { x: n.x - n.r * 0.72, y: n.y - n.r * 0.3 };   // 自己站在島的左上角，不擋住圖示和招牌
@@ -2499,14 +2617,20 @@ function placeOnThisMap(place) {
   const [kind, id] = [place.slice(0, 2), place.slice(2)];
   if (view.level === "world") {
     if (kind === "W:") return id;
-    const subj = id.startsWith("DOCK@") ? id.slice(5) : id.split("｜")[0];
-    return subj;
+    return subjOfPlaceId(id);
   }
-  if (kind === "U:") {
-    const subj = id.startsWith("DOCK@") ? id.slice(5) : id.split("｜")[0];
-    return subj === view.subject ? id : null;
+  if (kind !== "U:" || subjOfPlaceId(id) !== view.subject) return null;
+  const s = WORLD.find(x => x.key === view.subject);
+  const groups = s && unitGroups(s);
+  if (!groups) return id;
+  if (view.group) {   // 在群島裡：只顯示在這個群島的同學
+    if (id === "UP@" + view.subject + "@" + view.group) return id;
+    const g = groupOf(s, id);
+    return g && g.key === view.group ? id : null;
   }
-  return null;
+  if (id.startsWith("UP@")) return "GRP@" + id.slice(3);
+  const g = groupOf(s, id);   // 人在群島裡的某座小島：顯示在那座群島上
+  return g ? (g.units.length === 1 ? id : g.id) : id;
 }
 
 function renderAvatars() {
@@ -2658,11 +2782,18 @@ async function onIslandClick(id) {
     if (id === "BOSS") openMistakeBook();
     else enterSubject(id);
   } else {
+    const isDock = id.startsWith("DOCK@") || id.startsWith("UP@");
+    if (id.startsWith("GRP@")) {
+      const s = WORLD.find(x => x.key === view.subject), G = (unitGroups(s) || []).find(x => x.id === id);
+      if (G && session.user.role === "student" && G.units.every(islandClosed)) { toast(`🔒 老師暫時關閉了「${G.title}」裡全部的島`, 4000); return; }
+    }
     const mode = await travelTo(id);
-    if (!id.startsWith("DOCK@")) await maybeVoyageEvent(mode);
-    pos.unit[view.subject] = id;
+    if (!isDock) await maybeVoyageEvent(mode);
+    pos.unit[posKey()] = id;
     afterArrive(mode);
     if (id.startsWith("DOCK@")) backToWorld();
+    else if (id.startsWith("UP@")) leaveGroup();
+    else if (id.startsWith("GRP@")) enterGroup(id.split("@").slice(2).join("@"));
     else openUnitModal(id);
   }
 }
@@ -2685,16 +2816,38 @@ async function switchView(apply) {
   renderAll();
   void stage.offsetWidth;
   stage.classList.remove("entering");
+  popIslands();
+}
+/** 島一座接一座彈出來 */
+function popIslands() {
+  const svg = document.getElementById("map-svg");
+  svg.querySelectorAll(".isle").forEach((g, i) => g.style.setProperty("--i", i));
+  svg.classList.remove("pop"); void svg.getBoundingClientRect(); svg.classList.add("pop");
+  clearTimeout(popIslands.t);
+  popIslands.t = setTimeout(() => svg.classList.remove("pop"), 2600);
+}
+async function enterGroup(key) {
+  const s = WORLD.find(x => x.key === view.subject);
+  const g = (unitGroups(s) || []).find(x => x.key === key);
+  if (!g) return;
+  await switchView(() => { view = { level: "subject", subject: s.key, group: key }; pos.unit[posKey()] = pos.unit[posKey()] || dockIdNow(); });
+  toast(`${g.theme.icon} 歡迎來到「${g.title}」${g.theme.name}！這裡有 ${g.units.length} 座小島`);
+  net.heartbeat();
+}
+async function leaveGroup() {
+  const back = view.group ? "GRP@" + view.subject + "@" + view.group : null;
+  await switchView(() => { view = { level: "subject", subject: view.subject, group: null }; if (back) pos.unit[view.subject] = back; });
+  net.heartbeat();
 }
 async function enterSubject(key) {
-  await switchView(() => { view = { level: "subject", subject: key }; pos.unit[key] = pos.unit[key] || "DOCK@" + key; });
+  await switchView(() => { view = { level: "subject", subject: key, group: null }; pos.unit[key] = pos.unit[key] || "DOCK@" + key; });
   const s = WORLD.find(x => x.key === key);
-  toast(`${s.icon} 歡迎來到「${s.title}」！選好交通方式，點單元小島出發`);
+  toast(`${s.icon} 歡迎來到「${s.title}」！選好交通方式，${unitGroups(s) ? "先點一座群島" : "點單元小島出發"}`);
   setTimeout(() => maybePirate("sail"), 2500);
   net.heartbeat();
 }
 async function backToWorld() {
-  await switchView(() => { view = { level: "world", subject: null }; });
+  await switchView(() => { view = { level: "world", subject: null, group: null }; });
   net.heartbeat();
 }
 
@@ -2760,9 +2913,14 @@ function renderCrumbs() {
     c.innerHTML = `🌏 世界地圖`;
     hint.textContent = `👆 先選交通方式，再點一座大島出發；${WRECK_ICON} ${WRECK}可以訂正和複習所有錯過的題目`;
   } else {
-    const s = WORLD.find(x => x.key === view.subject);
-    c.innerHTML = `<button class="btn-ghost" onclick="backToWorld()">← 世界地圖</button> ${s.icon} ${escapeHtml(s.name)}`;
-    hint.textContent = "👆 點單元小島出發；⛵ 碼頭回世界地圖；遇到同學可以點他的頭像比賽或聊天";
+    const s = WORLD.find(x => x.key === view.subject), g = curGroup();
+    if (g) {
+      c.innerHTML = `<button class="btn-ghost" onclick="backToWorld()">← 世界地圖</button> <button class="btn-ghost" onclick="leaveGroup()">${s.icon} ${escapeHtml(s.name)}</button> › ${g.theme.icon} ${escapeHtml(g.title)}`;
+      hint.textContent = `👆 點單元小島出發；⛵ 碼頭回${s.name}的群島；遇到同學可以點他的頭像比賽或聊天`;
+    } else {
+      c.innerHTML = `<button class="btn-ghost" onclick="backToWorld()">← 世界地圖</button> ${s.icon} ${escapeHtml(s.name)}`;
+      hint.textContent = unitGroups(s) ? "👆 先點一座群島，裡面有這個單元的各座小島；⛵ 碼頭回世界地圖" : "👆 點單元小島出發；⛵ 碼頭回世界地圖；遇到同學可以點他的頭像比賽或聊天";
+    }
   }
 }
 
@@ -3051,6 +3209,8 @@ async function goAssigned(key) {
   const u = WORLD.flatMap(s => s.units).find(x => x.key === key);
   if (!u) return;
   if (view.level !== "subject" || view.subject !== u.subject) await enterSubject(u.subject);
+  const g = groupOf(WORLD.find(x => x.key === u.subject), key);
+  if (g && g.units.length > 1 && view.group !== g.key) await enterGroup(g.key);
   openUnitModal(key);
 }
 function teacherIslandBox(unit) {
