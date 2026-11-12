@@ -138,6 +138,28 @@
   body.season-final .modal-box.wreck .q-row { background: rgba(0,0,0,.28); border: 1px solid rgba(63,201,201,.45); border-radius: 12px; }
   body.season-final .coin-pill { background: linear-gradient(180deg, rgba(60,40,6,.85), rgba(20,12,2,.9)); border-color: #e9b949; color: #ffe48a; }
   .guide-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .rank-intro { font-size: .84rem; color: var(--ink-soft); margin: 0 0 10px; }
+  .podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 8px; align-items: end; margin: 6px 0 14px; }
+  .podium .pod { text-align: center; border-radius: 16px 16px 8px 8px; padding: 10px 4px 8px; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); position: relative; min-width: 0; }
+  .podium .pod.p1 { background: linear-gradient(160deg, #fbbf24, #d97706); padding-top: 18px; }
+  .podium .pod.p2 { background: linear-gradient(160deg, #cbd5e1, #64748b); }
+  .podium .pod.p3 { background: linear-gradient(160deg, #fdba74, #b45309); }
+  .podium .pod.empty { background: rgba(148,163,184,.25); color: var(--ink-soft); box-shadow: none; }
+  .podium .medal { font-size: 1.6rem; line-height: 1; }
+  .podium .face-av { width: 46px; height: 46px; font-size: 1.5rem; margin: 6px auto; border: 3px solid #fff; }
+  .podium .pod.p1 .face-av { width: 56px; height: 56px; font-size: 1.8rem; }
+  .podium .pn { font-weight: 900; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .podium .pv { font-size: .8rem; font-weight: 800; opacity: .95; }
+  .podium .pod.me { outline: 4px solid #f97316; outline-offset: 2px; }
+  .rank-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .rank-list li { display: grid; grid-template-columns: 2.4em 34px 1fr auto; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--card, rgba(255,255,255,.6)); }
+  .rank-list li.me { border: 2px solid #f97316; background: rgba(249,115,22,.12); }
+  .rank-list .rk { font-weight: 900; text-align: center; }
+  .rank-list .face-av { width: 32px; height: 32px; font-size: 1.05rem; }
+  .rank-list .rv { font-weight: 900; white-space: nowrap; }
+  .rank-list .rs { font-size: .74rem; opacity: .75; }
+  .rank-me { margin-top: 10px; font-size: .86rem; font-weight: 800; }
+
   .guide-tabs button { padding: 6px 12px; font-size: .85rem; }
   .guide-body { font-size: .93rem; line-height: 1.75; }
   .guide-body h4 { margin: 14px 0 6px; }
@@ -737,6 +759,7 @@
     <div class="pills" id="pills"></div>
     <div class="pills">
       <button class="btn-accent" id="btn-dashboard" onclick="openDashboard()" hidden>📊 後台</button>
+      <button class="btn-ghost" onclick="openRanking()" title="排行榜">🏆 排行榜</button>
       <button class="btn-ghost" onclick="openGuide()" title="遊戲說明">📜 說明</button>
       <button class="btn-ghost" onclick="toggleNight()">🌗</button>
       <button class="btn-ghost" onclick="logout()">登出</button>
@@ -798,6 +821,9 @@
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('dash-modal')" aria-label="關閉">✕</button><div id="dash-content"></div></div>
 </div>
 
+<div class="modal-overlay" id="rank-modal">
+  <div class="modal-box wide"><button class="close-btn" onclick="closeModal('rank-modal')" aria-label="關閉">✕</button><div id="rank-content"></div></div>
+</div>
 <div class="modal-overlay" id="guide-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('guide-modal')" aria-label="關閉">✕</button><div id="guide-content"></div></div>
 </div>
@@ -4147,6 +4173,13 @@ function guideSections() {
       <li>聊天室可以跟同學打招呼，不禮貌的字會被自動遮掉，老師也看得到聊天紀錄。</li>
       ${FINAL ? `<li>📩 有問題可以點右邊的「老師來信」私下問老師，只有老師看得到。</li>` : ""}
     </ul>`]);
+  L.push(["rank", "🏆 排行榜", `
+    <ul class="guide-list">
+      <li>右上角的「🏆 排行榜」學生、家長、老師都看得到，期中和期末分開排。</li>
+      <li>🏆 <b>分數王</b>：總積分。📝 <b>答題王</b>：作答題次。🎯 <b>正確率王</b>：答對題次 ÷ 作答題次，至少作答 ${RANK_MIN_ACC} 題才上榜。</li>
+      <li>⭐ <b>星星王</b>：所有島的正確率星＋完成度星。📖 <b>閱讀王</b>：在閱讀島答對的題次。🚩 <b>插旗王</b>：插上金旗的島數。🔧 <b>訂正王</b>：訂正成功的次數。</li>
+      <li>同分同名次；學生和家長看到前 10 名和自己的名次，老師看得到全班。全班排行每 5 分鐘更新一次。</li>
+    </ul>`]);
   L.push(["roles", "👨‍👩‍👧 家長與老師", `
     <ul class="guide-list">
       <li><b>學生</b>：答題會記錄分數、星星${FINAL ? "、金幣" : ""}，所有紀錄都存在雲端，換一台電腦登入也看得到。</li>
@@ -4165,6 +4198,120 @@ function openGuide(tab) {
     <div class="guide-tabs">${L.map(([k, t]) => `<button class="${k === guideTab ? "btn-primary" : "btn-ghost"}" onclick="openGuide('${k}')">${t}</button>`).join("")}</div>
     <div class="guide-body">${cur[2]}</div>`;
   openModal("guide-modal");
+}
+
+// =========================================================
+// 排行榜：答題王、正確率王、分數王、星星王、閱讀王、插旗王、訂正王
+// 全班的數字由雲端算好（5 分鐘更新一次）；自己的那一列用這台電腦上最新的紀錄
+// 學生和家長看到前 10 名和自己（孩子）的名次；老師看到全班
+// =========================================================
+const RANK_MIN_ACC = 30;   // 正確率王：至少作答 30 題才上榜
+const RANK_CATS = [
+  ["score", "🏆 分數王", "目前的總積分（和等級一樣算法）", r => r.score, v => v + " 分"],
+  ["attempts", "📝 答題王", "作答的題次（練習、訂正都算）", r => r.attempts, v => v + " 題"],
+  ["acc", "🎯 正確率王", `答對題次 ÷ 作答題次，至少作答 ${RANK_MIN_ACC} 題才上榜；一樣時作答多的排前面`, r => r.attempts >= RANK_MIN_ACC ? r.correct / r.attempts : 0, v => Math.round(v * 1000) / 10 + "%"],
+  ["stars", "⭐ 星星王", "所有島的 ⭐ 正確率星＋🌟 完成度星", r => r._stars, v => v + " 顆"],
+  ["reading", "📖 閱讀王", "在閱讀島答對的題次（各科的閱讀、短文、文章島都算）", r => r._reading, v => v + " 題"],
+  ["flags", "🚩 插旗王", "通過島嶼挑戰考、插上金旗的島數", r => r._flags, v => v + " 座島"],
+  ["fixes", "🔧 訂正王", "把錯題訂正成功的次數", r => r.fixes, v => v + " 次"]
+];
+let rankState = { cat: "score", data: null, at: 0 };
+/** 一位學生上榜的數字（網頁版，和雲端 rankRow 一樣） */
+function rankRowOf(st) {
+  const right = {}, ok = {};
+  let fixes = 0;
+  st.questions.forEach(q => { fixes += q.fixes; if (q.correct > 0) { const k = unitKey(q.subject, q.unit); right[k] = (right[k] || 0) + 1; } });
+  st.units.forEach(u => { if (u.correct) ok[unitKey(u.subject, u.unit)] = u.correct; });
+  return { attempts: st.attempts, correct: st.correct, score: st.score, fixes, stars: st.stars || {}, right, ok, lastActive: st.lastActive };
+}
+/** 用島上的題數算星星、插旗、閱讀（各島答對過幾題就能算完成度星） */
+function rankDerive(r) {
+  const units = WORLD.flatMap(s => s.units);
+  let stars = 0, flags = 0, reading = 0;
+  units.forEach(u => {
+    const st = { stars: r.stars || {} };
+    const won = conquered(u, st);
+    const total = u.questions.length, right = Math.min(total, (r.right || {})[u.key] || 0);
+    const cov = won ? 3 : total && right / total >= 0.7 ? 2 : total && right / total >= 0.4 ? 1 : 0;
+    stars += accStars(u, st) + cov;
+    if (won) flags++;
+  });
+  Object.keys(r.ok || {}).forEach(k => { const i = k.indexOf("｜"); if (isReadingUnit(k.slice(0, i), k.slice(i + 1))) reading += r.ok[k]; });
+  return Object.assign(r, { _stars: stars, _flags: flags, _reading: reading });
+}
+function rankMeName() { const u = session.user; return u.role === "student" ? u.name : u.role === "parent" ? u.child : ""; }
+async function loadRanking(force) {
+  if (!force && rankState.data && Date.now() - rankState.at < 60000) return rankState.data;
+  let board, t;
+  if (DEMO) {
+    const isF = r => String(r.sid || "").indexOf(FINAL_SID) === 0;
+    board = rosterList.filter(a => a.role === "student").map(s => {
+      const d = load("508_DEMO_DATA_" + s.name, { answers: [], sessions: [] });
+      return Object.assign({ name: s.name, seat: s.seat }, rankRowOf(aggregate(d.answers.filter(r => isF(r) === FINAL), d.sessions.filter(r => isF(r) === FINAL))));
+    });
+    t = "試玩資料";
+  } else {
+    const d = await api("leaderboard", { season: FINAL ? "final" : "mid" });
+    board = d.board; t = d.t;
+  }
+  // 自己的那一列用最新的紀錄（雲端的全班排行最多晚 5 分鐘）
+  if (session.user.role === "student") {
+    const mine = board.find(b => b.name === session.user.name);
+    const fresh = Object.assign({ name: session.user.name, seat: session.user.seat, emoji: myEmoji(), color: myColor() }, rankRowOf(stats));
+    if (mine) Object.assign(mine, fresh); else board.push(fresh);
+  }
+  board.forEach(rankDerive);
+  rankState.data = { board, t }; rankState.at = Date.now();
+  return rankState.data;
+}
+async function openRanking(cat) {
+  if (cat && cat !== "__refresh") rankState.cat = cat;
+  const box = document.getElementById("rank-content");
+  if (!rankState.data) box.innerHTML = `<h2 style="margin-top:0;">🏆 排行榜</h2><div class="spinner"></div>`;
+  openModal("rank-modal");
+  try {
+    await loadRanking(cat === "__refresh");
+    renderRanking();
+  } catch (e) {
+    box.innerHTML = `<h2 style="margin-top:0;">🏆 排行榜</h2><div class="empty-note">⚠️ ${escapeHtml(e.message)}${/未知的動作/.test(e.message) ? "<br>排行榜要等老師更新雲端 Apps Script 之後才會出現。" : ""}</div>`;
+  }
+}
+function renderRanking() {
+  const cat = RANK_CATS.find(c => c[0] === rankState.cat) || RANK_CATS[0];
+  const [, title, desc, valOf, fmt] = cat;
+  const me = rankMeName(), teacher = session.user.role === "teacher";
+  const list = rankState.data.board.map(r => ({ r, v: valOf(r) || 0 }))
+    .filter(x => x.v > 0)
+    .sort((a, b) => b.v - a.v || (cat[0] === "acc" ? b.r.attempts - a.r.attempts : 0) || String(a.r.seat).localeCompare(String(b.r.seat)));
+  // 同分同名次
+  list.forEach((x, i) => { x.rank = i && Math.abs(x.v - list[i - 1].v) < 1e-9 && (cat[0] !== "acc" || x.r.attempts === list[i - 1].r.attempts) ? list[i - 1].rank : i + 1; });
+  const face = r => avatarFace(r.emoji || seatEmoji(r.seat), r.color);
+  const show = teacher ? list : list.filter(x => x.rank <= 10);
+  const mine = list.find(x => x.r.name === me);
+  const pod = [1, 0, 2].map(i => {
+    const x = list[i], cls = ["p1", "p2", "p3"][i];
+    if (!x) return `<div class="pod empty ${cls}"><div class="medal">${["🥇", "🥈", "🥉"][i]}</div><div class="pn">虛位以待</div></div>`;
+    return `<div class="pod ${cls} ${x.r.name === me ? "me" : ""}"><div class="medal">${["🥇", "🥈", "🥉"][x.rank - 1] || "🏅"}</div>${face(x.r)}
+      <div class="pn">${escapeHtml(shortName(x.r.name))}</div><div class="pv">${fmt(x.v)}</div></div>`;
+  }).join("");
+  const sub = r => cat[0] === "acc" ? `答對 ${r.correct}／${r.attempts} 題` : cat[0] === "stars" ? `🚩 ${r._flags} 座島` : cat[0] === "score" ? escapeHtml(getLevelInfo(r.score || 0).title) : "";
+  document.getElementById("rank-content").innerHTML = `
+    <h2 style="margin-top:0;">🏆 ${FINAL ? "寶藏海" : "知識大航海"}排行榜 <small style="font-size:.78rem; opacity:.75">${FINAL ? "期末" : "期中"}</small></h2>
+    <div class="guide-tabs">${RANK_CATS.map(c => `<button class="${c[0] === cat[0] ? "btn-primary" : "btn-ghost"}" onclick="openRanking('${c[0]}')">${c[1]}</button>`).join("")}</div>
+    <p class="rank-intro"><b>${title}</b>：${desc}。${teacher ? "老師看得到全班名次。" : "這裡列出前 10 名" + (me ? "和" + (session.user.role === "parent" ? "孩子" : "你") + "的名次" : "") + "。"}</p>
+    ${list.length ? `<div class="podium">${pod}</div>
+    <ol class="rank-list">${show.slice(3).map(x => `<li class="${x.r.name === me ? "me" : ""}"><span class="rk">${x.rank}</span>${face(x.r)}
+      <span><b>${escapeHtml(shortName(x.r.name))}</b> <span class="rs">${sub(x.r)}</span></span><span class="rv">${fmt(x.v)}</span></li>`).join("")}</ol>` : `<div class="empty-note">還沒有人上榜，快去答題搶第一！</div>`}
+    ${me ? `<div class="rank-me">${mine ? `${session.user.role === "parent" ? "孩子" : "你"}目前是第 <b>${mine.rank}</b> 名（${fmt(mine.v)}）${mine.rank > 1 ? `，再 ${rankGap(list, mine, cat[0])} 就能往前一名！` : "，太厲害了！👑"}` : `${session.user.role === "parent" ? "孩子" : "你"}還沒上榜${cat[0] === "acc" ? `（作答滿 ${RANK_MIN_ACC} 題才會上正確率榜）` : ""}，加油！`}</div>` : ""}
+    <div style="margin-top:10px; font-size:.74rem; opacity:.7">更新時間：${escapeHtml(rankState.data.t || "")}（全班排行每 5 分鐘更新一次） <button class="btn-ghost" style="padding:2px 8px; font-size:.74rem" onclick="openRanking('__refresh')">🔄 重新整理</button></div>`;
+}
+/** 離前一名還差多少 */
+function rankGap(list, mine, key) {
+  const ahead = list.filter(x => x.rank < mine.rank).pop();
+  if (!ahead) return "";
+  if (key === "acc") return "提高一點正確率";
+  const d = Math.ceil(ahead.v - mine.v) || 1;
+  return { score: d + " 分", attempts: d + " 題", stars: d + " 顆星", reading: "答對 " + d + " 題閱讀題", flags: "插 " + d + " 面旗", fixes: "訂正 " + d + " 次" }[key] || d;
 }
 
 // =========================================================
