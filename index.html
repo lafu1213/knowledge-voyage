@@ -4178,7 +4178,7 @@ function guideSections() {
       <li>右上角的「🏆 排行榜」學生、家長、老師都看得到，期中和期末分開排。</li>
       <li>🏆 <b>分數王</b>：總積分。📝 <b>答題王</b>：作答題次。🎯 <b>正確率王</b>：答對題次 ÷ 作答題次，至少作答 ${RANK_MIN_ACC} 題才上榜。</li>
       <li>⭐ <b>星星王</b>：所有島的正確率星＋完成度星。📖 <b>閱讀王</b>：在閱讀島答對的題次。🚩 <b>插旗王</b>：插上金旗的島數。🔧 <b>訂正王</b>：訂正成功的次數。</li>
-      <li>同分同名次；學生和家長看到前 10 名和自己的名次，老師看得到全班。全班排行每 5 分鐘更新一次。</li>
+      <li>排行榜列出<b>前 ${RANK_TOP} 名</b>和自己的名次（老師可以展開全班）。<b>同分時由系統判定先後</b>：分數王先比正確率、再比星星；答題王先比答對題次；其他榜也各有比較順序，最後比座號，所以不會並列。全班排行每 5 分鐘更新一次。</li>
     </ul>`]);
   L.push(["roles", "👨‍👩‍👧 家長與老師", `
     <ul class="guide-list">
@@ -4209,13 +4209,25 @@ const RANK_MIN_ACC = 30;   // 正確率王：至少作答 30 題才上榜
 const RANK_CATS = [
   ["score", "🏆 分數王", "目前的總積分（和等級一樣算法）", r => r.score, v => v + " 分"],
   ["attempts", "📝 答題王", "作答的題次（練習、訂正都算）", r => r.attempts, v => v + " 題"],
-  ["acc", "🎯 正確率王", `答對題次 ÷ 作答題次，至少作答 ${RANK_MIN_ACC} 題才上榜；一樣時作答多的排前面`, r => r.attempts >= RANK_MIN_ACC ? r.correct / r.attempts : 0, v => Math.round(v * 1000) / 10 + "%"],
+  ["acc", "🎯 正確率王", `答對題次 ÷ 作答題次，至少作答 ${RANK_MIN_ACC} 題才上榜`, r => r.attempts >= RANK_MIN_ACC ? r.correct / r.attempts : 0, v => Math.round(v * 1000) / 10 + "%"],
   ["stars", "⭐ 星星王", "所有島的 ⭐ 正確率星＋🌟 完成度星", r => r._stars, v => v + " 顆"],
   ["reading", "📖 閱讀王", "在閱讀島答對的題次（各科的閱讀、短文、文章島都算）", r => r._reading, v => v + " 題"],
   ["flags", "🚩 插旗王", "通過島嶼挑戰考、插上金旗的島數", r => r._flags, v => v + " 座島"],
   ["fixes", "🔧 訂正王", "把錯題訂正成功的次數", r => r.fixes, v => v + " 次"]
 ];
-let rankState = { cat: "score", data: null, at: 0 };
+const RANK_TOP = 5;   // 學生、家長看前 5 名；老師可以展開全班
+// 同分時由系統依序比較，最後比座號，所以不會有並列名次
+const rankAcc = r => r.attempts ? r.correct / r.attempts : 0;
+const RANK_TIE = {
+  score: [["正確率", rankAcc], ["星星", r => r._stars], ["作答題次", r => r.attempts]],
+  attempts: [["答對題次", r => r.correct], ["分數", r => r.score]],
+  acc: [["作答題次", r => r.attempts], ["分數", r => r.score]],
+  stars: [["插旗", r => r._flags], ["分數", r => r.score]],
+  reading: [["星星", r => r._stars], ["分數", r => r.score]],
+  flags: [["星星", r => r._stars], ["分數", r => r.score]],
+  fixes: [["分數", r => r.score], ["正確率", rankAcc]]
+};
+let rankState = { cat: "score", data: null, at: 0, all: false };
 /** 一位學生上榜的數字（網頁版，和雲端 rankRow 一樣） */
 function rankRowOf(st) {
   const right = {}, ok = {};
@@ -4282,23 +4294,28 @@ function renderRanking() {
   const me = rankMeName(), teacher = session.user.role === "teacher";
   const list = rankState.data.board.map(r => ({ r, v: valOf(r) || 0 }))
     .filter(x => x.v > 0)
-    .sort((a, b) => b.v - a.v || (cat[0] === "acc" ? b.r.attempts - a.r.attempts : 0) || String(a.r.seat).localeCompare(String(b.r.seat)));
-  // 同分同名次
-  list.forEach((x, i) => { x.rank = i && Math.abs(x.v - list[i - 1].v) < 1e-9 && (cat[0] !== "acc" || x.r.attempts === list[i - 1].r.attempts) ? list[i - 1].rank : i + 1; });
+    .sort((a, b) => {
+      if (Math.abs(b.v - a.v) > 1e-9) return b.v - a.v;
+      for (const [, f] of RANK_TIE[cat[0]] || []) { const d = (f(b.r) || 0) - (f(a.r) || 0); if (Math.abs(d) > 1e-9) return d; }
+      return String(a.r.seat).localeCompare(String(b.r.seat), undefined, { numeric: true });
+    });
+  list.forEach((x, i) => { x.rank = i + 1; });   // 同分由系統判定先後，不並列
   const face = r => avatarFace(r.emoji || seatEmoji(r.seat), r.color);
-  const show = teacher ? list : list.filter(x => x.rank <= 10);
+  const show = teacher && rankState.all ? list : list.slice(0, RANK_TOP);
+  const tieText = (RANK_TIE[cat[0]] || []).map(x => x[0]).concat("座號").join("→");
   const mine = list.find(x => x.r.name === me);
   const pod = [1, 0, 2].map(i => {
     const x = list[i], cls = ["p1", "p2", "p3"][i];
     if (!x) return `<div class="pod empty ${cls}"><div class="medal">${["🥇", "🥈", "🥉"][i]}</div><div class="pn">虛位以待</div></div>`;
-    return `<div class="pod ${cls} ${x.r.name === me ? "me" : ""}"><div class="medal">${["🥇", "🥈", "🥉"][x.rank - 1] || "🏅"}</div>${face(x.r)}
+    return `<div class="pod ${cls} ${x.r.name === me ? "me" : ""}"><div class="medal">${["🥇", "🥈", "🥉"][i]}</div>${face(x.r)}
       <div class="pn">${escapeHtml(shortName(x.r.name))}</div><div class="pv">${fmt(x.v)}</div></div>`;
   }).join("");
   const sub = r => cat[0] === "acc" ? `答對 ${r.correct}／${r.attempts} 題` : cat[0] === "stars" ? `🚩 ${r._flags} 座島` : cat[0] === "score" ? escapeHtml(getLevelInfo(r.score || 0).title) : "";
   document.getElementById("rank-content").innerHTML = `
     <h2 style="margin-top:0;">🏆 ${FINAL ? "寶藏海" : "知識大航海"}排行榜 <small style="font-size:.78rem; opacity:.75">${FINAL ? "期末" : "期中"}</small></h2>
     <div class="guide-tabs">${RANK_CATS.map(c => `<button class="${c[0] === cat[0] ? "btn-primary" : "btn-ghost"}" onclick="openRanking('${c[0]}')">${c[1]}</button>`).join("")}</div>
-    <p class="rank-intro"><b>${title}</b>：${desc}。${teacher ? "老師看得到全班名次。" : "這裡列出前 10 名" + (me ? "和" + (session.user.role === "parent" ? "孩子" : "你") + "的名次" : "") + "。"}</p>
+    <p class="rank-intro"><b>${title}</b>：${desc}。列出前 ${RANK_TOP} 名${me ? "和" + (session.user.role === "parent" ? "孩子" : "你") + "的名次" : ""}。<br><small>同分時，系統依序比：${tieText}，所以不會並列。</small>
+      ${teacher && list.length > RANK_TOP ? `<button class="btn-ghost" style="padding:2px 10px; font-size:.76rem; margin-left:4px" onclick="rankState.all=!rankState.all; renderRanking()">${rankState.all ? "只看前 " + RANK_TOP + " 名" : "👀 看全班 " + list.length + " 人"}</button>` : ""}</p>
     ${list.length ? `<div class="podium">${pod}</div>
     <ol class="rank-list">${show.slice(3).map(x => `<li class="${x.r.name === me ? "me" : ""}"><span class="rk">${x.rank}</span>${face(x.r)}
       <span><b>${escapeHtml(shortName(x.r.name))}</b> <span class="rs">${sub(x.r)}</span></span><span class="rv">${fmt(x.v)}</span></li>`).join("")}</ol>` : `<div class="empty-note">還沒有人上榜，快去答題搶第一！</div>`}
