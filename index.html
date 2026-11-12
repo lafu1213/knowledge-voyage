@@ -659,6 +659,20 @@
   .peer-head { display: flex; align-items: center; gap: 8px; }
   .peer-head .face-av, .picker-preview .face-av, .vs-row .face-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
   .face-av { border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .face-av.has-photo, .me-emoji:has(.face-img) { overflow: hidden; padding: 0; }
+  .face-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; pointer-events: none; }
+  .me-emoji .face-img { width: 100%; height: 100%; }
+  body.season-final .me-emoji .face-img { width: calc(100% - 8px); height: calc(100% - 8px); }
+  .pill-face { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+  .photo-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .photo-btn { cursor: pointer; padding: 9px 16px; border-radius: 12px; display: inline-block; }
+  .photo-tip { font-size: .8rem; color: var(--ink-soft); margin: 6px 0; }
+  .crop-box { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 8px; animation: punishIn .35s cubic-bezier(.34,1.56,.64,1); }
+  .crop-box canvas { width: 220px; height: 220px; border-radius: 16px; touch-action: none; cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,.3); flex-shrink: 0; }
+  .crop-box canvas:active { cursor: grabbing; }
+  .crop-side { flex: 1; min-width: 180px; }
+  .crop-zoom { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+  .crop-zoom input { flex: 1; }
   .picker-preview { display: flex; gap: 12px; align-items: center; }
   .picker-preview .face-av { width: 64px; height: 64px; font-size: 2.2rem; border: 3px solid var(--accent); }
   .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
@@ -2631,9 +2645,47 @@ function spotOf(n, k = -1) {
 function toPct(p, vb) { return { left: (p.x - vb.x) / vb.w * 100, top: (p.y - vb.y) / vb.h * 100 }; }
 function setPos(el, p, vb) { const q = toPct(p, vb); el.style.left = q.left + "%"; el.style.top = q.top + "%"; }
 
-function avatarFace(emoji, color) { return `<div class="face-av" style="background:${color || "#fef08a"}">${emoji}</div>`; }
+// ── 照片頭像：每個人的照片依「照片版本」存在這台裝置，版本變了才重抓 ──
+const photoCache = {};
+function photoOf(name, pv) {
+  if (!name || !pv) return "";
+  let c = photoCache[name];
+  if (!c) { c = load("508_PHOTO_" + name, null); if (c) photoCache[name] = c; }
+  if (c && c.v === pv) return c.d;
+  needPhoto(name, pv);
+  return "";
+}
+const photoQueue = new Set();
+function needPhoto(name, pv) {
+  if (photoQueue.has(name) || (needPhoto.tried[name] === pv)) return;
+  needPhoto.tried[name] = pv;
+  photoQueue.add(name);
+  clearTimeout(needPhoto.t);
+  needPhoto.t = setTimeout(fetchPhotos, 300);
+}
+needPhoto.tried = {};
+async function fetchPhotos() {
+  const names = [...photoQueue]; photoQueue.clear();
+  if (!names.length || !session) return;
+  try {
+    const r = DEMO ? { photos: Object.fromEntries(names.map(n => [n, load("508_DEMO_PHOTO_" + n, { v: "", d: "" })])) } : await api("photos", { names });
+    Object.entries(r.photos || {}).forEach(([n, v]) => { if (v && v.d) { photoCache[n] = v; store("508_PHOTO_" + n, v); } });
+    refreshFaces();
+  } catch (e) {}
+}
+/** 照片抓到之後，把畫面上的頭像重畫一次 */
+function refreshFaces() {
+  if (!session) return;
+  try { renderAvatars(); renderPills(); renderSide(); } catch (e) {}
+  if (document.getElementById("rank-modal").classList.contains("open") && rankState.data) renderRanking();
+}
+function faceInner(emoji, name, pv) { const d = photoOf(name, pv); return d ? `<img class="face-img" src="${d}" alt="">` : emoji; }
+function avatarFace(emoji, color, name, pv) { const d = photoOf(name, pv); return `<div class="face-av${d ? " has-photo" : ""}" style="background:${color || "#fef08a"}">${d ? `<img class="face-img" src="${d}" alt="">` : emoji}</div>`; }
 function myEmoji() { return profile.emoji || (session.user.role === "student" ? seatEmoji(session.user.seat) : ROLE_INFO[session.user.role].icon); }
 function myColor() { return profile.color || "#fef08a"; }
+function myPv() { return profile.pv || ""; }
+function myFace() { return avatarFace(myEmoji(), myColor(), session.user.name, myPv()); }
+function myFaceInner() { return faceInner(myEmoji(), session.user.name, myPv()); }
 
 /** 其他同學在這張地圖上要站在哪座島（在世界地圖上，人在某科小島裡就顯示在那座大島） */
 function placeOnThisMap(place) {
@@ -2669,7 +2721,7 @@ function renderAvatars() {
     me.onclick = () => say(["加油！錯題清光光 💪", "要搭飛機還是游泳過去呢？", "星星收集中 ⭐"][Math.floor(Math.random() * 3)]);
     layer.appendChild(me);
   }
-  me.querySelector(".face-slot").innerHTML = avatarFace(myEmoji(), myColor());
+  me.querySelector(".face-slot").innerHTML = myFace();
   me.querySelector(".tag").textContent = (session.user.role === "student" ? "⭐ " : "") + shortName(session.user.name);
   const myLv = me.querySelector(".lv");
   if (session.user.role === "student") { myLv.hidden = false; myLv.textContent = "Lv." + getLevelInfo(stats.score).lv; }
@@ -2683,7 +2735,7 @@ function renderAvatars() {
     list.slice(0, 6).forEach((o, k) => {
       const el = document.createElement("div");
       el.className = "avatar other" + (net.battle && [net.battle.a, net.battle.b].includes(o.name) ? " battling" : "");
-      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}${o.battleOn === false ? `<div class="shield" title="專心練習中，暫不接受挑戰">🛡️</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
+      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}${o.battleOn === false ? `<div class="shield" title="專心練習中，暫不接受挑戰">🛡️</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
       el.title = shortName(o.name);
       el.onclick = (e) => { e.stopPropagation(); openPeerMenu(o, el); };
       setPos(el, spotOf(byId[id], k), vb);
@@ -2905,7 +2957,7 @@ function toggleBattle() {
 function renderPills() {
   const u = session.user;
   const pills = document.getElementById("pills");
-  let html = `<span class="pill" style="cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()} ${ROLE_INFO[u.role].icon} ${escapeHtml(u.name)} ✏️</span>`;
+  let html = `<span class="pill" style="cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${photoOf(u.name, myPv()) ? `<img class="pill-face" src="${photoOf(u.name, myPv())}" alt="">` : myEmoji()} ${ROLE_INFO[u.role].icon} ${escapeHtml(u.name)} ✏️</span>`;
   if (u.role === "student") {
     const lv = getLevelInfo(stats.score);
     const p = stats.pending.length;
@@ -2990,7 +3042,7 @@ function renderSide() {
   if (u.role !== "student") {
     side.innerHTML = `
       <div class="card">
-        <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}</div>
+        <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myFaceInner()}</div>
           <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
         ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span></button>
         <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
@@ -3015,7 +3067,7 @@ function renderSide() {
   const shipCard = FINAL ? myShipCard(lv.lv) : "";
   side.innerHTML = `
     <div class="card">
-      <div class="me-head"><div class="me-emoji" style="background:${myColor()}; --me-bg:${myColor()}; --xp:${pct}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myEmoji()}${FINAL ? `<span class="me-lv">Lv.${lv.lv}</span>` : ""}</div>
+      <div class="me-head"><div class="me-emoji" style="background:${myColor()}; --me-bg:${myColor()}; --xp:${pct}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myFaceInner()}${FINAL ? `<span class="me-lv">Lv.${lv.lv}</span>` : ""}</div>
         <div style="flex:1"><div class="me-name">${escapeHtml(shortName(u.name))} <button class="btn-ghost" style="padding:2px 8px; font-size:.72rem" onclick="openAvatarPicker()">換頭像</button></div>
         <div class="me-title">Lv.${lv.lv} ${lv.title}</div>
         <div class="bar"><i style="width:${pct}%"></i></div><div class="me-title" style="font-size:.72rem">${lv.lv >= MAX_LEVEL ? "已達最高等級！" : `再 ${nextAt - stats.score} 分升級`}</div></div></div>
@@ -3850,14 +3902,21 @@ function qRowHtml(q) {
 // =========================================================
 let pickerDraft = null;
 function openAvatarPicker() {
-  pickerDraft = { emoji: myEmoji(), color: myColor() };
+  pickerDraft = { emoji: myEmoji(), color: myColor(), photo: photoOf(session.user.name, myPv()) || "", photoChanged: false };
+  cropState = null;
   renderAvatarPicker();
   openModal("avatar-modal");
 }
 function renderAvatarPicker() {
   document.getElementById("avatar-content").innerHTML = `
     <h2 style="margin-top:0;">🎨 換一個頭像</h2>
-    <div class="picker-preview">${avatarFace(pickerDraft.emoji, pickerDraft.color)}<div><b>${escapeHtml(shortName(session.user.name))}</b><div style="font-size:.8rem; color:var(--ink-soft)">地圖上、聊天室、對戰時都會用這個頭像</div></div></div>
+    <div class="picker-preview"><div class="face-av${pickerDraft.photo ? " has-photo" : ""}" style="background:${pickerDraft.color}">${pickerDraft.photo ? `<img class="face-img" src="${pickerDraft.photo}" alt="">` : pickerDraft.emoji}</div><div><b>${escapeHtml(shortName(session.user.name))}</b><div style="font-size:.8rem; color:var(--ink-soft)">地圖上、排行榜、對戰時都會用這個頭像${pickerDraft.photo ? "（目前用照片）" : ""}</div></div></div>
+    <h3 style="margin:14px 0 6px; font-size:.95rem;">📷 用自己的照片</h3>
+    <div class="photo-row">
+      <label class="btn-accent photo-btn">📷 上傳照片<input type="file" accept="image/*" hidden onchange="onPhotoFile(this)"></label>
+      ${pickerDraft.photo ? `<button class="btn-ghost" onclick="pickerDraft.photo=''; pickerDraft.photoChanged=true; cropState=null; renderAvatarPicker();">🗑️ 不用照片，改回角色</button>` : ""}
+    </div>
+    <div id="crop-area">${cropState ? cropHtml() : `<p class="photo-tip">系統會自動找到臉、裁成最適合的圓形頭像，也可以自己拖曳、縮放調整。請用自己的照片，不要上傳別人的照片喔！</p>`}</div>
     <h3 style="margin:14px 0 6px; font-size:.95rem;">選角色</h3>
     <div class="picker-grid">${AVATAR_CHOICES.map(e => `<button class="${e === pickerDraft.emoji ? "on" : ""}" onclick="pickerDraft.emoji='${e}'; renderAvatarPicker();">${e}</button>`).join("")}</div>
     <h3 style="margin:14px 0 6px; font-size:.95rem;">選底色</h3>
@@ -3865,10 +3924,142 @@ function renderAvatarPicker() {
     <button class="btn-primary" style="width:100%; padding:12px; margin-top:16px;" onclick="saveAvatar()">💾 儲存頭像</button>`;
 }
 async function saveAvatar() {
-  profile = Object.assign({}, pickerDraft);
+  if (cropState) usePhoto();   // 還在調整照片就直接用調整好的
+  const d = pickerDraft, req = { emoji: d.emoji, color: d.color };
+  if (d.photoChanged) req.photo = d.photo || "";
   closeModal("avatar-modal");
-  renderAll();
-  try { await net.saveProfile(profile); toast("頭像換好了！"); } catch (e) { toast("⚠️ 頭像只換在這台裝置：" + e.message); }
+  try {
+    const r = await net.saveProfile(req);
+    profile = Object.assign({ emoji: d.emoji, color: d.color }, (r && r.profile) || {}, { pv: r && r.profile ? r.profile.pv || "" : (d.photo ? profile.pv : "") });
+    if (d.photoChanged && profile.pv && d.photo) { photoCache[session.user.name] = { v: profile.pv, d: d.photo }; store("508_PHOTO_" + session.user.name, photoCache[session.user.name]); }
+    renderAll();
+    toast(d.photoChanged ? (d.photo ? "📷 照片頭像換好了！" : "已改回角色頭像") : "頭像換好了！");
+  } catch (e) { profile = Object.assign({}, profile, { emoji: d.emoji, color: d.color }); renderAll(); toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 照片裁切：自動找臉（瀏覽器支援時），不然取中間偏上；可以拖曳、縮放 ──
+const CROP_VIEW = 220, PHOTO_OUT = 128;
+let cropState = null;
+async function onPhotoFile(input) {
+  const f = input.files && input.files[0];
+  input.value = "";
+  if (!f) return;
+  if (!/^image\//.test(f.type)) return toast("請選一張照片");
+  if (f.size > 15 * 1024 * 1024) return toast("照片太大了（超過 15MB），換一張試試");
+  try {
+    const img = await loadImageFile(f);
+    const W = img.naturalWidth, H = img.naturalHeight;
+    let side = Math.min(W, H), cx = W / 2, cy = H / 2 - (H > W ? (H - W) * 0.18 : 0);   // 直的照片，臉通常在上半部
+    const face = await detectFace(img);
+    if (face) { side = Math.min(Math.max(face.width, face.height) * 2.1, Math.min(W, H)); cx = face.x + face.width / 2; cy = face.y + face.height / 2 + face.height * 0.08; }
+    cropState = { img, W, H, base: CROP_VIEW / Math.min(W, H), zoom: Math.min(W, H) / side, cx, cy, face: !!face };
+    clampCrop();
+    renderAvatarPicker();
+    drawCrop();
+  } catch (e) { toast("⚠️ 這張照片打不開，換一張試試"); }
+}
+function loadImageFile(f) {
+  return new Promise((res, rej) => { const url = URL.createObjectURL(f); const img = new Image(); img.onload = () => { res(img); setTimeout(() => URL.revokeObjectURL(url), 1000); }; img.onerror = rej; img.src = url; });
+}
+async function detectFace(img) {
+  try {
+    if ("FaceDetector" in window) {
+      const faces = await new window.FaceDetector({ fastMode: true, maxDetectedFaces: 3 }).detect(img);
+      if (faces.length) return faces.map(f => f.boundingBox).sort((a, b) => b.width * b.height - a.width * a.height)[0];
+    }
+  } catch (e) {}
+  return skinFace(img);
+}
+/** 沒有內建找臉功能的瀏覽器（例如 iPhone）：找照片上半部膚色最集中的地方當作臉 */
+function skinFace(img) {
+  try {
+    const W = img.naturalWidth, H = img.naturalHeight, n = 80, k = n / Math.max(W, H);
+    const w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const ctx = cv.getContext("2d"); ctx.drawImage(img, 0, 0, w, h);
+    const px = ctx.getImageData(0, 0, w, h).data, pts = [];
+    for (let y = 0; y < h * 0.8; y++) for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4, r = px[i], g = px[i + 1], b = px[i + 2];
+      const cb = 128 - 0.1687 * r - 0.3313 * g + 0.5 * b, cr = 128 + 0.5 * r - 0.4187 * g - 0.0813 * b;
+      if (cr > 135 && cr < 180 && cb > 85 && cb < 135 && r > 60 && r > b) pts.push([x, y]);
+    }
+    if (pts.length < w * h * 0.01) return null;
+    // 從膚色點的中心開始，只留靠近中心的點，避免手、手臂把範圍拉大
+    let mx = pts.reduce((t, p) => t + p[0], 0) / pts.length, my = pts.reduce((t, p) => t + p[1], 0) / pts.length;
+    let near = pts;
+    for (let it = 0; it < 3; it++) {
+      const d = near.map(p => Math.hypot(p[0] - mx, p[1] - my)).sort((a, b) => a - b), lim = d[Math.floor(d.length * 0.7)] || 1;
+      near = near.filter(p => Math.hypot(p[0] - mx, p[1] - my) <= lim * 1.2);
+      mx = near.reduce((t, p) => t + p[0], 0) / near.length; my = near.reduce((t, p) => t + p[1], 0) / near.length;
+    }
+    const xs = near.map(p => p[0]).sort((a, b) => a - b), ys = near.map(p => p[1]).sort((a, b) => a - b);
+    const x0 = xs[Math.floor(xs.length * 0.05)], x1 = xs[Math.floor(xs.length * 0.95)], y0 = ys[Math.floor(ys.length * 0.05)], y1 = ys[Math.floor(ys.length * 0.95)];
+    const fw = (x1 - x0 + 1) / k, fh = (y1 - y0 + 1) / k;
+    if (fw < W * 0.08 || fh < H * 0.06) return null;
+    return { x: x0 / k, y: y0 / k, width: fw, height: fh };
+  } catch (e) { return null; }
+}
+function cropScale() { return cropState.base * cropState.zoom; }   // 原圖 1px 在預覽裡是幾 px
+function clampCrop() {
+  const c = cropState, half = CROP_VIEW / 2 / cropScale();
+  c.cx = Math.min(c.W - half, Math.max(half, c.cx));
+  c.cy = Math.min(c.H - half, Math.max(half, c.cy));
+}
+function cropHtml() {
+  return `<div class="crop-box">
+      <canvas id="crop-canvas" width="${CROP_VIEW}" height="${CROP_VIEW}" aria-label="照片預覽，可以拖曳調整位置"></canvas>
+      <div class="crop-side">
+        <div class="photo-tip">${cropState.face ? "🙂 已經自動對準臉了！" : "已經自動裁好了！"}<br>用手指或滑鼠<b>拖曳照片</b>調整位置，滑桿可以放大縮小。</div>
+        <label class="crop-zoom">🔍 <input type="range" min="1" max="4" step="0.01" value="${cropState.zoom}" oninput="cropState.zoom=+this.value; clampCrop(); drawCrop();"></label>
+        <button class="btn-success" style="width:100%; padding:10px" onclick="usePhoto()">✅ 用這張照片</button>
+        <button class="btn-ghost" style="width:100%; margin-top:6px" onclick="cropState=null; renderAvatarPicker();">取消</button>
+      </div>
+    </div>`;
+}
+function drawCrop(target, size) {
+  const c = cropState; if (!c) return;
+  const cv = target || document.getElementById("crop-canvas"); if (!cv) return;
+  const S = size || CROP_VIEW, k = S / CROP_VIEW, sc = cropScale() * k;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, S, S);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(c.img, S / 2 - c.cx * sc, S / 2 - c.cy * sc, c.W * sc, c.H * sc);
+  if (!target) {   // 預覽：圓形外面蓋一層半透明
+    ctx.save(); ctx.fillStyle = "rgba(15,23,42,.55)"; ctx.beginPath(); ctx.rect(0, 0, S, S); ctx.arc(S / 2, S / 2, S / 2 - 4, 0, Math.PI * 2, true); ctx.fill("evenodd");
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 4, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    bindCropDrag(cv);
+  }
+}
+function bindCropDrag(cv) {
+  if (cv._bound) return; cv._bound = true;
+  let last = null;
+  cv.addEventListener("pointerdown", e => { last = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", e => {
+    if (!last || !cropState) return;
+    const r = cv.getBoundingClientRect(), k = CROP_VIEW / r.width;
+    cropState.cx -= (e.clientX - last.x) * k / cropScale(); cropState.cy -= (e.clientY - last.y) * k / cropScale();
+    last = { x: e.clientX, y: e.clientY }; clampCrop(); drawCrop();
+  });
+  ["pointerup", "pointercancel"].forEach(t => cv.addEventListener(t, () => (last = null)));
+  cv.addEventListener("wheel", e => { e.preventDefault(); cropState.zoom = Math.min(4, Math.max(1, cropState.zoom * (e.deltaY < 0 ? 1.08 : 0.93))); clampCrop(); drawCrop(); const z = document.querySelector(".crop-zoom input"); if (z) z.value = cropState.zoom; }, { passive: false });
+}
+/** 裁成 128×128 的小圖（約 5～10 KB），存起來等按「儲存頭像」 */
+function usePhoto() {
+  if (!cropState) return;
+  const cv = document.createElement("canvas"); cv.width = cv.height = PHOTO_OUT;
+  drawCrop(cv, PHOTO_OUT);
+  let q = 0.85, d = cv.toDataURL("image/jpeg", q);
+  while (d.length > 40000 && q > 0.4) { q -= 0.1; d = cv.toDataURL("image/jpeg", q); }
+  pickerDraft.photo = d; pickerDraft.photoChanged = true; cropState = null;
+  renderAvatarPicker();
+}
+async function clearPhoto(name) {
+  closePeerMenu();
+  try {
+    if (DEMO) store("508_DEMO_PHOTO_" + name, { v: "", d: "" }); else await api("photos", { op: "clear", name });
+    delete photoCache[name]; try { localStorage.removeItem("508_PHOTO_" + name); } catch (e) {}
+    toast(`已移除 ${shortName(name)} 的照片頭像（他的畫面約 5 秒後更新）`);
+  } catch (e) { toast("⚠️ " + e.message); }
 }
 
 // =========================================================
@@ -3891,7 +4082,7 @@ const net = {
     if (!session) return;
     try {
       const since = this.messages.length ? this.messages[this.messages.length - 1].id : 0;
-      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0, battleOn: battleOn() }));
+      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor(), pv: myPv(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0, battleOn: battleOn() }));
     } catch (e) { /* 網路斷掉時下次再試 */ }
   },
   apply(r) {
@@ -3902,7 +4093,7 @@ const net = {
     this.messages = this.messages.slice(-40);
     this.battle = r.battle || null;
     applyBridgePulse(r.bridge || (DEMO ? demoBridge("pulse") : null));
-    const sig = this.others.map(o => o.name + o.place + o.emoji).join("|");
+    const sig = this.others.map(o => o.name + o.place + o.emoji + (o.pv || "")).join("|");
     if (sig !== this.sig) { this.sig = sig; renderSide(); }
     if (!walking) renderAvatars();
     renderChat();
@@ -4531,7 +4722,7 @@ async function loadRanking(force) {
   // 自己的那一列用最新的紀錄（雲端的全班排行最多晚 5 分鐘）
   if (session.user.role === "student") {
     const mine = board.find(b => b.name === session.user.name);
-    const fresh = Object.assign({ name: session.user.name, seat: session.user.seat, emoji: myEmoji(), color: myColor() }, rankRowOf(stats));
+    const fresh = Object.assign({ name: session.user.name, seat: session.user.seat, emoji: myEmoji(), color: myColor(), pv: myPv() }, rankRowOf(stats));
     if (mine) Object.assign(mine, fresh); else board.push(fresh);
   }
   board.forEach(rankDerive);
@@ -4562,7 +4753,7 @@ function renderRanking() {
       return String(a.r.seat).localeCompare(String(b.r.seat), undefined, { numeric: true });
     });
   list.forEach((x, i) => { x.rank = i + 1; });   // 同分由系統判定先後，不並列
-  const face = r => avatarFace(r.emoji || seatEmoji(r.seat), r.color);
+  const face = r => avatarFace(r.emoji || seatEmoji(r.seat), r.color, r.name, r.pv);
   const show = teacher && rankState.all ? list : list.slice(0, RANK_TOP);
   const tieText = (RANK_TIE[cat[0]] || []).map(x => x[0]).concat("座號").join("→");
   const mine = list.find(x => x.r.name === me);
@@ -4816,7 +5007,8 @@ function openPeerMenu(o, el) {
   menu.id = "peer-menu";
   const sameIsland = o.place === myPlace();
   menu.innerHTML = `
-    <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color)}<b>${escapeHtml(shortName(o.name))}</b></div>
+    <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}<b>${escapeHtml(shortName(o.name))}</b></div>
+    ${session.user.role === "teacher" && o.pv ? `<button class="btn-ghost" style="width:100%; margin-bottom:6px" onclick='clearPhoto(${JSON.stringify(o.name)})'>🗑️ 移除他的照片頭像</button>` : ""}
     ${!canChallenge(o) ? (session.user.role === "student" && o.battleOn === false ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>` : "")
       : `<div class="peer-note">⚔️ 選一科來挑戰${session.user.role === "parent" ? "孩子" : "他"}：</div>
          <div class="peer-subjects">${WORLD.filter(s => s.units.length).map(s => `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '${escapeHtml(s.key)}')">${s.icon} ${escapeHtml(s.key)}</button>`).join("")}
@@ -4867,8 +5059,8 @@ function renderBattle() {
   const ROLE_TAG = { teacher: "👩‍🏫 ", parent: "👪 " };
   const oppLabel = (opp === b.a ? ROLE_TAG[b.ar] || "" : "") + shortName(opp);
   const mistakeOwner = b.ar && b.ar !== "student" ? b.b : b.a;
-  const oppFace = avatarFace(oppInfo.emoji || "🙂", oppInfo.color);
-  const vs = `<div class="vs-row"><div>${avatarFace(myEmoji(), myColor())}<b>我</b></div><span class="vs">VS</span><div>${oppFace}<b>${escapeHtml(oppLabel)}</b></div></div>`;
+  const oppFace = avatarFace(oppInfo.emoji || "🙂", oppInfo.color, opp, oppInfo.pv);
+  const vs = `<div class="vs-row"><div>${myFace()}<b>我</b></div><span class="vs">VS</span><div>${oppFace}<b>${escapeHtml(oppLabel)}</b></div></div>`;
   const countdown = (sec, id) => {
     let left = Math.max(0, Math.round(sec));
     const tick = () => { const el = document.getElementById(id); if (el) el.textContent = left; left = Math.max(0, left - 1); };
@@ -5037,7 +5229,12 @@ const demo = (() => {
       }
       return snapshot(since);
     },
-    saveProfile(p) { store("508_DEMO_PROFILE_" + session.user.name, p); return { ok: true }; },
+    saveProfile(p) {
+      const old = load("508_DEMO_PROFILE_" + session.user.name, {}) || {};
+      const out = { emoji: p.emoji, color: p.color, pv: old.pv || "" };
+      if (p.photo !== undefined) { out.pv = p.photo ? Date.now().toString(36) : ""; store("508_DEMO_PHOTO_" + session.user.name, { v: out.pv, d: p.photo || "" }); }
+      store("508_DEMO_PROFILE_" + session.user.name, out); return { profile: out };
+    },
     getProfile() { return { profile: load("508_DEMO_PROFILE_" + session.user.name, null) }; }
   };
 })();
