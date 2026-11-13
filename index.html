@@ -536,6 +536,30 @@
   .bridge-tabs button { padding: 6px 12px; font-size: .85rem; }
   .mail-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 900; line-height: 18px; text-align: center; }
   .mail-badge[hidden] { display: none; }
+  /* 題目回報 */
+  .report-row { text-align: right; margin-top: 8px; }
+  .report-link { background: none; border: none; box-shadow: none; color: var(--ink-soft); font-size: .8rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
+  .report-link:hover { color: var(--danger); background: none; }
+  .report-q { background: rgba(37,99,235,0.07); border-radius: 12px; padding: 10px 12px; font-size: .9rem; line-height: 1.6; white-space: pre-line; margin-bottom: 10px; }
+  .report-reasons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+  .report-reasons button { padding: 9px 8px; font-size: .86rem; text-align: left; }
+  #report-note, .rep-input { width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); padding: 8px 10px; font: inherit; font-size: .9rem; background: var(--card-solid); color: var(--ink); }
+  @media (max-width: 480px) { .report-reasons { grid-template-columns: 1fr; } }
+  .rep-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; background: var(--card); }
+  .rep-card.done { opacity: .72; }
+  .rep-meta { font-size: .78rem; color: var(--ink-soft); font-weight: 700; }
+  .rep-chip { display: inline-block; font-size: .74rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; background: rgba(220,38,38,.12); color: #b91c1c; margin: 2px 4px 2px 0; }
+  .rep-chip.ok { background: rgba(22,163,74,.14); color: #15803d; }
+  .rep-chip.grey { background: rgba(100,116,139,.16); color: var(--ink-soft); }
+  .rep-opts { margin: 6px 0; padding-left: 0; list-style: none; font-size: .88rem; }
+  .rep-opts li { padding: 2px 0; }
+  .rep-opts li.right { color: #15803d; font-weight: 900; }
+  .rep-who { font-size: .85rem; margin: 8px 0; padding: 8px 10px; border-radius: 10px; background: rgba(245,158,11,.1); }
+  .rep-who div { padding: 2px 0; }
+  .rep-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+  .rep-edit label { display: block; font-size: .82rem; font-weight: 800; margin: 8px 0 3px; }
+  .rep-edit .opt-line { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
+  .rep-edit .opt-line input[type=text] { flex: 1; }
   .bridge-kpis { grid-template-columns: repeat(4, 1fr); }
   .bridge-kpis .tile-kpi { cursor: pointer; }
   .bridge-kpis .tile-kpi span { font-size: .78rem; }
@@ -874,6 +898,9 @@
 </div>
 <div class="modal-overlay" id="rank-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('rank-modal')" aria-label="關閉">✕</button><div id="rank-content"></div></div>
+</div>
+<div class="modal-overlay" id="report-modal">
+  <div class="modal-box" style="max-width:540px"><button class="close-btn" onclick="closeModal('report-modal')" aria-label="關閉">✕</button><div id="report-content"></div></div>
 </div>
 <div class="modal-overlay" id="guide-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('guide-modal')" aria-label="關閉">✕</button><div id="guide-content"></div></div>
@@ -3059,8 +3086,9 @@ function renderSide() {
       <div class="card">
         <div class="me-head"><div class="me-emoji" style="background:${myColor()}; cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${myFaceInner()}</div>
           <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
-        ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span></button>
+        ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span> <span class="mail-badge report-badge" style="background:#f59e0b" title="待處理的題目回報" ${bridgeState.reportsN ? "" : "hidden"}>🚩${bridgeState.reportsN}</span></button>
         <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
+        ${!FINAL && u.role === "teacher" ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('reports')">🚩 題目回報 <span class="mail-badge report-badge" style="background:#f59e0b" title="待處理的題目回報" ${bridgeState.reportsN ? "" : "hidden"}>🚩${bridgeState.reportsN}</span></button>` : ""}
         ${u.role === "teacher" ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('islands')">🏝️ 島嶼開關（開放 ${WORLD.flatMap(s => s.units).filter(x => !islandClosed(x)).length}／${WORLD.flatMap(s => s.units).length}）</button>` : ""}
         <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
         <button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openGuide()">📜 遊戲說明（孩子看到的規則）</button>
@@ -3543,7 +3571,8 @@ function renderQuestion() {
     ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject)}</h3>
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject)}</button>`).join("")}</div>
-    <div id="feedback-box" style="margin-top:12px;"></div>`;
+    <div id="feedback-box" style="margin-top:12px;"></div>
+    ${reportRowHtml()}`;
   if (questionSpeech(q)) setTimeout(() => speakCurrent(false), 350);
   else if ("speechSynthesis" in window) speechSynthesis.cancel();
 }
@@ -4138,9 +4167,10 @@ const net = {
 // 11. 老師艦橋（期末）：航海規則、發金幣、私訊、亂答紀錄、分科錯題
 // =========================================================
 const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
-  peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set() };
-const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
-const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands");
+  peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set(),
+  reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
+const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
+const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
 const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00" };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
@@ -4202,6 +4232,15 @@ function applyBridgePulse(p) {
     store(RULES_KEY, { openStart: p.rules.openStart, openEnd: p.rules.openEnd });
     if (JSON.stringify(closedList()) !== before) onIslandsChanged();
   }
+  if (session.user.role === "teacher" && typeof p.reports === "number") {
+    const was = bridgeState.reportsN;
+    bridgeState.reportsN = p.reports;
+    document.querySelectorAll(".report-badge").forEach(el => { el.textContent = (el.title ? "🚩" : "") + p.reports; el.hidden = !p.reports; });
+    if (p.reports > was && was !== null) {
+      const open = document.getElementById("bridge-modal").classList.contains("open");
+      if (open && bridgeState.tab === "reports") renderBridge(); else toast(`🚩 有學生回報題目可能有問題（待處理 ${p.reports} 題）`, 4500);
+    }
+  }
   if (!FINAL) return;
   const before = bridgeState.unread;
   bridgeState.unread = p.unread || 0;
@@ -4234,7 +4273,7 @@ function openBridge(tab) {
 }
 function bridgeShell(body) {
   return `<h2 style="margin-top:0;">⚓ 老師艦橋 <small style="font-size:.8rem; opacity:.75">${FINAL ? "期末航線的指揮台" : "期中航線"}</small></h2>
-    <div class="bridge-tabs">${BRIDGE_TABS.map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}</button>`).join("")}</div>
+    <div class="bridge-tabs">${BRIDGE_TABS.map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}${k === "reports" ? ` <span class="mail-badge report-badge" ${bridgeState.reportsN ? "" : "hidden"}>${bridgeState.reportsN}</span>` : ""}</button>`).join("")}</div>
     <div id="bridge-body">${body}</div>`;
 }
 function bridgeLoading() { return `<div class="spinner"></div><div class="empty-note">正在讀取…</div>`; }
@@ -4258,6 +4297,7 @@ async function renderBridge() {
       set(`<div class="tiles bridge-kpis">
           <div class="tile-kpi" onclick="bridgeState.tab='rules'; renderBridge();"><b>${rulesNow().pirateOn ? "🏴‍☠️ 開" : "⛔ 關"}</b><span>${escapeHtml(pirateStatusText())}</span></div>
           <div class="tile-kpi" onclick="bridgeState.tab='dm'; renderBridge();"><b>📩 ${bridgeState.unread}</b><span>未讀的學生來信</span></div>
+          <div class="tile-kpi" onclick="bridgeState.tab='reports'; renderBridge();"><b style="color:${bridgeState.reportsN ? "var(--danger)" : "inherit"}">🚩 ${bridgeState.reportsN}</b><span>待處理的題目回報</span></div>
           <div class="tile-kpi" onclick="bridgeState.tab='pace'; renderBridge();"><b style="color:${todayPace.length ? "var(--danger)" : "inherit"}">⛓️ ${todayPace.length}</b><span>今天亂答人次（${new Set(todayPace.map(r => r.name)).size} 人）</span></div>
           <div class="tile-kpi" onclick="bridgeState.tab='mistakes'; renderBridge();"><b>📚 ${mk.mistakes.length}</b><span>期末有人答錯的題目</span></div>
         </div>
@@ -4300,6 +4340,12 @@ async function renderBridge() {
       set(bridgeLoading());
       bridgeState.pace = (await bridgeCall("paceList")).rows;
       set(paceHtml());
+    } else if (t === "reports") {
+      if (!bridgeState.reports) set(bridgeLoading());
+      const r = await bridgeCall("qReports");
+      bridgeState.reports = r.reports || []; bridgeState.repBank = r.bank || {};
+      bridgeState.reportsN = bridgeState.reports.filter(x => x.status === "待處理").length;
+      set(reportsHtml());
     } else if (t === "mistakes") {
       set(bridgeLoading());
       bridgeState.mistakes = (await bridgeCall("mistakes", { season: bridgeState.season })).mistakes;
@@ -4487,6 +4533,167 @@ function mailCard() {
 }
 
 // ── 示範模式的艦橋（全部記在這台裝置，換帳號登入就能測試老師和學生互傳） ──
+// =========================================================
+// 題目回報：作答時覺得題目、答案怪怪的 → 回報給老師；老師在艦橋處理，可以直接改題庫
+// =========================================================
+const REPORT_REASONS = [["ans", "🎯 答案好像不對"], ["typo", "✏️ 題目或選項有錯字"], ["multi", "🤔 不只一個答案是對的"], ["img", "🖼️ 圖片看不到或看不清楚"], ["exp", "📝 詳解有錯或看不懂"], ["other", "💬 其他問題"]];
+const reportState = { q: null, reason: "", note: "", sent: new Set(), busy: false };
+function reportRowHtml() {
+  if (!session || session.user.role === "parent") return "";
+  return `<div class="report-row"><button class="report-link" onclick="openReport()">🚩 這題怪怪的？回報給老師</button></div>`;
+}
+function openReport() {
+  const q = quizState.questions && quizState.questions[quizState.idx];
+  if (!q) return;
+  if (reportState.q !== q) Object.assign(reportState, { q, reason: "", note: "" });
+  renderReport();
+  openModal("report-modal");
+}
+function renderReport() {
+  const q = reportState.q, sent = reportState.sent.has(q.id);
+  const qText = String(q.q || "");
+  document.getElementById("report-content").innerHTML = `
+    <h2 style="margin-top:0">🚩 回報題目</h2>
+    <div class="report-q"><b>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</b>\n${escapeHtml(qText.length > 140 ? qText.slice(0, 140) + "…" : qText)}</div>
+    ${sent ? `<div class="lore-box">✅ 這題你已經回報過了！老師檢查後，會用 📩 私訊告訴你結果。</div>
+      <button class="btn-primary" style="width:100%; padding:10px" onclick="closeModal('report-modal')">繼續作答</button>` : `
+    <p style="margin:6px 0; font-size:.92rem; font-weight:800">哪裡有問題呢？（選一個）</p>
+    <div class="report-reasons">${REPORT_REASONS.map(([k, l]) => `<button class="${reportState.reason === k ? "btn-primary" : "btn-ghost"}" onclick="pickReportReason('${k}')">${l}</button>`).join("")}</div>
+    <textarea id="report-note" maxlength="150" rows="3" oninput="reportState.note=this.value" placeholder="可以寫清楚一點，例如：我覺得答案應該是「……」，因為……（可以不填）">${escapeHtml(reportState.note)}</textarea>
+    <button id="report-send" class="btn-accent" style="width:100%; padding:11px; margin-top:8px" onclick="sendReport()">📮 送出回報</button>
+    <p style="font-size:.8rem; opacity:.8; margin-bottom:0">回報不會影響這一題的分數。老師檢查後，不管有沒有錯，都會用私訊告訴你結果。</p>`}`;
+}
+/** 私訊裡提到的題目：去掉「選出最適合填入（　）的語詞：」這種共同的開頭，只留題目本身 */
+function reportSnippet(q) {
+  let lines = String(q || "").split("\n").map(x => x.trim()).filter(Boolean);
+  if (lines.length > 1 && /[：:]$/.test(lines[0])) lines = lines.slice(1);
+  const t = lines.join(" ");
+  return t.length > 24 ? t.slice(0, 24) + "…" : t;
+}
+function pickReportReason(k) { reportState.reason = k; renderReport(); }
+async function sendReport() {
+  const q = reportState.q;
+  if (!reportState.reason) return toast("請先選一個「哪裡有問題」");
+  if (reportState.reason === "other" && !reportState.note.trim()) return toast("選「其他問題」的話，請寫一下是什麼問題");
+  if (reportState.busy) return;
+  reportState.busy = true;
+  const btn = document.getElementById("report-send"); if (btn) { btn.disabled = true; btn.textContent = "送出中…"; }
+  try {
+    await bridgeCall("qReport", { qId: q.id, subject: q.subject, unit: q.unit, q: q.q, opts: q.opts.map(stripNum), correct: stripNum(q.opts[q.ans]),
+      reason: reportState.reason, note: reportState.note.trim(), season: FINAL ? "final" : "mid" });
+    reportState.sent.add(q.id);
+    closeModal("report-modal");
+    toast("🚩 已經送給老師了，謝謝你細心的發現！", 3500);
+  } catch (e) {
+    if (/已經回報過/.test(e.message)) { reportState.sent.add(q.id); renderReport(); }
+    else if (btn) { btn.disabled = false; btn.textContent = "📮 送出回報"; }
+    toast("⚠️ " + e.message, 4500);
+  } finally { reportState.busy = false; }
+}
+
+// ── 老師艦橋：🚩 題目回報 ──
+function reportGroups() {
+  const by = {};
+  (bridgeState.reports || []).forEach(r => {
+    const k = r.season + "|" + r.qId;
+    const g = by[k] || (by[k] = { key: k, qId: r.qId, season: r.season, subject: r.subject, unit: r.unit, q: r.q, opts: r.opts, correct: r.correct, items: [] });
+    g.items.push(r);
+  });
+  return Object.values(by).map(g => Object.assign(g, { pending: g.items.filter(r => r.status === "待處理"), last: g.items.reduce((m, r) => (r.t > m ? r.t : m), "") }))
+    .sort((a, b) => b.pending.length - a.pending.length || b.last.localeCompare(a.last));
+}
+function reportsHtml() {
+  const all = reportGroups(), f = bridgeState.repFilter;
+  const list = f === "待處理" ? all.filter(g => g.pending.length) : all;
+  bridgeState.repGroups = list;
+  const nPend = all.filter(g => g.pending.length).length;
+  return `<div class="lore-box" style="font-size:.88rem">學生作答時按「🚩 這題怪怪的？」就會出現在這裡。同一題的回報會合在一起。
+      檢查後按 <b>✅ 已修正</b> 或 <b>👌 答案沒錯</b>，系統會自動用私訊告訴回報的同學。要改題目，可以按 <b>✏️ 直接修改題庫</b>，或照卡片上的位置到試算表修改。</div>
+    <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap">
+      <button class="${f === "待處理" ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.repFilter='待處理'; renderBridge();">待處理（${nPend} 題${bridgeState.reportsN > nPend ? `・${bridgeState.reportsN} 筆回報` : ""}）</button>
+      <button class="${f === "全部" ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.repFilter='全部'; renderBridge();">全部紀錄（${all.length} 題）</button>
+    </div>
+    ${list.length ? list.map((g, i) => reportCard(g, i)).join("") : `<div class="empty-note">${f === "待處理" ? "🎉 目前沒有待處理的題目回報" : "還沒有人回報過題目"}</div>`}`;
+}
+function reportCard(g, i) {
+  const b = bridgeState.repBank[g.qId];
+  const cur = b ? { q: b.q, opts: b.opts.filter(Boolean), ans: b.ans, exp: b.exp } : { q: g.q, opts: g.opts, ans: g.opts.indexOf(g.correct), exp: "" };
+  const reasons = {}; g.pending.forEach(r => { reasons[r.reason] = (reasons[r.reason] || 0) + 1; });
+  const where = b ? `📍 試算表「${escapeHtml(b.tab)}」第 <b>${b.row}</b> 列` : `⚠️ 題庫裡找不到這題（可能已經在試算表改過，或是系統自動出的題目）`;
+  const statusChip = r => r.status === "待處理" ? `<span class="rep-chip">待處理</span>` : r.status === "已修正" ? `<span class="rep-chip ok">已修正</span>` : `<span class="rep-chip grey">${escapeHtml(r.status)}</span>`;
+  const editing = bridgeState.repEdit === g.key && b;
+  return `<div class="rep-card ${g.pending.length ? "" : "done"}">
+    <div class="rep-meta">${escapeHtml(g.season)}・${escapeHtml(g.subject)}・${escapeHtml(g.unit)}　｜　${where}</div>
+    <div style="margin:6px 0">${Object.entries(reasons).map(([k, n]) => `<span class="rep-chip">${escapeHtml(k)}${n > 1 ? ` ×${n}` : ""}</span>`).join("")}</div>
+    ${editing ? reportEditHtml(g, b, i) : `
+    <div style="white-space:pre-line; font-weight:800; line-height:1.6">${escapeHtml(cur.q)}</div>
+    <ul class="rep-opts">${cur.opts.map((o, k) => `<li class="${k === cur.ans ? "right" : ""}">${"①②③④"[k]} ${escapeHtml(o)}${k === cur.ans ? "　✔ 目前的答案" : ""}</li>`).join("")}</ul>
+    ${cur.exp ? `<details style="font-size:.84rem"><summary>看詳解</summary><div style="white-space:pre-line">${escapeHtml(cur.exp)}</div></details>` : ""}`}
+    <div class="rep-who">${g.items.slice().reverse().map(r => `<div>${statusChip(r)} <b>${escapeHtml(shortName(r.name))}</b>
+      <span class="rep-meta">${escapeHtml(String(r.t).slice(5, 16))}</span>：${escapeHtml(r.reason)}${r.note ? `——「${escapeHtml(r.note)}」` : ""}${r.reply ? `<br><span class="rep-meta">↳ 老師回覆：${escapeHtml(r.reply)}</span>` : ""}</div>`).join("")}</div>
+    ${g.pending.length && !editing ? `
+    <input class="rep-input" id="rep-reply-${i}" maxlength="100" placeholder="想對回報的同學說的話（可不填），例如：謝謝你，第②個選項的錯字已經改好了">
+    <div class="rep-actions">
+      ${b ? `<button class="btn-ghost" onclick="bridgeState.repEdit='${g.key.replace(/'/g, "")}'; renderBridge();">✏️ 直接修改題庫</button>` : ""}
+      <button class="btn-accent" onclick="resolveReport(${i}, '已修正')">✅ 已修正，通知學生</button>
+      <button class="btn-ghost" onclick="resolveReport(${i}, '答案沒錯')">👌 答案沒錯，通知學生</button>
+      <label style="font-size:.84rem">謝禮 <select id="rep-coin-${i}">${[0, 5, 10, 20].map(n => `<option value="${n}" ${n === 10 ? "selected" : ""}>${n ? "🪙 " + n : "不送"}</option>`).join("")}</select></label>
+    </div>
+    <div class="rep-meta" style="margin-top:4px">「謝禮」只在按「已修正」時發給回報的同學，放進他的島上寶庫。</div>` : ""}
+  </div>`;
+}
+function reportEditHtml(g, b, i) {
+  return `<div class="rep-edit">
+    <label>題目</label><textarea class="rep-input" id="ed-q-${i}" rows="3">${escapeHtml(b.q)}</textarea>
+    <label>選項（點左邊的圓圈，選正確答案）</label>
+    ${[0, 1, 2, 3].map(k => `<div class="opt-line"><input type="radio" name="ed-ans-${i}" value="${k}" ${k === b.ans ? "checked" : ""}> ${"①②③④"[k]}
+      <input type="text" class="rep-input" id="ed-o${k}-${i}" value="${escapeHtml(b.opts[k] || "")}" placeholder="${k >= 2 ? "（沒有可以空著）" : ""}"></div>`).join("")}
+    ${b.hasExp ? `<label>詳解</label><textarea class="rep-input" id="ed-exp-${i}" rows="3">${escapeHtml(b.exp)}</textarea>` : ""}
+    <div class="rep-actions">
+      <button class="btn-accent" id="ed-save-${i}" onclick="saveReportEdit(${i})">💾 寫回題庫</button>
+      <button class="btn-ghost" onclick="bridgeState.repEdit=''; renderBridge();">取消</button>
+    </div>
+    <div class="rep-meta" style="margin-top:4px">會直接改試算表「${escapeHtml(b.tab)}」第 ${b.row} 列。學生重新進入遊戲後就會看到新版題目。</div>
+  </div>`;
+}
+async function saveReportEdit(i) {
+  const g = bridgeState.repGroups[i], b = g && bridgeState.repBank[g.qId];
+  if (!b) return;
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  const opts = [0, 1, 2, 3].map(k => val(`ed-o${k}-${i}`));
+  const picked = document.querySelector(`input[name="ed-ans-${i}"]:checked`);
+  const data = { season: g.season === "期中" ? "mid" : "final", qId: g.qId, q: val(`ed-q-${i}`), opts, ans: picked ? Number(picked.value) : -1 };
+  if (b.hasExp) data.exp = val(`ed-exp-${i}`);
+  const filled = opts.filter(Boolean).length;
+  if (!data.q) return toast("題目不能是空的");
+  if (filled < 2 || opts.slice(0, filled).some(o => !o)) return toast("選項要從 ① 開始連續填，至少兩個");
+  if (!(data.ans >= 0 && data.ans < filled)) return toast("請點選正確答案（要是有內容的選項）");
+  const btn = document.getElementById(`ed-save-${i}`); if (btn) { btn.disabled = true; btn.textContent = "寫入中…"; }
+  try {
+    const r = await bridgeCall("qEdit", data);
+    // 老師自己這邊的題庫也先換成新版
+    const local = BANK.find(q => q.id === g.qId);
+    if (local) Object.assign(local, { q: data.q, opts: opts.filter(Boolean), ans: data.ans }, b.hasExp ? { exp: data.exp } : {}, r.qId ? { id: r.qId } : {});
+    bridgeState.repEdit = "";
+    toast("💾 已寫回題庫！確認沒問題後，按「✅ 已修正」通知回報的同學", 5000);
+    renderBridge();
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "💾 寫回題庫"; }
+    toast("⚠️ " + e.message, 5000);
+  }
+}
+async function resolveReport(i, status) {
+  const g = bridgeState.repGroups[i];
+  if (!g || !g.pending.length) return;
+  const reply = (document.getElementById(`rep-reply-${i}`) || {}).value || "";
+  const coins = status === "已修正" ? Number((document.getElementById(`rep-coin-${i}`) || {}).value || 0) : 0;
+  try {
+    const r = await bridgeCall("qResolve", { rows: g.pending.map(x => x.row), status, reply: reply.trim(), coins });
+    toast(`${status === "已修正" ? "✅" : "👌"} 已標記「${status}」，並私訊通知 ${r.told || 0} 位同學${coins && r.told ? `（各送 🪙${coins}）` : ""}`, 4000);
+    renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
 function demoBridge(op, d) {
   const K = "508_DEMO_BRIDGE", db = load(K, { rules: null, dms: [], pace: [], unl: {} });
   const save = () => store(K, db);
@@ -4495,7 +4702,32 @@ function demoBridge(op, d) {
     db.dms.forEach(m => { if (m.to === me && m.from === peer) m.read = true; }); save();
     return { messages: db.dms.filter(m => (m.from === me && m.to === peer) || (m.from === peer && m.to === me)).map(m => ({ t: m.t, from: m.from, text: m.text, mine: m.from === me })) };
   };
-  if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES };
+  db.reports = db.reports || [];
+  if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES,
+    reports: session.user.role === "teacher" ? db.reports.filter(r => r.status === "待處理").length : undefined };
+  if (op === "qReport") {
+    if (db.reports.some(r => r.name === session.user.name && r.qId === d.qId && r.status === "待處理")) throw new Error("這題你已經回報過了，老師處理後會用私訊通知你");
+    db.reports.push({ row: db.reports.length + 2, t: nowStr(), name: session.user.name, season: d.season === "mid" ? "期中" : "期末", qId: d.qId, subject: d.subject, unit: d.unit, q: d.q, opts: d.opts,
+      correct: d.correct, reason: REPORT_REASONS.find(x => x[0] === d.reason)[1].replace(/^\S+ /, ""), note: d.note, status: "待處理", reply: "", doneT: "" });
+    save(); return { ok: true };
+  }
+  if (op === "qReports") {
+    const bank = {};
+    db.reports.forEach(r => { const i = BANK.findIndex(q => q.id === r.qId); if (i >= 0) { const q = BANK[i]; bank[r.qId] = { qId: q.id, tab: "示範題庫", row: i + 2, subject: q.subject, unit: q.unit, q: q.q, opts: [0, 1, 2, 3].map(k => q.opts[k] || ""), ans: q.ans, exp: q.exp || "", hasExp: true }; } });
+    return { reports: db.reports, bank };
+  }
+  if (op === "qResolve") {
+    const told = {};
+    db.reports.filter(r => d.rows.indexOf(r.row) >= 0 && r.status === "待處理").forEach(r => { r.status = d.status; r.reply = d.reply; r.doneT = nowStr(); told[r.name] = r.q; });
+    Object.keys(told).forEach(n => db.dms.push({ t: nowStr(), from: "老師", to: n, text: `🚩 你回報的題目「${reportSnippet(told[n])}」：${d.status === "已修正" ? "老師已經修正好了，謝謝你！" : "老師檢查過了，答案沒有錯喔！"}${d.reply ? "\n老師說：" + d.reply : ""}`, read: false }));
+    save(); return { ok: true, told: Object.keys(told).length };
+  }
+  if (op === "qEdit") {
+    const q = BANK.find(x => x.id === d.qId);
+    if (!q) throw new Error("題庫裡找不到這題");
+    q.q = d.q; q.opts = d.opts.filter(Boolean); q.ans = d.ans; q.exp = d.exp;
+    return { ok: true, qId: q.id };
+  }
   if (op === "rules") return { rules: db.rules || DEFAULT_RULES };
   if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, db.rules || {}, d.rules); save(); return { rules: db.rules }; }
   if (op === "dmSend") { db.dms.push({ t: nowStr(), from: me, to: me === "老師" ? d.to : "老師", text: d.text, read: false }); save(); return thread(me === "老師" ? d.to : "老師"); }
