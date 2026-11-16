@@ -538,6 +538,9 @@
   .mail-badge[hidden] { display: none; }
   /* 學校班級標籤、使用規範 */
   .class-row { display: grid; gap: 4px; }
+  .dash-class-tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; font-size: .8rem; }
+  .dash-class-tabs button { padding: 3px 10px; font-size: .78rem; }
+  .dash-class-tabs small { opacity: .7; }
   .org-tag { display: inline-block; font-size: .7rem; font-weight: 800; padding: 1px 7px; margin-left: 4px; border-radius: 999px; background: rgba(14,165,233,.16); color: #0369a1; vertical-align: middle; white-space: nowrap; }
   body.night .org-tag, .season-final .org-tag { color: #7dd3fc; }
   .avatar .tag small { font-size: .62rem; opacity: .85; }
@@ -4061,6 +4064,18 @@ function demoDashboard(student) {
   };
 }
 
+// 508 老師的後台：可以切換各班分頁（全部／501／502…）
+function stuClass(name) { return accClass(accOf(name).name ? accOf(name) : { role: "student", name }); }
+function dashClasses(d) { return [...new Set(d.summary.map(s => stuClass(s.name)))].sort(byNum); }
+function dashInClass(name) { return !dashState.cls || dashState.cls === "all" || stuClass(name) === dashState.cls; }
+function dashShowClassCol(d) { return (!dashState.cls || dashState.cls === "all") && dashClasses(d).length > 1; }
+function dashClassTabs(d) {
+  if (!isAdmin()) return "";
+  const cls = dashClasses(d), cur = dashState.cls || "all";
+  const count = c => d.summary.filter(s => c === "all" || stuClass(s.name) === c).length;
+  return `<div class="dash-class-tabs">班級：${[["all", "全部"], ...cls.map(c => [c, c + " 班"])].map(([k, l]) =>
+    `<button class="${cur === k ? "btn-primary" : "btn-ghost"}" onclick="dashState.cls='${k}'; renderDashboard();">${l} <small>${count(k)}</small></button>`).join("")}</div>`;
+}
 function renderDashboard() {
   const d = dashState.data;
   const box = document.getElementById("dash-content");
@@ -4075,17 +4090,18 @@ function renderDashboard() {
         <span style="width:12px"></span>排序：
         ${[["seat", "座號"], ["level", "🏆 等級"], ["stars", "⭐ 星星"]].map(([k, l]) => `<button class="${dashState.sort === k ? "btn-primary" : "btn-ghost"}" style="padding:3px 10px; font-size:.78rem" onclick="dashState.sort='${k}'; renderDashboard();">${l}</button>`).join("")}
       </div>
+      ${dashClassTabs(d)}
       ${d.summary.some(s => s.rightIds) ? "" : `<div class="trial-note" style="margin-bottom:8px">ℹ️ 全班的星星欄要更新雲端 Apps Script 後才會顯示；等級已經可以看，點「查看」也能看到個人星星。</div>`}
       <div class="dash-table-wrap"><table>
-        <thead><tr><th>座號</th><th>姓名</th><th>等級</th><th class="num">星星</th><th class="num">作答題次</th><th class="num">正確率</th><th class="num">待訂正</th><th class="num">一錯再錯</th><th class="num">積分</th><th>最後作答</th><th></th></tr></thead>
-        <tbody>${d.summary.map(s => Object.assign({}, s, { _st: statsFromSummary(s) }))
+        <thead><tr>${dashShowClassCol(d) ? "<th>班級</th>" : ""}<th>座號</th><th>姓名</th><th>等級</th><th class="num">星星</th><th class="num">作答題次</th><th class="num">正確率</th><th class="num">待訂正</th><th class="num">一錯再錯</th><th class="num">積分</th><th>最後作答</th><th></th></tr></thead>
+        <tbody>${d.summary.filter(s => dashInClass(s.name)).map(s => Object.assign({}, s, { _st: statsFromSummary(s) }))
           .map(s => Object.assign(s, { _stars: s._st ? starSummary(s._st) : null }))
-          .sort((a, b) => dashState.sort === "level" ? (b.score || 0) - (a.score || 0) : dashState.sort === "stars" ? ((b._stars || {}).total || 0) - ((a._stars || {}).total || 0) : String(a.seat).localeCompare(String(b.seat)))
+          .sort((a, b) => dashState.sort === "level" ? (b.score || 0) - (a.score || 0) : dashState.sort === "stars" ? ((b._stars || {}).total || 0) - ((a._stars || {}).total || 0) : byNum(stuClass(a.name), stuClass(b.name)) || String(a.seat).localeCompare(String(b.seat)))
           .map(s => {
           const acc = s.attempts ? Math.round(s.correct / s.attempts * 100) : 0;
           const lv = getLevelInfo(s.score || 0);
           return `<tr class="${s.name === dashState.student ? "sel" : ""}">
-            <td>${escapeHtml(s.seat)}</td><td><b>${escapeHtml(shortName(s.name))}</b></td>
+            ${dashShowClassCol(d) ? `<td>${escapeHtml(stuClass(s.name))}</td>` : ""}<td>${escapeHtml(s.seat)}</td><td><b>${escapeHtml(shortName(s.name))}</b></td>
             <td style="white-space:nowrap">${lvPill(s.score)} <span style="font-size:.74rem; opacity:.8">${escapeHtml(lv.title)}</span></td>
             <td class="num" style="white-space:nowrap">${s._stars ? `⭐${s._stars.acc} 🌟${s._stars.comp}<br><small>共 ${s._stars.total}／${s._stars.max}</small>` : "—"}</td>
             <td class="num">${s.attempts}</td><td class="num">${s.attempts ? acc + "%" : "—"}</td>
