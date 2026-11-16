@@ -642,6 +642,8 @@
   .fog { animation: fogDrift 14s ease-in-out infinite alternate; }
   @keyframes fogDrift { to { transform: translateX(40px); } }
   .map-wrapper[data-theme="oldmap"] { box-shadow: inset 0 0 90px rgba(120,53,15,0.45), 0 10px 26px rgba(0,0,0,0.1); }
+  .map-wrapper[data-theme="dojo"] { box-shadow: inset 0 0 80px rgba(127,29,29,0.55), 0 10px 26px rgba(0,0,0,0.1); }
+  .map-wrapper[data-theme="letters"] { box-shadow: inset 0 0 80px rgba(76,29,149,0.5), 0 10px 26px rgba(0,0,0,0.1); }
   .map-wrapper[data-theme="grid"] { box-shadow: inset 0 0 60px rgba(30,58,138,0.5), 0 10px 26px rgba(0,0,0,0.1); }
 
   .avatar { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: pointer; z-index: 16; }
@@ -1249,6 +1251,20 @@ const SUBJECTS = [
     palette: ["#facc15", "#eab308", "#ca8a04", "#d97706", "#a16207", "#f59e0b"],
     unitIcons: ["🏘️", "🗺️", "🏛️", "🚂", "⚖️", "🧭", "🌾", "🏮", "⛩️"] }
 ];
+// 五大島外圍的兩座小島：題庫裡有這一科的題目才會出現在地圖上
+const EXTRA_SUBJECTS = [
+  { key: "武林大會", name: "武林大會島", icon: "🥋", title: "群英擂台海", pattern: "dojo", small: true,
+    land: ["#fca5a5", "#991b1b"], sand: "#fde68a", sea: ["#fecaca", "#dc2626", "#450a0a"], banner: "#7f1d1d",
+    shape: { points: 8, wobble: 0.22, sharp: true }, deco: ["🏯", "⚔️", "🥋", "🐉", "🏮", "🥁"],
+    palette: ["#f87171", "#ef4444", "#dc2626", "#f59e0b", "#b91c1c", "#d97706", "#fb923c"],
+    unitIcons: ["⚔️", "🥋", "🐉", "🏯", "🥁", "🗡️", "🛡️", "🏮"] },
+  { key: "單字王", name: "1200單字王島", icon: "👑", title: "字母星海", pattern: "letters", small: true,
+    plainGroups: ["啟航港", "字母森林", "單字峽谷", "拼字火山", "詞彙雪峰", "閱讀叢林", "句子花園", "克漏字礁", "片語水晶宮", "故事沙丘", "極光書院", "單字王城"],
+    land: ["#c4b5fd", "#5b21b6"], sand: "#ede9fe", sea: ["#ddd6fe", "#8b5cf6", "#2e1065"], banner: "#4c1d95",
+    shape: { points: 14, wobble: 0.24 }, deco: ["👑", "🔤", "📖", "✨", "🎓", "💬"],
+    palette: ["#a78bfa", "#8b5cf6", "#7c3aed", "#c084fc", "#6366f1", "#818cf8", "#e879f9"],
+    unitIcons: ["🔤", "📖", "💬", "🎓", "✏️", "🌟", "📚", "🗝️", "🎧", "🧩"] }
+];
 const SUBJECT_ALIASES = { "國文": "國語", "英文": "英語", "社會科": "社會", "自然科學": "自然", "自然與生活科技": "自然" };
 const SEAT_EMOJI = ["🦁", "🐰", "🦊", "🐼", "🐯", "🐨", "🐸", "🦄", "🦖", "🐱", "🐶", "🐹", "🦉", "🦋", "🐧", "🐬", "🐿️", "🦅", "🦩", "🐳", "🦌", "🐢"];
 // 可以換的頭像與底色
@@ -1466,7 +1482,7 @@ function unitGroups(s) {
         const theme = GROUP_THEMES[(i + (seeded("grp" + s.key)() * GROUP_THEMES.length | 0)) % GROUP_THEMES.length];
         // 名稱：老師取的名字 → 課文標題 → 各單元共同的詞 → 主題名（名稱裡不要再重複「第七課」）
         const words = commonWords(units.map(u => (splitUnit(u.unit)[1] || u.unit).split(key).join("").trim()));
-        const name = custom[groupNameKey(s, key)] || passageTitle(units) || words || theme.name;
+        const name = custom[groupNameKey(s, key)] || (s.plainGroups ? s.plainGroups[i % s.plainGroups.length] : passageTitle(units) || words || theme.name);
         return { id: "GRP@" + s.key + "@" + key, key, units, theme, words, auto: passageTitle(units) || words || theme.name, title: key === "其他" ? name : `${key}・${name}` };
       });
     }
@@ -1691,9 +1707,10 @@ async function loadData() {
 function buildWorld() {
   computeReadingUnits();
   let order = [...SUBJECTS.map(s => s.key)];
+  EXTRA_SUBJECTS.forEach(s => { if (BANK.some(q => q.subject === s.key)) order.push(s.key); });
   BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
   WORLD = order.slice(0, 7).map((key, i) => {
-    const base = SUBJECTS.find(s => s.key === key) || {
+    const base = SUBJECTS.find(s => s.key === key) || EXTRA_SUBJECTS.find(s => s.key === key) || {
       key, name: key + "島", icon: "⭐", colors: [["#a78bfa", "#5b21b6"], ["#2dd4bf", "#115e59"]][i % 2],
       terrain: ["⭐", "📘", "🌟", "📗", "✨", "📙"], unitIcons: ["⭐", "🌟", "✨", "💫"]
     };
@@ -1710,6 +1727,14 @@ function buildWorld() {
       u.questions.push(q);
     });
     units.forEach(u => { const m = UNIT_META[u.unit]; if (m) { u.icon = m.icon; if (m.lore) u.lore = m.lore; } });
+    // 兩座小島的單元介紹：單字王寫出這篇閱讀的標題，武林大會寫出這份考卷的大題
+    if (key === "單字王" || key === "武林大會") units.forEach(u => {
+      if (u.lore) return;
+      const cnt = {}; u.questions.forEach(q => { const t = /^單字/.test(q.type) ? "單字" : q.type; cnt[t] = (cnt[t] || 0) + 1; });
+      const p = key === "單字王" ? ((u.questions.find(q => q.passage) || {}).passage || "").split("\n")[0] : "";
+      u.lore = `<b>【${escapeHtml(u.unit)}】</b>${p ? `📖 ${escapeHtml(p)}<br>` : key === "武林大會" ? "其他學校的期末考題，挑戰看看自己的實力！<br>" : ""}` +
+        Object.entries(cnt).map(([t, n]) => `${escapeHtml(t)} ${n} 題`).join("・");
+    });
     VIRTUAL_UNITS.filter(v => !FINAL && v.subject === key).forEach(v => {
       let u = units.find(x => x.unit === v.unit);
       if (!u) {
@@ -2093,8 +2118,8 @@ function pirateRound() {
       ${stats.byId && stats.byId[q.id] && stats.byId[q.id].wrong ? `<span class="tag">這題你上次答錯過</span>` : ""}
       <span style="flex:1"></span><span class="pirate-hp">${P.emoji} ${"❤️".repeat(Math.max(0, Math.min(P.need, qs.length) - pirate.right))}</span>
       <span class="pirate-clock" id="pirate-clock">${secs}</span></div>
-    <div class="pirate-q"><small>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</small><h3>${mathHtml(q.q, q.subject)}</h3></div>
-    <div id="pirate-opts">${q.opts.map((o, i) => `<button class="option-btn" data-i="${i}" onclick="pirateAnswer(${i})">${mathHtml(o, q.subject)}</button>`).join("")}</div>
+    <div class="pirate-q"><small>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</small><h3>${mathHtml(q.q, q.subject, q.unit)}</h3></div>
+    <div id="pirate-opts">${q.opts.map((o, i) => `<button class="option-btn" data-i="${i}" onclick="pirateAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>
     <div class="pirate-actions"><button class="btn-accent" ${invCount("cannon") && q.opts.length > 2 ? "" : "disabled"} onclick="pirateCannon()">💣 發射大砲：刪一個錯誤選項（${invCount("cannon")}）</button></div>`;
   clearInterval(pirate.timer);
   pirate.timer = setInterval(() => {
@@ -2125,7 +2150,7 @@ function pirateAnswer(i) {
   btns[q.ans].classList.add("correct");
   if (i >= 0 && !ok) btns[i].classList.add("wrong");
   const box = document.getElementById("pirate-opts");
-  box.insertAdjacentHTML("afterend", `<div class="lore-box" style="margin-top:8px">${ok ? "🎯 命中！" : i < 0 ? "⏰ 時間到了！" : "💥 被打中了！"} 正確答案：<b>${mathHtml(stripNum(q.opts[q.ans]), q.subject)}</b>${q.exp ? `<br>📝 ${mathHtml(q.exp, q.subject)}` : ""}</div>
+  box.insertAdjacentHTML("afterend", `<div class="lore-box" style="margin-top:8px">${ok ? "🎯 命中！" : i < 0 ? "⏰ 時間到了！" : "💥 被打中了！"} 正確答案：<b>${mathHtml(stripNum(q.opts[q.ans]), q.subject, q.unit)}</b>${q.exp ? `<br>📝 ${mathHtml(q.exp, q.subject, q.unit)}` : ""}</div>
     <button class="btn-primary" style="width:100%; padding:12px; margin-top:8px" onclick="pirate.idx++; pirateRound()">${pirate.idx + 1 < pirate.qs.length ? "➡️ 下一回合" : "🏁 看戰果"}</button>`);
 }
 async function finishPirate(win) {
@@ -2307,6 +2332,9 @@ function themeBackdrop(pattern, vb, seedKey) {
     + `<path d="M${vb.x},${vb.y + 70} q80,-60 160,-10 q60,-50 140,0 q70,-40 150,5" fill="none" stroke="rgba(15,23,42,0.18)" stroke-width="3"/>`;
   if (pattern === "fog") return Array.from({ length: 6 }, () => { const p = R(); return `<ellipse class="fog" cx="${f1(p.x)}" cy="${f1(p.y)}" rx="${f1(120 + rnd() * 120)}" ry="${f1(30 + rnd() * 30)}" fill="rgba(255,255,255,0.35)" filter="url(#soft)"/>`; }).join("");
   if (pattern === "leaf") return Array.from({ length: 12 }, () => { const p = R(); return `<text class="t-emoji" x="${f1(p.x)}" y="${f1(p.y)}" font-size="${f1(16 + rnd() * 14)}" opacity="0.45" transform="rotate(${f1(rnd() * 60 - 30)} ${f1(p.x)} ${f1(p.y)})">${rnd() > 0.5 ? "🌿" : "🍃"}</text>`; }).join("");
+  if (pattern === "dojo") return Array.from({ length: 10 }, (_, i) => { const p = R(); return `<text class="t-emoji" x="${f1(p.x)}" y="${f1(p.y)}" font-size="${f1(18 + rnd() * 16)}" opacity="0.35" transform="rotate(${f1(rnd() * 40 - 20)} ${f1(p.x)} ${f1(p.y)})">${["🏮", "⚔️", "🥁", "🐉"][i % 4]}</text>`; }).join("")
+    + `<circle cx="${f1(vb.x + vb.w / 2)}" cy="${f1(vb.y + vb.h / 2)}" r="${f1(Math.min(vb.w, vb.h) * 0.42)}" fill="none" stroke="rgba(254,202,202,0.25)" stroke-width="10" stroke-dasharray="2 14"/>`;
+  if (pattern === "letters") return Array.from({ length: 16 }, (_, i) => { const p = R(); return `<text x="${f1(p.x)}" y="${f1(p.y)}" font-size="${f1(20 + rnd() * 26)}" font-weight="900" fill="rgba(255,255,255,0.22)" font-family="Georgia, serif" transform="rotate(${f1(rnd() * 50 - 25)} ${f1(p.x)} ${f1(p.y)})">${"ABCDEFGHIJKLMNOPQRSTUVWXYZ"[(rnd() * 26) | 0]}</text>`; }).join("");
   if (pattern === "oldmap") return Array.from({ length: 4 }, (_, i) => `<line x1="${vb.x}" y1="${f1(vb.y + (i + 1) * vb.h / 5)}" x2="${vb.x + vb.w}" y2="${f1(vb.y + (i + 1) * vb.h / 5)}" stroke="rgba(120,53,15,0.25)" stroke-dasharray="6 6"/>`).join("")
     + `<text class="t-emoji" x="${f1(vb.x + vb.w - 70)}" y="${f1(vb.y + vb.h - 40)}" font-size="70" opacity="0.4">🧭</text><text class="t-emoji" x="${f1(vb.x + 70)}" y="${f1(vb.y + 70)}" font-size="34" opacity="0.5">⛵</text>`;
   return "";
@@ -2330,16 +2358,18 @@ const LAYOUTS = {
   wide: {
     vb: { x: 0, y: 0, w: 1000, h: 700 },
     spots: { "國語": { x: 215, y: 210, r: 112 }, "數學": { x: 650, y: 128, r: 80 }, "英語": { x: 858, y: 372, r: 92 },
-      "自然": { x: 572, y: 548, r: 118 }, "社會": { x: 178, y: 530, r: 96 }, BOSS: { x: 428, y: 330, r: 62 } },
+      "自然": { x: 572, y: 548, r: 118 }, "社會": { x: 178, y: 530, r: 96 }, BOSS: { x: 428, y: 330, r: 62 },
+      "武林大會": { x: 432, y: 102, r: 70 }, "單字王": { x: 862, y: 598, r: 72 } },
     extra: [{ x: 830, y: 610, r: 64 }, { x: 420, y: 92, r: 58 }],
-    reefs: [[330, 600, 26], [930, 160, 22], [60, 330, 20], [760, 250, 16], [320, 80, 18], [700, 360, 14]]
+    reefs: [[330, 600, 26], [930, 160, 22], [60, 330, 20], [760, 250, 16], [300, 80, 16], [700, 360, 14]]
   },
   tall: {
     vb: { x: 0, y: 0, w: 700, h: 1010 },
     spots: { "國語": { x: 200, y: 185, r: 118 }, "數學": { x: 545, y: 160, r: 88 }, "英語": { x: 565, y: 575, r: 100 },
-      "自然": { x: 400, y: 845, r: 118 }, "社會": { x: 160, y: 620, r: 102 }, BOSS: { x: 365, y: 410, r: 70 } },
+      "自然": { x: 400, y: 845, r: 118 }, "社會": { x: 160, y: 620, r: 102 }, BOSS: { x: 365, y: 410, r: 70 },
+      "武林大會": { x: 595, y: 370, r: 68 }, "單字王": { x: 612, y: 790, r: 66 } },
     extra: [{ x: 600, y: 940, r: 60 }, { x: 120, y: 900, r: 56 }],
-    reefs: [[640, 360, 22], [60, 420, 20], [630, 760, 18], [110, 960, 20], [380, 70, 18], [250, 380, 14]]
+    reefs: [[650, 250, 18], [60, 420, 20], [660, 960, 18], [110, 960, 20], [380, 70, 18], [250, 380, 14]]
   }
 };
 function layout() { return isPortrait() ? LAYOUTS.tall : LAYOUTS.wide; }
@@ -2347,7 +2377,8 @@ function worldVB() { return layout().vb; }
 const WORLD_ROUTES = [
   ["國語", "BOSS", "walk"], ["國語", "社會", "bus"], ["社會", "自然", "walk"], ["自然", "BOSS", "bus"],
   ["自然", "英語", "walk"], ["英語", "數學", "bus"], ["數學", "BOSS", "walk"],
-  ["國語", "數學", "plane"], ["社會", "BOSS", "swim"], ["英語", "BOSS", "plane"], ["數學", "自然", "boat"]
+  ["國語", "數學", "plane"], ["社會", "BOSS", "swim"], ["英語", "BOSS", "plane"], ["數學", "自然", "boat"],
+  ["武林大會", "國語", "boat"], ["武林大會", "數學", "boat"], ["單字王", "英語", "boat"]
 ];
 function worldNodes() {
   const nodes = WORLD.map((s, i) => {
@@ -3546,9 +3577,9 @@ function startPaceTimer() {
 }
 
 // 數學題的分數用上下排的方式顯示：「2又3/4」→ 2 又 四分之三
-function mathHtml(text, subject) {
+function mathHtml(text, subject, unit) {
   const h = escapeHtml(text);
-  if (subject !== "數學") return h;
+  if (subject !== "數學" && !(subject === "武林大會" && /^數學/.test(unit || ""))) return h;
   const fr = (n, d) => `<span class="frac" aria-label="${d}分之${n}"><span>${n}</span><span>${d}</span></span>`;
   return h.replace(/(\d+)又(\d+)\/(\d+)/g, (m, w, n, d) => `${w}${fr(n, d)}`)
           .replace(/(\d+)\/(\d+)/g, (m, n, d) => fr(n, d));
@@ -3569,8 +3600,8 @@ function renderQuestion() {
     ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
     ${listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
-    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject)}</h3>
-    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject)}</button>`).join("")}</div>
+    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject, q.unit)}</h3>
+    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>
     ${reportRowHtml()}`;
   if (questionSpeech(q)) setTimeout(() => speakCurrent(false), 350);
@@ -3612,7 +3643,7 @@ function submitAnswer(choice) {
   document.getElementById("feedback-box").innerHTML = `
     <div class="lore-box" style="border-left-color:${ok ? "#16a34a" : "#dc2626"}; background:${ok ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)"}">
       <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
-      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${mathHtml(q.exp, q.subject)}</div>` : ""}
+      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${mathHtml(q.exp, q.subject, q.unit)}</div>` : ""}
     </div>
     ${pace.note ? `<div class="rush-warn" style="white-space:pre-line">${escapeHtml(pace.note)}</div>` : ""}
     ${lvNote}
@@ -3761,7 +3792,7 @@ function openMistakeBook(tab) {
         <div class="q-row">
           <div class="meta">${q.last === false ? `<span class="chip red">待訂正</span>` : `<span class="chip green">已訂正</span>`}
             <span class="chip ${q.wrong >= 2 ? "red" : "amber"}">錯 ${q.wrong} 次</span><span>${escapeHtml(q.subject)}・${escapeHtml(q.unit)}</span></div>
-          <div>${mathHtml(q.q, q.subject)}</div>
+          <div>${mathHtml(q.q, q.subject, q.unit)}</div>
           <div style="color:var(--success); font-weight:800;">✔ ${escapeHtml(q.correctText)}</div>
         </div>`).join("")}</div>
         <button class="btn-primary" style="width:100%; padding:14px; margin-top:10px;" onclick="startReview()">🔁 複習${mistakeView.subject === "全部" ? "全部" : mistakeView.subject}錯題（隨機 ${Math.min(SESSION_SIZE, list.length)} 題，錯最多次的優先）</button>`
@@ -3782,9 +3813,9 @@ function openMistakeBook(tab) {
         const st = stats.byId[q.id] || {};
         return `<div class="lore-box">
           <b>錯題 ${i + 1}【${escapeHtml(q.subject)}・${escapeHtml(q.unit)}】</b>${st.wrong >= 2 ? ` <span class="chip red">已經錯 ${st.wrong} 次</span>` : ""}<br>
-          <span style="white-space:pre-line">${mathHtml(q.q, q.subject)}</span><br>
-          <span style="color:var(--success); font-weight:900;">✔ 正確答案：${mathHtml(stripNum(q.opts[q.ans]), q.subject)}</span><br>
-          ${q.exp ? `<span style="font-size:.86rem;">💡 ${mathHtml(q.exp, q.subject)}</span>` : ""}
+          <span style="white-space:pre-line">${mathHtml(q.q, q.subject, q.unit)}</span><br>
+          <span style="color:var(--success); font-weight:900;">✔ 正確答案：${mathHtml(stripNum(q.opts[q.ans]), q.subject, q.unit)}</span><br>
+          ${q.exp ? `<span style="font-size:.86rem;">💡 ${mathHtml(q.exp, q.subject, q.unit)}</span>` : ""}
           ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
           ${listenBoxHtml(q, false)}
           ${questionImageHtml(q)}
