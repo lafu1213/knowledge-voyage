@@ -537,6 +537,7 @@
   .mail-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 900; line-height: 18px; text-align: center; }
   .mail-badge[hidden] { display: none; }
   /* 學校班級標籤、使用規範 */
+  .class-row { display: grid; gap: 4px; }
   .org-tag { display: inline-block; font-size: .7rem; font-weight: 800; padding: 1px 7px; margin-left: 4px; border-radius: 999px; background: rgba(14,165,233,.16); color: #0369a1; vertical-align: middle; white-space: nowrap; }
   body.night .org-tag, .season-final .org-tag { color: #7dd3fc; }
   .avatar .tag small { font-size: .62rem; opacity: .85; }
@@ -837,7 +838,11 @@
         <span class="who" id="role-title"></span>
         <button type="button" class="btn-ghost" onclick="backToRoles()">← 換身分</button>
       </div>
-      <label for="account-select">選擇帳號</label>
+      <div id="class-row" class="class-row" hidden>
+        <label for="class-select">① 選擇班級</label>
+        <select id="class-select" onchange="fillAccounts()"></select>
+      </div>
+      <label for="account-select" id="account-label">選擇帳號</label>
       <select id="account-select"></select>
       <label for="password-input">輸入密碼</label>
       <input id="password-input" type="password" inputmode="numeric" autocomplete="current-password" placeholder="請輸入密碼">
@@ -1651,9 +1656,9 @@ async function api(action, data = {}) {
 // 3. 進入畫面與登入
 // =========================================================
 const DEMO_ROSTER = [
-  { role: "teacher", seat: "", name: "508老師" },
-  // 示範同學三放在另一所學校，看得到學校班級標籤的樣子
-  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "student", seat: String(i + 1).padStart(2, "0"), name: "508" + n, school: i === 2 ? "示範國小" : "", cls: i === 2 ? "501" : "" })),
+  ...["501", "502", "503", "504", "505", "506", "507", "508"].map(c => ({ role: "teacher", seat: "", name: c + "老師", cls: c })),
+  // 示範同學三放在 501 班，看得到「先選班級、再選名字」和班級標籤的樣子
+  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "student", seat: String(i + 1).padStart(2, "0"), name: "508" + n, cls: i === 2 ? "501" : "" })),
   ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "parent", seat: String(i + 1).padStart(2, "0"), name: "508" + n + "家長" }))
 ];
 
@@ -1666,12 +1671,12 @@ async function boot() {
     font.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap";
     document.head.appendChild(font);
     const badge = document.querySelector(".splash-badge");
-    if (badge) badge.textContent = "508 班 ・ 期末考特訓";
-    document.title = "寶藏海知識大冒險：508 期末航線";
+    if (badge) badge.textContent = "北辰國小五年級 ・ 期末考特訓";
+    document.title = "寶藏海知識大冒險：五年級期末航線";
     document.querySelector(".splash-title").textContent = "寶藏海知識大冒險";
-    document.querySelector(".splash-subtitle").textContent = "⚓ 508 期末航線 ⚓";
+    document.querySelector(".splash-subtitle").textContent = "⚓ 五年級期末航線 ⚓";
     document.querySelector(".splash-sub").textContent = "黑帆海盜出沒的寶藏海！每題停留 20 秒、看懂詳解，把錯題寶箱一個個撈上來。";
-    document.querySelector(".brand").innerHTML = "🏴‍☠️ 寶藏海 <small>508 期末航線・試航版</small>";
+    document.querySelector(".brand").innerHTML = "🏴‍☠️ 寶藏海 <small>五年級期末航線・試航版</small>";
   }
   if (DEMO) {
     const note = document.getElementById("demo-note");
@@ -1696,15 +1701,47 @@ async function boot() {
 
 function setStatus(html) { document.getElementById("splash-status").innerHTML = html; }
 
+// ── 登入：老師直接選帳號（501～508 老師）；學生、家長先選班級、再選自己 ──
+const CLASS_KEY = "508_LAST_CLASS";
+/** 帳號屬於哪一班：名冊「班級」欄 → 家長看孩子 → 老師看帳號開頭（501老師）→ 預設 508 */
+function accClass(a) {
+  if (a.cls) return String(a.cls);
+  if (a.role === "parent") return orgOf(a.child || String(a.name).replace(/家長$/, "")).cls;
+  if (a.role === "teacher") { const m = String(a.name).match(/^(\d{3})/); return m ? m[1] : HOME_CLASS; }
+  return orgOf(a.name).cls;
+}
+const byNum = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
+function fillAccounts() {
+  const role = document.getElementById("step-account").dataset.role;
+  const sel = document.getElementById("account-select");
+  let list = rosterList.filter(a => a.role === role);
+  if (role !== "teacher") {
+    const cls = document.getElementById("class-select").value;
+    list = list.filter(a => accClass(a) === cls);
+    store(CLASS_KEY, cls);
+  } else list = list.slice().sort((a, b) => byNum(accClass(a), accClass(b)) || byNum(a.name, b.name));
+  list.sort((a, b) => role === "teacher" ? 0 : byNum(a.seat, b.seat));
+  sel.innerHTML = list.length
+    ? `<option value="">${role === "teacher" ? "請選擇老師" : role === "parent" ? "請選擇孩子的名字" : "請選擇你的名字"}</option>` +
+      list.map(a => `<option value="${escapeHtml(a.name)}">${a.seat ? a.seat + " 號　" : ""}${escapeHtml(role === "teacher" ? a.name : shortName(a.name))}</option>`).join("")
+    : `<option value="">（這一班還沒有帳號）</option>`;
+  document.getElementById("login-error").textContent = "";
+}
 function chooseRole(role) {
   const list = rosterList.filter(a => a.role === role);
   const sel = document.getElementById("account-select");
-  const opt = a => `<option value="${escapeHtml(a.name)}">${a.seat ? a.seat + " 號　" : ""}${escapeHtml(a.name)}</option>`;
-  const groups = {};
-  list.forEach(a => { const k = role === "teacher" ? "" : orgLabel(role === "parent" ? (a.child || a.name.replace(/家長$/, "")) : a.name); (groups[k] = groups[k] || []).push(a); });
-  sel.innerHTML = !list.length ? `<option value="">（名冊還沒載入）</option>`
-    : Object.keys(groups).length > 1 ? Object.keys(groups).sort().map(k => `<optgroup label="${escapeHtml(k)}">${groups[k].map(opt).join("")}</optgroup>`).join("")
-    : list.map(opt).join("");
+  document.getElementById("step-account").dataset.role = role;
+  const classRow = document.getElementById("class-row"), cs = document.getElementById("class-select");
+  if (role === "teacher" || !list.length) classRow.hidden = true;
+  else {
+    const classes = [...new Set(list.map(accClass))].sort(byNum);
+    cs.innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)} 班</option>`).join("");
+    const last = load(CLASS_KEY, "");
+    cs.value = classes.includes(last) ? last : classes.includes(HOME_CLASS) ? HOME_CLASS : classes[0];
+    classRow.hidden = false;
+  }
+  document.getElementById("account-label").textContent = role === "teacher" ? "選擇老師帳號" : role === "parent" ? "② 選擇孩子" : "② 選擇你的名字";
+  if (list.length) fillAccounts(); else sel.innerHTML = `<option value="">（名冊還沒載入）</option>`;
   document.getElementById("role-title").textContent = ROLE_INFO[role].title;
   document.getElementById("step-account").dataset.role = role;
   document.getElementById("step-role").hidden = true;
@@ -1725,7 +1762,7 @@ async function doLogin() {
   const password = document.getElementById("password-input").value.trim();
   const err = document.getElementById("login-error");
   const btn = document.getElementById("enter-btn");
-  if (!name) { err.textContent = "請先選擇帳號"; return; }
+  if (!name) { err.textContent = role === "teacher" ? "請先選擇老師帳號" : "請先選擇班級和名字"; return; }
   if (!password) { err.textContent = "請輸入密碼"; return; }
   err.textContent = "";
   if (role === "student" && !isOpenNow()) { err.textContent = closedText(); return; }
