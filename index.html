@@ -536,6 +536,17 @@
   .bridge-tabs button { padding: 6px 12px; font-size: .85rem; }
   .mail-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 900; line-height: 18px; text-align: center; }
   .mail-badge[hidden] { display: none; }
+  /* 學校班級標籤、使用規範 */
+  .org-tag { display: inline-block; font-size: .7rem; font-weight: 800; padding: 1px 7px; margin-left: 4px; border-radius: 999px; background: rgba(14,165,233,.16); color: #0369a1; vertical-align: middle; white-space: nowrap; }
+  body.night .org-tag, .season-final .org-tag { color: #7dd3fc; }
+  .avatar .tag small { font-size: .62rem; opacity: .85; }
+  .rank-scope { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .rank-scope button { padding: 4px 12px; font-size: .82rem; }
+  .conduct-list { padding-left: 1.3em; line-height: 1.75; margin: 6px 0 10px; }
+  .conduct-list li { margin-bottom: 4px; }
+  .conduct-agree { display: flex; gap: 8px; align-items: center; font-weight: 800; padding: 10px 12px; border-radius: 12px; background: rgba(245,158,11,.12); cursor: pointer; }
+  .conduct-agree input { width: 20px; height: 20px; }
+  #conduct-modal.must .conduct-x { display: none; }
   /* 單字王：單字卡 */
   .vocab-box { border: 2px solid rgba(139,92,246,.45); background: rgba(139,92,246,.08); border-radius: 16px; padding: 12px; margin: 10px 0; }
   .vocab-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
@@ -917,6 +928,12 @@
 </div>
 <div class="modal-overlay" id="report-modal">
   <div class="modal-box" style="max-width:540px"><button class="close-btn" onclick="closeModal('report-modal')" aria-label="關閉">✕</button><div id="report-content"></div></div>
+</div>
+<div class="modal-overlay" id="conduct-modal">
+  <div class="modal-box" style="max-width:620px"><button class="close-btn conduct-x" onclick="closeModal('conduct-modal')" aria-label="關閉">✕</button><div id="conduct-content"></div></div>
+</div>
+<div class="modal-overlay" id="timeup-modal">
+  <div class="modal-box" id="timeup-content"></div>
 </div>
 <div class="modal-overlay" id="guide-modal">
   <div class="modal-box wide"><button class="close-btn" onclick="closeModal('guide-modal')" aria-label="關閉">✕</button><div id="guide-content"></div></div>
@@ -1617,7 +1634,7 @@ function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(k
 function openModal(id) { document.getElementById(id).classList.add("open"); }
 function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal") stopSpeak(); }
 function seatEmoji(seat) { const n = parseInt(seat, 10); return n ? SEAT_EMOJI[(n - 1) % SEAT_EMOJI.length] : "🧑‍🏫"; }
-function shortName(name) { return String(name).replace(/^508/, ""); }
+function shortName(name) { return String(name).replace(/^\d{3}(?=\D)/, ""); }
 
 async function api(action, data = {}) {
   const res = await fetch(API_URL, {
@@ -1635,7 +1652,8 @@ async function api(action, data = {}) {
 // =========================================================
 const DEMO_ROSTER = [
   { role: "teacher", seat: "", name: "508老師" },
-  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "student", seat: String(i + 1).padStart(2, "0"), name: "508" + n })),
+  // 示範同學三放在另一所學校，看得到學校班級標籤的樣子
+  ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "student", seat: String(i + 1).padStart(2, "0"), name: "508" + n, school: i === 2 ? "示範國小" : "", cls: i === 2 ? "501" : "" })),
   ...["示範同學一", "示範同學二", "示範同學三"].map((n, i) => ({ role: "parent", seat: String(i + 1).padStart(2, "0"), name: "508" + n + "家長" }))
 ];
 
@@ -1681,9 +1699,12 @@ function setStatus(html) { document.getElementById("splash-status").innerHTML = 
 function chooseRole(role) {
   const list = rosterList.filter(a => a.role === role);
   const sel = document.getElementById("account-select");
-  sel.innerHTML = list.length
-    ? list.map(a => `<option value="${escapeHtml(a.name)}">${a.seat ? a.seat + " 號　" : ""}${escapeHtml(a.name)}</option>`).join("")
-    : `<option value="">（名冊還沒載入）</option>`;
+  const opt = a => `<option value="${escapeHtml(a.name)}">${a.seat ? a.seat + " 號　" : ""}${escapeHtml(a.name)}</option>`;
+  const groups = {};
+  list.forEach(a => { const k = role === "teacher" ? "" : orgLabel(role === "parent" ? (a.child || a.name.replace(/家長$/, "")) : a.name); (groups[k] = groups[k] || []).push(a); });
+  sel.innerHTML = !list.length ? `<option value="">（名冊還沒載入）</option>`
+    : Object.keys(groups).length > 1 ? Object.keys(groups).sort().map(k => `<optgroup label="${escapeHtml(k)}">${groups[k].map(opt).join("")}</optgroup>`).join("")
+    : list.map(opt).join("");
   document.getElementById("role-title").textContent = ROLE_INFO[role].title;
   document.getElementById("step-account").dataset.role = role;
   document.getElementById("step-role").hidden = true;
@@ -1713,6 +1734,7 @@ async function doLogin() {
   try {
     if (DEMO) {
       const acc = rosterList.find(a => a.name === name);
+      if (role === "student") { const st = demoUsage(name, 0); if (st.lock) throw new Error(st.lock.text); }
       session = { token: "demo", user: { role, name, seat: acc.seat, child: role === "parent" ? name.replace(/家長$/, "") : role === "student" ? name : "" } };
     } else {
       session = await api("login", { role, name, password });
@@ -1747,10 +1769,13 @@ async function enterApp() {
   renderAll();
   net.start();
   startHoursWatch();
+  startUsage();
+  setTimeout(() => showConduct(false), 600);
   toast(session.user.role === "student" ? `歡迎登島，${shortName(session.user.name)}！先選交通方式，再點一座大島出發 ✈️🚌🏊🚶` : "歡迎！可以先逛逛島嶼，或按右上角「📊 後台」看紀錄。");
 }
 
 function logout() {
+  stopUsage();
   net.stop();
   clearInterval(hoursTimer);
   closePeerMenu();
@@ -2922,8 +2947,8 @@ function renderAvatars() {
     list.slice(0, 6).forEach((o, k) => {
       const el = document.createElement("div");
       el.className = "avatar other" + (net.battle && [net.battle.a, net.battle.b].includes(o.name) ? " battling" : "");
-      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}${o.battleOn === false ? `<div class="shield" title="專心練習中，暫不接受挑戰">🛡️</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}</div>`;
-      el.title = shortName(o.name);
+      el.innerHTML = `${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}${o.lv ? `<div class="lv">Lv.${Number(o.lv) || 1}</div>` : ""}${o.battleOn === false ? `<div class="shield" title="專心練習中，暫不接受挑戰">🛡️</div>` : ""}<div class="tag">${escapeHtml(shortName(o.name))}${orgTag(o.name) ? `<small> ${escapeHtml(orgLabel(o.name))}</small>` : ""}</div>`;
+      el.title = shortName(o.name) + (multiOrg() ? `（${orgLabel(o.name)}）` : "");
       el.onclick = (e) => { e.stopPropagation(); openPeerMenu(o, el); };
       setPos(el, spotOf(byId[id], k), vb);
       layer.appendChild(el);
@@ -3150,7 +3175,8 @@ function renderPills() {
     const p = stats.pending.length;
     html += `<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
       <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>
-      <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>`;
+      <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>
+      <span class="pill" id="use-pill" style="cursor:pointer" onclick="showConduct(true)" title="今天累計的使用時間；連續最多 ${rulesNow().sessionMin || 60} 分鐘、每天最多 ${rulesNow().dailyMin || 120} 分鐘">${usageText()}</span>`;
   }
   if (FINAL && u.role === "student" && !isTrial()) {
     const c = coinState();
@@ -3217,7 +3243,7 @@ function renderSide() {
   const side = document.getElementById("side-dyn");
   const online = (net.others || []).length;
   const onlineCard = `<div class="card"><h3>🟢 島上同學（${online} 位在線）</h3>
-    ${online ? `<div class="online-list">${net.others.map(o => `<button class="online-chip" onclick='openPeerMenu(${JSON.stringify({ name: o.name, emoji: o.emoji, color: o.color, seat: o.seat, place: o.place, battleOn: o.battleOn }).replace(/'/g, "&#39;")})'>${o.emoji || seatEmoji(o.seat)} ${escapeHtml(shortName(o.name))}${o.battleOn === false ? " 🛡️" : ""}</button>`).join("")}</div>`
+    ${online ? `<div class="online-list">${net.others.map(o => `<button class="online-chip" onclick='openPeerMenu(${JSON.stringify({ name: o.name, emoji: o.emoji, color: o.color, seat: o.seat, place: o.place, battleOn: o.battleOn }).replace(/'/g, "&#39;")})'>${o.emoji || seatEmoji(o.seat)} ${escapeHtml(shortName(o.name))}${orgTag(o.name)}${o.battleOn === false ? " 🛡️" : ""}</button>`).join("")}</div>`
       : `<div class="empty-note" style="padding:6px">目前沒有其他同學在線上</div>`}</div>`;
   const subjRows = WORLD.map(s => {
     if (!s.units.length) return `<div class="subj-row"><div><span>${s.icon} ${escapeHtml(s.key)}</span><span style="opacity:.6">準備中</span></div><div class="bar"><i style="width:0"></i></div></div>`;
@@ -4321,9 +4347,9 @@ const net = {
 const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
   peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set(),
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
-const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["mistakes", "📚 分科錯題"]];
+const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00" };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10 };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -4468,8 +4494,27 @@ async function renderBridge() {
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0 14px 32px; font-size:.9rem">上課時間 <input type="time" id="rule-start" value="${r.schoolStart}"> 到 <input type="time" id="rule-end" value="${r.schoolEnd}"></div>
         <div class="bridge-switch" style="cursor:default"><span style="font-size:1.2rem">⏰</span> <span><b>系統開放時間</b><br><small>學生只能在這段時間登入；關閉前 5 分鐘會跳出提醒，時間到自動登出（老師、家長不受限制）。</small>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">每天 <input type="time" id="rule-open-start" value="${r.openStart || "06:30"}"> 到 <input type="time" id="rule-open-end" value="${r.openEnd || "22:00"}"></div></span></div>
+        <div class="bridge-switch" style="cursor:default"><span style="font-size:1.2rem">⏱️</span> <span><b>使用時間上限</b><br><small>時間到自動登出；連續使用到上限後，要休息一段時間才能再登入（老師、家長不受限制）。</small>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">連續最多 <input type="number" id="rule-session" min="10" max="240" style="width:70px" value="${r.sessionMin || 60}"> 分鐘，休息 <input type="number" id="rule-rest" min="1" max="120" style="width:60px" value="${r.restMin || 10}"> 分鐘；每天最多 <input type="number" id="rule-daily" min="10" max="600" style="width:70px" value="${r.dailyMin || 120}"> 分鐘</div></span></div>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
+    } else if (t === "conduct") {
+      set(bridgeLoading());
+      const d = await bridgeCall("conduct");
+      const mm = s => Math.floor((s || 0) / 60);
+      set(`<div class="lore-box" style="font-size:.88rem">學生第一次登入要讀完並同意「使用規範」。聊天室裡不友善的字詞、電話和 LINE 等聯絡方式會被擋下、記在試算表「違規紀錄」，並私訊通知您；同一天 3 次會禁言 24 小時。<br>
+        使用時間：連續最多 ${d.limits.session / 60} 分鐘、每天最多 ${d.limits.daily / 60} 分鐘（在「航海規則」調整）。</div>
+        <h3 style="margin:12px 0 6px">⏱️ 今天的使用時間</h3>
+        <div class="dash-table-wrap"><table><thead><tr><th>學生</th><th>今天</th><th>連續</th><th>狀態</th><th></th></tr></thead><tbody>
+        ${d.people.sort((a, b) => b.today - a.today).map(p => `<tr><td>${escapeHtml(shortName(p.name))} ${orgTag(p.name, true)}</td><td>${mm(p.today)} 分</td><td>${mm(p.cont)} 分</td>
+          <td>${p.lock === "daily" ? "⛔ 今天已用完" : p.lock === "session" ? "☕ 休息中" : ""}${p.muted ? ` 🔇 禁言到 ${escapeHtml(p.muted)}` : ""}</td>
+          <td style="white-space:nowrap">${p.muted ? `<button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='conductOp("unmute", ${JSON.stringify(p.name)})'>解除禁言</button>` : ""}
+          ${p.today ? `<button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='conductOp("resetUsage", ${JSON.stringify(p.name)})'>時間歸零</button>` : ""}</td></tr>`).join("")}
+        </tbody></table></div>
+        <h3 style="margin:14px 0 6px">🚫 被擋下的訊息（最近 100 筆）</h3>
+        ${d.vio.length ? `<div class="dash-table-wrap"><table><thead><tr><th>時間</th><th>學生</th><th>內容</th><th>原因</th><th>處置</th></tr></thead><tbody>
+          ${d.vio.map(v => `<tr><td>${escapeHtml(String(v.t).slice(5, 16))}</td><td>${escapeHtml(shortName(v.name))}</td><td>${escapeHtml(v.text)}</td><td>${escapeHtml(v.why)}</td><td>${escapeHtml(v.act)}</td></tr>`).join("")}</tbody></table></div>`
+          : `<div class="empty-note">目前沒有違規紀錄 👍</div>`}`);
     } else if (t === "coins") {
       set(`<div class="lore-box">發的金幣會直接放進學生的 <b>🔒 島上寶庫</b>，海盜搶不走。每次 1～500 枚。</div>
         <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap">
@@ -4509,8 +4554,10 @@ async function renderBridge() {
 async function saveRules() {
   const rules = { pirateOn: document.getElementById("rule-pirate").checked, afterSchoolOnly: document.getElementById("rule-after").checked, eventsOn: document.getElementById("rule-events").checked,
     schoolStart: document.getElementById("rule-start").value || "07:40", schoolEnd: document.getElementById("rule-end").value || "16:00",
-    openStart: document.getElementById("rule-open-start").value || "06:30", openEnd: document.getElementById("rule-open-end").value || "22:00" };
+    openStart: document.getElementById("rule-open-start").value || "06:30", openEnd: document.getElementById("rule-open-end").value || "22:00",
+    sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120 };
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
+  if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
     bridgeState.rules = (await bridgeCall("setRules", { rules })).rules;
     toast("💾 航海規則已儲存：" + pirateStatusText());
@@ -4846,6 +4893,165 @@ async function resolveReport(i, status) {
   } catch (e) { toast("⚠️ " + e.message, 4500); }
 }
 
+// =========================================================
+// 學校與班級：名冊的「學校」「班級」欄（沒填就是北辰國小 508）
+// =========================================================
+const HOME_SCHOOL = "北辰國小", HOME_CLASS = "508";
+function accOf(name) { return rosterList.find(a => a.name === name) || {}; }
+function orgOf(name) { const a = accOf(name); return { school: a.school || HOME_SCHOOL, cls: a.cls || HOME_CLASS }; }
+function schoolShort(s) { return String(s).replace(/(國民)?小學$|國小$/, ""); }
+function orgLabel(name) { const o = orgOf(name); return `${schoolShort(o.school)} ${o.cls}`; }
+function multiOrg() { return new Set(rosterList.filter(a => a.role === "student").map(a => orgLabel(a.name))).size > 1; }
+function myOrgName() { return session ? (session.user.role === "parent" ? session.user.child : session.user.name) : ""; }
+/** 名字旁邊的小標籤：只有名冊裡有兩個以上的班才出現；always＝自己班的也標 */
+function orgTag(name, always) {
+  if (!multiOrg() || !accOf(name).name) return "";
+  if (!always && session && session.user.role !== "teacher" && orgLabel(name) === orgLabel(myOrgName())) return "";
+  return `<span class="org-tag">${escapeHtml(orgLabel(name))}</span>`;
+}
+function rankInScope(name, scope) {
+  if (!scope || scope === "all") return true;
+  const a = orgOf(name), me = orgOf(myOrgName());
+  if (scope === "school") return a.school === me.school;
+  if (scope === "class") return a.school === me.school && a.cls === me.cls;
+  return orgLabel(name) === scope;   // 老師選某一班
+}
+function rankScopeHtml() {
+  if (!multiOrg()) return "";
+  const cur = rankState.scope || "all", teacher = session.user.role === "teacher";
+  const opts = teacher ? [["all", "全部"], ...[...new Set(rosterList.filter(a => a.role === "student").map(a => orgLabel(a.name)))].sort().map(l => [l, l])]
+    : [["all", "🌏 全部"], ["school", "🏫 我的學校"], ["class", "👥 我的班級"]];
+  return `<div class="rank-scope">${opts.map(([k, t]) => `<button class="${k === cur ? "btn-primary" : "btn-ghost"}" onclick='rankState.scope=${JSON.stringify(k)}; renderRanking()'>${escapeHtml(t)}</button>`).join("")}</div>`;
+}
+
+// =========================================================
+// 使用規範：第一次登入要讀完並同意；聊天室不友善的字詞會被擋下
+// =========================================================
+const CONDUCT_VER = 1;
+function conductHtml() {
+  const r = rulesNow();
+  return `<ol class="conduct-list">
+    <li><b>🔑 帳號只給自己用</b>：不把帳號密碼告訴別人，也不登入別人的帳號。</li>
+    <li><b>💬 友善發言</b>：聊天室只聊學習、互相加油。<b>禁止</b>罵人、嘲笑、髒話、人身攻擊、散播謠言或排擠同學。</li>
+    <li><b>🛡️ 保護自己</b>：不在聊天室留下電話、地址、LINE、IG 等聯絡方式。</li>
+    <li><b>🖼️ 頭像要合適</b>：不放別人的照片或不雅圖片。</li>
+    <li><b>🎯 誠實作答</b>：不亂猜、不幫別人作答；亂答會被扣分、暫停出航。</li>
+    <li><b>⏰ 注意使用時間</b>：每天 ${escapeHtml(r.openStart || "06:30")}～${escapeHtml(r.openEnd || "22:00")} 開放；<b>連續最多 ${r.sessionMin || 60} 分鐘</b>（休息 ${r.restMin || 10} 分鐘後才能再登入），<b>每天最多 ${r.dailyMin || 120} 分鐘</b>，時間到系統會自動登出。</li>
+    <li><b>⚠️ 違規處理</b>：不友善的訊息會被擋下並通知老師；同一天違規 3 次，聊天室禁言 24 小時；情節嚴重的會停用帳號並通知家長。</li>
+  </ol>`;
+}
+function conductKey() { return `508_CONDUCT_V${CONDUCT_VER}_` + (session ? session.user.name : ""); }
+function showConduct(force) {
+  const need = session && session.user.role !== "teacher" && !load(conductKey(), false);
+  if (!force && !need) return;
+  document.getElementById("conduct-content").innerHTML = `
+    <h2 style="margin-top:0">📜 寶藏海使用規範</h2>
+    <p style="margin-top:0">${session.user.role === "parent" ? "請和孩子一起讀一讀，提醒孩子遵守：" : "出航之前，請先讀完這幾條規定："}</p>
+    ${conductHtml()}
+    ${need ? `<label class="conduct-agree"><input type="checkbox" id="conduct-ok" onchange="document.getElementById('conduct-go').disabled=!this.checked"> 我讀完了，會遵守使用規範</label>
+    <button id="conduct-go" class="btn-accent" style="width:100%; padding:12px; margin-top:8px" disabled onclick="agreeConduct()">⚓ 同意，開始冒險</button>`
+      : `<button class="btn-primary" style="width:100%; padding:12px; margin-top:8px" onclick="closeModal('conduct-modal')">知道了</button>`}`;
+  document.getElementById("conduct-modal").classList.toggle("must", !!need);
+  openModal("conduct-modal");
+}
+function agreeConduct() { store(conductKey(), true); closeModal("conduct-modal"); toast("👍 謝謝你！一起當個友善的航海士"); }
+// 示範模式用（雲端由 Apps Script 判斷）
+const BAD_WORDS = ["笨蛋", "白痴", "白癡", "智障", "低能", "弱智", "腦殘", "去死", "死胖子", "肥豬", "醜八怪", "豬頭", "廢物", "垃圾", "人渣", "神經病", "王八", "混蛋",
+  "賤", "婊", "幹", "靠北", "靠杯", "靠背", "機掰", "雞掰", "雞巴", "屁眼", "他媽", "你媽", "媽的", "三小", "閉嘴", "滾", "噁心", "走開", "沒人要",
+  "fuck", "shit", "bitch", "damn", "stupid", "idiot", "loser", "dumb", "ugly", "kill", "wtf", "stfu", "ㄍㄢˋ", "ㄍㄢ", "ㄐㄅ", "fk", "sb"];
+const OK_WORDS = ["幹嘛", "幹麻", "能幹", "幹部", "樹幹", "主幹", "才幹", "骨幹", "苦幹", "垃圾分類", "倒垃圾", "撿垃圾", "垃圾桶", "丟垃圾", "垃圾車", "滾動", "翻滾", "滾燙", "滾輪", "滾筒", "滾來滾去", "滾雪球", "skill", "dumbo"];
+function chatProblem(text) {
+  let t = String(text).normalize("NFKC").toLowerCase().replace(/[\s.,!?！？。，、~～…\-_*＊'"「」()（）]/g, "");
+  if (/(?:09\d{8}|\d{7,})/.test(t) || /line(id)?[:：]?[a-z0-9]{3,}|加我(line|ig|賴)|ig[:：@]|地址[:：]/.test(t)) return "個資";
+  OK_WORDS.forEach(w => { t = t.split(w).join(""); });
+  return BAD_WORDS.some(w => t.includes(w)) ? "不友善" : "";
+}
+function demoChatCheck(text) {
+  if (session.user.role !== "student") return;
+  const db = load("508_DEMO_CONDUCT", { vio: [], mute: {} });
+  const m = db.mute[session.user.name] || 0;
+  if (m > Date.now()) throw new Error("🔇 你因為違反使用規範，聊天室暫停使用中。有話想說可以私訊老師。");
+  const bad = chatProblem(text);
+  if (!bad) return;
+  const today = nowStr().slice(0, 10), n = db.vio.filter(v => v.name === session.user.name && v.t.slice(0, 10) === today).length + 1;
+  if (n >= 3) db.mute[session.user.name] = Date.now() + 24 * 3600e3;
+  db.vio.unshift({ t: nowStr(), name: session.user.name, text, why: bad, act: n >= 3 ? `今天第 ${n} 次，聊天室禁言 24 小時` : `今天第 ${n} 次，訊息擋下` });
+  store("508_DEMO_CONDUCT", db);
+  throw new Error(bad === "個資" ? "🛡️ 聊天室不能留下電話、地址、LINE 等聯絡方式，訊息沒有送出。" : "🚫 訊息裡有不友善的字詞，沒有送出。請遵守使用規範，友善發言！");
+}
+
+// =========================================================
+// 使用時間：連續最多 60 分鐘、每天最多 120 分鐘（老師可在航海規則調整），時間到自動登出
+// =========================================================
+const useState = { info: null, timer: null, acc: 0, lastTick: 0, warned: "", ending: false };
+function useLimits() { const r = rulesNow(); return { session: (r.sessionMin || 60) * 60, daily: (r.dailyMin || 120) * 60, rest: (r.restMin || 10) * 60 }; }
+// 示範模式：存在這台裝置（雲端由 Apps Script 計算）
+function demoUsage(name, add) {
+  const lim = useLimits(), today = nowStr().slice(0, 10), key = "508_DEMO_USE_" + name;
+  let u = load(key, {}); if (u.d !== today) u = { d: today, total: 0, cont: 0, last: 0 };
+  if (add) { if ((Date.now() - (u.last || 0)) / 1000 > lim.rest) u.cont = 0; u.total += add; u.cont += add; u.last = Date.now(); store(key, u); }
+  const gap = (Date.now() - (u.last || 0)) / 1000, cont = gap > lim.rest ? 0 : u.cont;
+  let lock = null;
+  if (u.total >= lim.daily) lock = { reason: "daily", text: `⏰ 今天已經使用 ${Math.floor(u.total / 60)} 分鐘，達到每天 ${lim.daily / 60} 分鐘的上限，明天再來喔！讓眼睛休息一下吧。` };
+  else if (cont >= lim.session) lock = { reason: "session", text: `⏰ 已經連續使用 ${Math.floor(cont / 60)} 分鐘了，請休息 ${Math.ceil((lim.rest - gap) / 60)} 分鐘後再登入。起來走一走、喝口水吧！` };
+  return { today: u.total, cont, limits: lim, lock };
+}
+async function usageCall(add) { return DEMO ? demoUsage(session.user.name, add) : (await api("usage", { sec: add })).usage; }
+function startUsage() {
+  stopUsage();
+  if (!session || session.user.role !== "student") return;
+  useState.lastTick = Date.now(); useState.acc = 0; useState.warned = ""; useState.ending = false;
+  usageReport(0, true);
+  useState.timer = setInterval(usageTick, 5000);
+}
+function stopUsage() { clearInterval(useState.timer); useState.timer = null; }
+function usageTick() {
+  const n = Date.now(), dt = (n - useState.lastTick) / 1000;
+  useState.lastTick = n;
+  if (document.visibilityState === "visible" && dt < 30) useState.acc += dt;   // 只算畫面開著的時間
+  if (useState.acc >= 60) { const a = Math.round(useState.acc); useState.acc = 0; usageReport(a); }
+  else updateUsagePill();
+}
+async function usageReport(add, first) {
+  try {
+    const s = await usageCall(add);
+    if (!s || !session) return;
+    useState.info = s;
+    updateUsagePill();
+    if (first) toast(`⏱️ 今天已經航行 ${Math.floor(s.today / 60)} 分鐘（每天最多 ${s.limits.daily / 60} 分鐘，連續最多 ${s.limits.session / 60} 分鐘）`, 5000);
+    if (s.lock) return timeUp(s.lock);
+    const left = Math.min(s.limits.daily - s.today, s.limits.session - s.cont);
+    if (left <= 300 && useState.warned !== "5") { useState.warned = "5"; toast(`⏰ 再 ${Math.max(1, Math.ceil(left / 60))} 分鐘就到使用時間上限了，系統會自動登出，先把這一題做完吧！`, 6000); }
+  } catch (e) { /* 連線問題下次再回報 */ }
+}
+function usageText() {
+  const s = useState.info; if (!s) return "⏱️ 今天 －";
+  const used = Math.floor((s.today + useState.acc) / 60);
+  return `⏱️ 今天 ${used}／${s.limits.daily / 60} 分`;
+}
+function updateUsagePill() { const el = document.getElementById("use-pill"); if (el) el.textContent = usageText(); }
+function timeUp(lock) {
+  if (useState.ending) return; useState.ending = true;
+  stopUsage();
+  let n = 15;
+  const box = document.getElementById("timeup-content");
+  const draw = () => { box.innerHTML = `<div class="close-warn"><div class="big">⏰</div><h2 style="margin:6px 0">時間到了！</h2><p>${escapeHtml(lock.text)}</p>
+    <p style="opacity:.75">${n} 秒後自動登出</p><button class="btn-primary" style="padding:10px 22px" onclick="finishTimeUp()">現在登出</button></div>`; };
+  draw(); openModal("timeup-modal");
+  useState.endTimer = setInterval(() => { n--; if (n <= 0) finishTimeUp(); else draw(); }, 1000);
+  useState.lockText = lock.text;
+}
+function finishTimeUp() {
+  clearInterval(useState.endTimer);
+  closeModal("timeup-modal");
+  const msg = useState.lockText;
+  logout();
+  if (msg) setStatus(`<div class="lore-box" style="text-align:left">${escapeHtml(msg)}</div>`);
+}
+async function conductOp(op, name) {
+  try { await bridgeCall(op, { name }); toast(op === "unmute" ? "🔊 已解除禁言" : "⏱️ 今天的使用時間已歸零"); renderBridge(); }
+  catch (e) { toast("⚠️ " + e.message, 4500); }
+}
 function demoBridge(op, d) {
   const K = "508_DEMO_BRIDGE", db = load(K, { rules: null, dms: [], pace: [], unl: {} });
   const save = () => store(K, db);
@@ -4881,6 +5087,14 @@ function demoBridge(op, d) {
     return { ok: true, qId: q.id };
   }
   if (op === "rules") return { rules: db.rules || DEFAULT_RULES };
+  if (op === "conduct") {
+    const c = load("508_DEMO_CONDUCT", { vio: [], mute: {} });
+    const people = rosterList.filter(a => a.role === "student").map(a => { const st = demoUsage(a.name, 0); const m = c.mute[a.name] || 0;
+      return { name: a.name, today: st.today, cont: st.cont, lock: st.lock ? st.lock.reason : "", muted: m > Date.now() ? new Date(m).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "" }; });
+    return { people, vio: c.vio.slice(0, 100), limits: useLimits() };
+  }
+  if (op === "unmute") { const c = load("508_DEMO_CONDUCT", { vio: [], mute: {} }); delete c.mute[d.name]; store("508_DEMO_CONDUCT", c); return { ok: true }; }
+  if (op === "resetUsage") { try { localStorage.removeItem("508_DEMO_USE_" + d.name); } catch (e) {} return { ok: true }; }
   if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, db.rules || {}, d.rules); save(); return { rules: db.rules }; }
   if (op === "dmSend") { db.dms.push({ t: nowStr(), from: me, to: me === "老師" ? d.to : "老師", text: d.text, read: false }); save(); return thread(me === "老師" ? d.to : "老師"); }
   if (op === "dmList") {
@@ -5022,6 +5236,7 @@ function guideSections() {
         <li>⛓️ <b>判定亂答的處罰</b>：扣分（至少 ${PACE.penaltyMin} 分）而且<b>退一級</b>、<b>強迫結束這一局冒險</b>、<b>${PACE.lockMinutes} 分鐘不能出航</b>（不能闖關、挑戰、比賽），但可以到 <b>📚 錯題島</b>練習錯題。</li>
         <li>老師看得到亂答紀錄，可以幫你解除。</li>
         <li>⏰ <b>系統開放時間</b>：每天 ${openRules().openStart}～${openRules().openEnd}，時間外不能進入；關閉前 5 分鐘會跳出提醒，時間到自動登出。</li>
+        <li>⏱️ <b>使用時間</b>：連續最多 ${rulesNow().sessionMin || 60} 分鐘（休息 ${rulesNow().restMin || 10} 分鐘後才能再登入），每天最多 ${rulesNow().dailyMin || 120} 分鐘；剩 5 分鐘會提醒，時間到自動登出。上方的「⏱️ 今天」可以看到今天用了多久。</li>
       </ul>`]);
   }
   L.push(["voyage", "🌊 航行事件", `
@@ -5032,11 +5247,12 @@ function guideSections() {
       <li>計分：<b>一次就答對 +${VOYAGE.ptsFirst}</b>；答錯<b>只扣一次 ${VOYAGE.ptsWrong}</b>（之後再答錯不會再扣）；答錯之後再答對 <b>+${VOYAGE.ptsLater}</b>，比一次就答對少一點。航行事件不算星星，也不會放進錯題島。</li>
       <li>每天最多遇到 ${VOYAGE.perDay} 次，兩次之間至少隔 ${VOYAGE.gapMinutes} 分鐘。${FINAL ? "老師可以在老師艦橋關掉航行事件。" : ""}</li>
     </ul>`]);
+  L.push(["conduct", "📜 使用規範", conductHtml()]);
   L.push(["battle", "⚔️ 對戰與聊天", `
     <ul class="guide-list">
       <li>地圖上會看到正在線上的同學。點同學可以邀請他來一場<b>知識對決</b>：同一題比答案，答對 ${sign(R.battleOk)}、答錯 ${R.battleWrong}。</li>
       <li>不想被打擾時，可以把上面的「接受挑戰」切成「關」，專心練習。</li>
-      <li>聊天室可以跟同學打招呼，不禮貌的字會被自動遮掉，老師也看得到聊天紀錄。</li>
+      <li>聊天室可以跟同學打招呼。<b>不友善的字詞、電話和 LINE 等聯絡方式都不能送出</b>，會通知老師；同一天違規 3 次會禁言 24 小時。老師也看得到聊天紀錄。</li>
       ${FINAL ? `<li>📩 有問題可以點右邊的「老師來信」私下問老師，只有老師看得到。</li>` : ""}
     </ul>`]);
   L.push(["rank", "🏆 排行榜", `
@@ -5159,7 +5375,7 @@ function renderRanking() {
   const [, title, desc, valOf, fmt] = cat;
   const me = rankMeName(), teacher = session.user.role === "teacher";
   const list = rankState.data.board.map(r => ({ r, v: valOf(r) || 0 }))
-    .filter(x => x.v > 0)
+    .filter(x => x.v > 0 && rankInScope(x.r.name, rankState.scope))
     .sort((a, b) => {
       if (Math.abs(b.v - a.v) > 1e-9) return b.v - a.v;
       for (const [, f] of RANK_TIE[cat[0]] || []) { const d = (f(b.r) || 0) - (f(a.r) || 0); if (Math.abs(d) > 1e-9) return d; }
@@ -5174,17 +5390,18 @@ function renderRanking() {
     const x = list[i], cls = ["p1", "p2", "p3"][i];
     if (!x) return `<div class="pod empty ${cls}"><div class="medal">${["🥇", "🥈", "🥉"][i]}</div><div class="pn">虛位以待</div></div>`;
     return `<div class="pod ${cls} ${x.r.name === me ? "me" : ""}"><div class="medal">${["🥇", "🥈", "🥉"][i]}</div>${face(x.r)}
-      <div class="pn">${escapeHtml(shortName(x.r.name))}</div><div class="pv">${fmt(x.v)}</div></div>`;
+      <div class="pn">${escapeHtml(shortName(x.r.name))}</div>${orgTag(x.r.name, true)}<div class="pv">${fmt(x.v)}</div></div>`;
   }).join("");
   const sub = r => cat[0] === "acc" ? `答對 ${r.correct}／${r.attempts} 題` : cat[0] === "stars" ? `🚩 ${r._flags} 座島` : cat[0] === "score" ? escapeHtml(getLevelInfo(r.score || 0).title) : "";
   document.getElementById("rank-content").innerHTML = `
     <h2 style="margin-top:0;">🏆 ${FINAL ? "寶藏海" : "知識大航海"}排行榜 <small style="font-size:.78rem; opacity:.75">${FINAL ? "期末" : "期中"}</small></h2>
     <div class="guide-tabs">${RANK_CATS.map(c => `<button class="${c[0] === cat[0] ? "btn-primary" : "btn-ghost"}" onclick="openRanking('${c[0]}')">${c[1]}</button>`).join("")}</div>
+    ${rankScopeHtml()}
     <p class="rank-intro"><b>${title}</b>：${desc}。列出前 ${RANK_TOP} 名${me ? "和" + (session.user.role === "parent" ? "孩子" : "你") + "的名次" : ""}。<br><small>同分時，系統依序比：${tieText}，所以不會並列。</small>
       ${teacher && list.length > RANK_TOP ? `<button class="btn-ghost" style="padding:2px 10px; font-size:.76rem; margin-left:4px" onclick="rankState.all=!rankState.all; renderRanking()">${rankState.all ? "只看前 " + RANK_TOP + " 名" : "👀 看全班 " + list.length + " 人"}</button>` : ""}</p>
     ${list.length ? `<div class="podium">${pod}</div>
     <ol class="rank-list">${show.slice(3).map(x => `<li class="${x.r.name === me ? "me" : ""}"><span class="rk">${x.rank}</span>${face(x.r)}
-      <span><b>${escapeHtml(shortName(x.r.name))}</b> <span class="rs">${sub(x.r)}</span></span><span class="rv">${fmt(x.v)}</span></li>`).join("")}</ol>` : `<div class="empty-note">還沒有人上榜，快去答題搶第一！</div>`}
+      <span><b>${escapeHtml(shortName(x.r.name))}</b> ${orgTag(x.r.name, true)} <span class="rs">${sub(x.r)}</span></span><span class="rv">${fmt(x.v)}</span></li>`).join("")}</ol>` : `<div class="empty-note">還沒有人上榜，快去答題搶第一！</div>`}
     ${me ? `<div class="rank-me">${mine ? `${session.user.role === "parent" ? "孩子" : "你"}目前是第 <b>${mine.rank}</b> 名（${fmt(mine.v)}）${mine.rank > 1 ? `，再 ${rankGap(list, mine, cat[0])} 就能往前一名！` : "，太厲害了！👑"}` : `${session.user.role === "parent" ? "孩子" : "你"}還沒上榜${cat[0] === "acc" ? `（作答滿 ${RANK_MIN_ACC} 題才會上正確率榜）` : ""}，加油！`}</div>` : ""}
     <div style="margin-top:10px; font-size:.74rem; opacity:.7">更新時間：${escapeHtml(rankState.data.t || "")}（全班排行每 5 分鐘更新一次） <button class="btn-ghost" style="padding:2px 8px; font-size:.74rem" onclick="openRanking('__refresh')">🔄 重新整理</button></div>`;
 }
@@ -5400,7 +5617,7 @@ function renderChat() {
   list.innerHTML = net.messages.length ? net.messages.map(m => `
     <div class="chat-msg ${m.name === session.user.name ? "me" : ""} ${m.role === "teacher" ? "teacher" : ""}">
       <span class="chat-av" style="background:${m.color || "#fef08a"}">${m.emoji || "🙂"}</span>
-      <div class="chat-bubble"><div class="chat-meta"><b>${escapeHtml(shortName(m.name))}</b><span>${escapeHtml((m.t || "").slice(11, 16))}</span></div>${escapeHtml(m.text)}</div>
+      <div class="chat-bubble"><div class="chat-meta"><b>${escapeHtml(shortName(m.name))}</b>${m.role === "teacher" ? "" : orgTag(m.name)}<span>${escapeHtml((m.t || "").slice(11, 16))}</span></div>${escapeHtml(m.text)}</div>
     </div>`).join("") : `<div class="empty-note" style="padding:10px">還沒有人說話，打個招呼吧！</div>`;
   if (atBottom) list.scrollTop = list.scrollHeight;
 }
@@ -5420,7 +5637,7 @@ function openPeerMenu(o, el) {
   menu.id = "peer-menu";
   const sameIsland = o.place === myPlace();
   menu.innerHTML = `
-    <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}<b>${escapeHtml(shortName(o.name))}</b></div>
+    <div class="peer-head">${avatarFace(o.emoji || seatEmoji(o.seat), o.color, o.name, o.pv)}<b>${escapeHtml(shortName(o.name))}</b>${orgTag(o.name, true)}</div>
     ${session.user.role === "teacher" && o.pv ? `<button class="btn-ghost" style="width:100%; margin-bottom:6px" onclick='clearPhoto(${JSON.stringify(o.name)})'>🗑️ 移除他的照片頭像</button>` : ""}
     ${!canChallenge(o) ? (session.user.role === "student" && o.battleOn === false ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>` : "")
       : `<div class="peer-note">⚔️ 選一科來挑戰${session.user.role === "parent" ? "孩子" : "他"}：</div>
@@ -5608,6 +5825,7 @@ const demo = (() => {
       return snapshot(since);
     },
     chat({ text, since }) {
+      demoChatCheck(text);
       st.msgs.push({ id: Date.now(), name: session.user.name, emoji: myEmoji(), color: myColor(), role: session.user.role, text, t: nowStr() });
       const bot = pickRandom(bots());
       if (bot) setTimeout(() => botSay(bot, text.includes("@" + shortName(bot.name)) ? "嗨嗨！👋" : pickRandom(LINES)), 1800);
