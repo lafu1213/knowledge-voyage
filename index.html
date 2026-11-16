@@ -827,7 +827,7 @@
     <div id="step-role">
       <div style="font-weight:900; margin-bottom:10px;">你是誰？請先選身分</div>
       <div class="role-grid">
-        <button class="role-card teacher" onclick="chooseRole('teacher')"><span class="role-emoji">🧑‍🏫</span><b>老師</b><small>看全班後台</small></button>
+        <button class="role-card teacher" onclick="chooseRole('teacher')"><span class="role-emoji">🧑‍🏫</span><b>老師</b><small>看班級後台</small></button>
         <button class="role-card student" onclick="chooseRole('student')"><span class="role-emoji">🎒</span><b>學生</b><small>登島闖關</small></button>
         <button class="role-card parent" onclick="chooseRole('parent')"><span class="role-emoji">👨‍👩‍👧</span><b>家長</b><small>看孩子的紀錄</small></button>
       </div>
@@ -1773,6 +1773,7 @@ async function doLogin() {
       const acc = rosterList.find(a => a.name === name);
       if (role === "student") { const st = demoUsage(name, 0); if (st.lock) throw new Error(st.lock.text); }
       session = { token: "demo", user: { role, name, seat: acc.seat, child: role === "parent" ? name.replace(/家長$/, "") : role === "student" ? name : "" } };
+      if (role === "teacher") { session.user.cls = accClass(acc); session.user.admin = session.user.cls === HOME_CLASS; }
     } else {
       session = await api("login", { role, name, password });
     }
@@ -3296,9 +3297,9 @@ function renderSide() {
           <div><div class="me-name">${escapeHtml(u.name)}</div><div class="me-title">${u.role === "teacher" ? "全班 22 人總管" : "孩子：" + escapeHtml(u.child)}</div></div></div>
         ${FINAL && u.role === "teacher" ? `<button class="btn-accent bridge-btn" style="width:100%; margin-top:12px; padding:12px;" onclick="openBridge()">⚓ 老師艦橋 <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span> <span class="mail-badge report-badge" style="background:#f59e0b" title="待處理的題目回報" ${bridgeState.reportsN ? "" : "hidden"}>🚩${bridgeState.reportsN}</span></button>
         <div style="font-size:.78rem; margin-top:6px; opacity:.85">${escapeHtml(pirateStatusText())}</div>` : ""}
-        ${!FINAL && u.role === "teacher" ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('reports')">🚩 題目回報 <span class="mail-badge report-badge" style="background:#f59e0b" title="待處理的題目回報" ${bridgeState.reportsN ? "" : "hidden"}>🚩${bridgeState.reportsN}</span></button>` : ""}
-        ${u.role === "teacher" ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('islands')">🏝️ 島嶼開關（開放 ${WORLD.flatMap(s => s.units).filter(x => !islandClosed(x)).length}／${WORLD.flatMap(s => s.units).length}）</button>` : ""}
-        <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? "開啟全班後台" : "看孩子的學習紀錄"}</button>
+        ${!FINAL && u.role === "teacher" && isAdmin() ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('reports')">🚩 題目回報 <span class="mail-badge report-badge" style="background:#f59e0b" title="待處理的題目回報" ${bridgeState.reportsN ? "" : "hidden"}>🚩${bridgeState.reportsN}</span></button>` : ""}
+        ${u.role === "teacher" && isAdmin() ? `<button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openBridge('islands')">🏝️ 島嶼開關（開放 ${WORLD.flatMap(s => s.units).filter(x => !islandClosed(x)).length}／${WORLD.flatMap(s => s.units).length}）</button>` : ""}
+        <button class="${FINAL && u.role === "teacher" ? "btn-ghost" : "btn-accent"}" style="width:100%; margin-top:${FINAL && u.role === "teacher" ? 8 : 12}px; padding:${FINAL && u.role === "teacher" ? 9 : 12}px;" onclick="openDashboard()">📊 ${u.role === "teacher" ? (isAdmin() ? "開啟全年級後台" : `開啟 ${escapeHtml(teacherCls())} 班後台`) : "看孩子的學習紀錄"}</button>
         <button class="btn-ghost" style="width:100%; margin-top:8px; padding:9px;" onclick="openGuide()">📜 遊戲說明（孩子看到的規則）</button>
         <div class="trial-note">👀 試玩模式：答題不列入紀錄</div>
       </div>
@@ -4043,7 +4044,7 @@ async function openDashboard(student) {
 }
 
 function demoDashboard(student) {
-  const students = rosterList.filter(a => a.role === "student");
+  const students = rosterList.filter(a => a.role === "student" && (session.user.role !== "teacher" || inMyClass(a.name)));
   const isF = r => String(r.sid || "").indexOf(FINAL_SID) === 0, want = dashState.season === "final";
   const statsOf = name => { const d = load("508_DEMO_DATA_" + name, { answers: [], sessions: [] }); return aggregate(d.answers.filter(r => isF(r) === want), d.sessions.filter(r => isF(r) === want)); };
   const u = session.user;
@@ -4065,7 +4066,8 @@ function renderDashboard() {
   const box = document.getElementById("dash-content");
   let html = "";
   if (d.scope === "teacher") {
-    html += `<h2 style="margin-top:0;">🧑‍🏫 508 全班後台 <button class="btn-ghost" style="font-size:.8rem; vertical-align:middle" onclick="showChatLog()">💬 全班聊天紀錄</button></h2>
+    html += `<h2 style="margin-top:0;">🧑‍🏫 ${isAdmin() ? "五年級全部" : escapeHtml(teacherCls()) + " 班"}後台 <button class="btn-ghost" style="font-size:.8rem; vertical-align:middle" onclick="showChatLog()">💬 聊天紀錄</button></h2>
+      ${isAdmin() ? "" : `<p style="font-size:.8rem; margin:0 0 6px; color:var(--ink-soft)">🔒 這裡只列出 ${escapeHtml(teacherCls())} 班的學生。</p>`}
       <p style="font-size:.84rem; color:var(--ink-soft); margin-top:0;">點任一位學生，看他答對、答錯哪些題目，訂正幾次，哪些一錯再錯。⭐ 正確率星、🌟 完成度星。</p>
       <div style="margin:0 0 8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; font-size:.8rem;">考試：
         ${[["mid", "📘 期中"], ["final", "🏴‍☠️ 期末"]].map(([k, l]) => `<button class="${dashState.season === k ? "btn-primary" : "btn-ghost"}" style="padding:3px 10px; font-size:.78rem" onclick="dashState.season='${k}'; openDashboard(dashState.student || '');">${l}</button>`).join("")}
@@ -4440,6 +4442,11 @@ function pirateStatusText(r = rulesNow()) {
 /** 每 4 秒的回報帶回來的：未讀私訊、老師解除扣押、航海規則 */
 function applyBridgePulse(p) {
   if (!p || !session) return;
+  if (session.user.role === "teacher" && typeof p.admin === "boolean" && session.user.admin !== p.admin) {
+    session.user.admin = p.admin; session.user.cls = p.cls;
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+    try { renderAll(); } catch (e) {}
+  }
   if (p.rules) {
     const before = JSON.stringify(closedList()), namesBefore = JSON.stringify((bridgeState.rules && bridgeState.rules.groupNames) || {});
     bridgeState.rules = p.rules;
@@ -4481,19 +4488,25 @@ function reportPace(why, count, act) {
 
 function openBridge(tab) {
   if (tab) bridgeState.tab = tab;
-  if (!BRIDGE_TABS.some(t => t[0] === bridgeState.tab)) bridgeState.tab = BRIDGE_TABS[0][0];
+  if (!bridgeTabs().some(t => t[0] === bridgeState.tab)) bridgeState.tab = bridgeTabs()[0][0];
   openModal("bridge-modal");
   if (session.user.role === "student") { bridgeState.peer = "老師"; refreshDm(); return; }
   renderBridge();
 }
 function bridgeShell(body) {
   return `<h2 style="margin-top:0;">⚓ 老師艦橋 <small style="font-size:.8rem; opacity:.75">${FINAL ? "期末航線的指揮台" : "期中航線"}</small></h2>
-    <div class="bridge-tabs">${BRIDGE_TABS.map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}${k === "reports" ? ` <span class="mail-badge report-badge" ${bridgeState.reportsN ? "" : "hidden"}>${bridgeState.reportsN}</span>` : ""}</button>`).join("")}</div>
+    <div class="bridge-tabs">${bridgeTabs().map(([k, l]) => `<button class="${bridgeState.tab === k ? "btn-primary" : "btn-ghost"}" onclick="bridgeState.tab='${k}'; renderBridge();">${l}${k === "dm" ? ` <span class="mail-badge" ${bridgeState.unread ? "" : "hidden"}>${bridgeState.unread}</span>` : ""}${k === "reports" ? ` <span class="mail-badge report-badge" ${bridgeState.reportsN ? "" : "hidden"}>${bridgeState.reportsN}</span>` : ""}</button>`).join("")}</div>
     <div id="bridge-body">${body}</div>`;
 }
 function bridgeLoading() { return `<div class="spinner"></div><div class="empty-note">正在讀取…</div>`; }
 function bridgeError(e) { return `<div class="empty-note">⚠️ ${escapeHtml(e.message)}${/未知的動作/.test(e.message) ? "<br>（雲端 Apps Script 還沒更新成新版，請先貼上新的程式碼並重新部署）" : ""}</div>`; }
-function studentsList() { return rosterList.filter(a => a.role === "student"); }
+// ── 老師權限：508 老師是管理者，看得到全部；501～507 老師只看自己班 ──
+function teacherCls() { const u = session && session.user; if (!u || u.role !== "teacher") return ""; return u.cls || accClass(accOf(u.name).name ? accOf(u.name) : { role: "teacher", name: u.name }); }
+function isAdmin() { const u = session && session.user; return !!u && u.role === "teacher" && (u.admin !== undefined ? u.admin : teacherCls() === HOME_CLASS); }
+function inMyClass(name) { return isAdmin() || accClass(accOf(name)) === teacherCls(); }
+const ADMIN_TABS = ["reports", "islands", "rules"];   // 只有 508 老師能用：題目回報（改題庫）、島嶼開關、航海規則
+function bridgeTabs() { return BRIDGE_TABS.filter(t => isAdmin() || !ADMIN_TABS.includes(t[0])); }
+function studentsList() { return rosterList.filter(a => a.role === "student" && (!session || session.user.role !== "teacher" || inMyClass(a.name))); }
 
 async function renderBridge() {
   const box = document.getElementById("bridge-content");
@@ -4519,8 +4532,8 @@ async function renderBridge() {
         <h3>🔥 全班最常錯的題目</h3>
         ${top.length ? top.map(q => mistakeCard(q, true)).join("") : `<div class="empty-note">期末還沒有人答錯，或還沒有人作答</div>`}
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px">
-          <button class="btn-accent" onclick="closeModal('bridge-modal'); dashState.season='final'; openDashboard();">📊 全班成績（期末）</button>
-          <button class="btn-ghost" onclick="closeModal('bridge-modal'); dashState.season='mid'; openDashboard();">📊 全班成績（期中）</button>
+          <button class="btn-accent" onclick="closeModal('bridge-modal'); dashState.season='final'; openDashboard();">📊 ${isAdmin() ? "全年級" : "全班"}成績（期末）</button>
+          <button class="btn-ghost" onclick="closeModal('bridge-modal'); dashState.season='mid'; openDashboard();">📊 ${isAdmin() ? "全年級" : "全班"}成績（期中）</button>
         </div>`);
     } else if (t === "rules") {
       const r = rulesNow();
@@ -5303,7 +5316,7 @@ function guideSections() {
     <ul class="guide-list">
       <li><b>學生</b>：答題會記錄分數、星星${FINAL ? "、金幣" : ""}，所有紀錄都存在雲端，換一台電腦登入也看得到。</li>
       <li><b>家長</b>：可以試玩（不列入紀錄），按「📊 看孩子的學習紀錄」查看孩子答對、答錯、訂正和星星。</li>
-      <li><b>老師</b>：可以試玩，按「📊 開啟全班後台」看全班成績（期中、期末分開）${FINAL ? "；「⚓ 老師艦橋」可以發金幣、私訊、看亂答紀錄、看分科錯題、開關海盜" : ""}。</li>
+      <li><b>老師</b>：可以試玩，按「📊 開啟後台」看班上的成績（期中、期末分開；508 老師看得到全年級，其他班的老師只看得到自己班）${FINAL ? "；「⚓ 老師艦橋」可以發金幣、私訊、看亂答紀錄、看分科錯題、開關海盜" : ""}。</li>
     </ul>`]);
   return L;
 }
