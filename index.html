@@ -1370,19 +1370,23 @@ let walking = false;
 // =========================================================
 // ---- 題目附圖：「圖解」欄位填圖片網址（Google 雲端分享連結或任何 https 圖片）就會顯示 ----
 function diagramParts(q) { return String((q && (q.image || q.diagram)) || "").split(/[｜\n]/).map(x => x.trim()).filter(Boolean); }
+/** 圖解欄裡的音檔（英聽原音，例如 …/audio/eng/e3_01_1.mp3） */
+function isAudioUrl(x) { return /^https?:\/\/.+\.(mp3|m4a|wav|ogg)(\?.*)?$/i.test(x); }
+function questionAudio(q) { return diagramParts(q).find(isAudioUrl) || ""; }
+function hasListen(q) { return !!(questionSpeech(q) || questionAudio(q)); }
 function questionSpeech(q) {
   const t = diagramParts(q).find(x => /^(聽|🔊)[：:]/.test(x));
   return t ? t.replace(/^(聽|🔊)[：:]\s*/, "") : "";
 }
 function questionImageUrl(q) {
-  const raw = diagramParts(q).find(x => /^https?:\/\//i.test(x)) || "";
+  const raw = diagramParts(q).find(x => /^https?:\/\//i.test(x) && !isAudioUrl(x)) || "";
   if (!raw) return "";
   const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
   return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
 }
 function questionImageHtml(q) {
   // 一題可以有好幾張圖（用「｜」分開），例如左邊是正方體、右邊是四個選項
-  const urls = diagramParts(q).filter(x => /^https?:\/\//i.test(x)).map(raw => {
+  const urls = diagramParts(q).filter(x => /^https?:\/\//i.test(x) && !isAudioUrl(x)).map(raw => {
     const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
     return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
   });
@@ -1420,7 +1424,7 @@ function speakList(list, slow, onEach) {
     speechSynthesis.speak(u);
   });
 }
-function stopSpeak() { if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); }
+function stopSpeak() { if (typeof AUDIO_NOW !== "undefined" && AUDIO_NOW) { try { AUDIO_NOW.pause(); } catch (e) {} AUDIO_NOW = null; } if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); }
 /** 英文文章切成句子 */
 function englishSentences(text) {
   return String(text).split(/\n+/).flatMap(line => line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
@@ -1462,8 +1466,31 @@ let VOCAB_NOW = [];
 function markVocab(i) { document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); const el = i >= 0 && document.getElementById("vc-" + i); if (el) el.classList.add("on"); }
 function speakWord(i) { const w = VOCAB_NOW[i]; if (w) speakList([w.en], false, k => markVocab(k < 0 ? -1 : i)); }
 function speakVocab(slow) { speakList(VOCAB_NOW.map(w => w.en), slow, markVocab); }
-function speakCurrent(slow) { const q = quizState && quizState.questions[quizState.idx]; if (q) speakText(questionSpeech(q), slow); }
+// 英聽原音：同一時間只播一個；慢速用 0.75 倍
+let AUDIO_NOW = null;
+function playAudio(url, slow) {
+  stopSpeak();
+  try {
+    AUDIO_NOW = new Audio(url);
+    AUDIO_NOW.playbackRate = slow ? 0.75 : 1;
+    if ("preservesPitch" in AUDIO_NOW) AUDIO_NOW.preservesPitch = true;
+    const p = AUDIO_NOW.play();
+    if (p && p.catch) p.catch(err => { if (err && err.name !== "AbortError") toast("🔇 請按「🔊 播放」聽題目（手機要先點一下才能出聲）", 3500); });
+  } catch (e) { toast("這台裝置沒辦法播放音檔"); }
+}
+function speakCurrent(slow) {
+  const q = quizState && quizState.questions[quizState.idx];
+  if (!q) return;
+  const a = questionAudio(q);
+  if (a) playAudio(a, slow); else speakText(questionSpeech(q), slow);
+}
 function listenBoxHtml(q, auto) {
+  const au = questionAudio(q);
+  if (au) return `<div class="lore-box" style="border-left-color:#0ea5e9; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+    <b>🎧 英聽題：</b>
+    <button class="btn-primary" style="padding:8px 14px" onclick="playAudio(${escapeHtml(JSON.stringify(au))}, false)">🔊 播放</button>
+    <button class="btn-ghost" style="padding:8px 14px" onclick="playAudio(${escapeHtml(JSON.stringify(au))}, true)">🐢 慢速再聽</button>
+    <span style="font-size:.8rem; opacity:.75">真人錄音，可以重複聽，聽完再作答</span></div>`;
   const t = questionSpeech(q);
   if (!t) return "";
   return `<div class="lore-box" style="border-left-color:#0ea5e9; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
@@ -1566,7 +1593,9 @@ function unitGroups(s) {
         // 名稱：老師取的名字 → 課文標題 → 各單元共同的詞 → 主題名（名稱裡不要再重複「第七課」）
         const words = commonWords(units.map(u => (splitUnit(u.unit)[1] || u.unit).split(key).join("").trim()));
         const name = custom[groupNameKey(s, key)] || (s.plainGroups ? s.plainGroups[i % s.plainGroups.length] : passageTitle(units) || words || theme.name);
-        return { id: "GRP@" + s.key + "@" + key, key, units, theme, words, auto: passageTitle(units) || words || theme.name, title: key === "其他" ? name : `${key}・${name}` };
+        // 英文單元本來就有名字（Unit 3 A Fun Day），沒有更好的名稱時就不要再接主題名
+        const named = /^(?:Unit|Review|Lesson)\s*\d+\s+\S/i.test(key) && !custom[groupNameKey(s, key)] && !passageTitle(units) && !words;
+        return { id: "GRP@" + s.key + "@" + key, key, units, theme, words, auto: passageTitle(units) || words || theme.name, title: key === "其他" ? name : named ? key : `${key}・${name}` };
       });
     }
   }
@@ -1586,7 +1615,7 @@ function subjOfPlaceId(id) {
 function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
-function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal" && "speechSynthesis" in window) speechSynthesis.cancel(); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal") stopSpeak(); }
 function seatEmoji(seat) { const n = parseInt(seat, 10); return n ? SEAT_EMOJI[(n - 1) % SEAT_EMOJI.length] : "🧑‍🏫"; }
 function shortName(name) { return String(name).replace(/^508/, ""); }
 
@@ -3678,7 +3707,7 @@ function renderQuestion() {
   const total = quizState.questions.length;
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
-      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${questionSpeech(q) ? "🎧 英聽" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
+      <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${hasListen(q) ? "🎧 英聽" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
       <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
     </div>
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
@@ -3691,8 +3720,8 @@ function renderQuestion() {
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>
     ${reportRowHtml()}`;
-  if (questionSpeech(q)) setTimeout(() => speakCurrent(false), 350);
-  else if ("speechSynthesis" in window) speechSynthesis.cancel();
+  if (hasListen(q)) setTimeout(() => speakCurrent(false), 350);
+  else stopSpeak();
 }
 
 function submitAnswer(choice) {
