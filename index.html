@@ -536,6 +536,20 @@
   .bridge-tabs button { padding: 6px 12px; font-size: .85rem; }
   .mail-badge { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #ef4444; color: #fff; font-size: .72rem; font-weight: 900; line-height: 18px; text-align: center; }
   .mail-badge[hidden] { display: none; }
+  /* 單字王：單字卡 */
+  .vocab-box { border: 2px solid rgba(139,92,246,.45); background: rgba(139,92,246,.08); border-radius: 16px; padding: 12px; margin: 10px 0; }
+  .vocab-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .vocab-head button { padding: 7px 12px; font-size: .86rem; }
+  .vocab-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  @media (max-width: 700px) { .vocab-grid { grid-template-columns: repeat(2, 1fr); } }
+  .vc { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px 10px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); cursor: pointer; box-shadow: none; transition: transform .15s, box-shadow .15s; }
+  .vc:hover { transform: translateY(-2px); }
+  .vc.on { box-shadow: 0 0 0 3px #a78bfa; transform: scale(1.04); }
+  .vc-en { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; font-weight: 800; word-break: break-word; }
+  .vc-zh { font-size: .86rem; opacity: .85; }
+  .vc-no { position: absolute; top: 4px; left: 7px; font-size: .66rem; opacity: .55; }
+  .vc-sp { position: absolute; top: 3px; right: 6px; font-size: .75rem; opacity: .6; }
   /* 題目回報 */
   .report-row { text-align: right; margin-top: 8px; }
   .report-link { background: none; border: none; box-shadow: none; color: var(--ink-soft); font-size: .8rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
@@ -1387,6 +1401,61 @@ function speakText(text, slow) {
   speechVoice = speechVoice || pickVoice(); if (speechVoice) u.voice = speechVoice;
   speechSynthesis.speak(u);
 }
+/** 一次念好幾段（一句一句排隊念，長文章才不會念到一半被瀏覽器切掉） */
+function speakList(list, slow, onEach) {
+  if (!("speechSynthesis" in window)) { toast("這台裝置不支援英語朗讀，請換用 Chrome 或 Safari"); return; }
+  speechSynthesis.cancel();
+  speechVoice = speechVoice || pickVoice();
+  list.filter(Boolean).forEach((t, i) => {
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "en-US"; u.rate = slow ? 0.6 : 0.85;
+    if (speechVoice) u.voice = speechVoice;
+    if (onEach) { u.onstart = () => onEach(i); u.onend = () => onEach(-1); }
+    speechSynthesis.speak(u);
+  });
+}
+function stopSpeak() { if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); }
+/** 英文文章切成句子 */
+function englishSentences(text) {
+  return String(text).split(/\n+/).flatMap(line => line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
+}
+function isEnglishPassage(q) { const t = String(q.passage || ""); return t.length > 20 && (t.match(/[A-Za-z]/g) || []).length / t.length > 0.5; }
+function readPassage(slow) {
+  const q = quizState && quizState.questions[quizState.idx];
+  if (!q || !isEnglishPassage(q)) return;
+  speakList(englishSentences(q.passage), slow);
+}
+
+// ── 單字王：每座島先看這一篇的 10 個單字（可以點來聽發音） ──
+function vocabWords(unit) {
+  const out = {};
+  unit.questions.forEach(q => {
+    if (!/^單字/.test(q.type || "")) return;
+    const m = String(q.exp || "").match(/^(.+?)：(.+?)(?:（1200 字第 (\d+) 個）)?$/);
+    if (!m) return;
+    const [en, zh] = /中翻英/.test(q.type) ? [m[2], m[1]] : [m[1], m[2]];
+    out[en.toLowerCase()] = { en, zh, no: Number(m[3]) || 9999 };
+  });
+  return Object.values(out).sort((a, b) => a.no - b.no);
+}
+function vocabCardsHtml(unit) {
+  const ws = vocabWords(unit);
+  if (!ws.length) return "";
+  VOCAB_NOW = ws;
+  return `<div class="vocab-box">
+    <div class="vocab-head"><b>🔤 這一篇的 ${ws.length} 個單字</b>
+      <span><button class="btn-primary" onclick="speakVocab(false)">🔊 全部念一遍</button>
+      <button class="btn-ghost" onclick="speakVocab(true)">🐢 慢速</button>
+      <button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
+    <div class="vocab-grid">${ws.map((w, i) => `<button class="vc" id="vc-${i}" onclick="speakWord(${i})" aria-label="${escapeHtml(w.en)} ${escapeHtml(w.zh)}，點一下聽發音">
+      <span class="vc-en">${escapeHtml(w.en)}</span><span class="vc-zh">${escapeHtml(w.zh)}</span>${w.no < 9999 ? `<span class="vc-no">${w.no}</span>` : ""}<span class="vc-sp">🔊</span></button>`).join("")}</div>
+    <div style="font-size:.8rem; opacity:.75; margin-top:6px">點單字卡就會念給你聽；先把 10 個單字念熟，再開始闖關！</div>
+  </div>`;
+}
+let VOCAB_NOW = [];
+function markVocab(i) { document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); const el = i >= 0 && document.getElementById("vc-" + i); if (el) el.classList.add("on"); }
+function speakWord(i) { const w = VOCAB_NOW[i]; if (w) speakList([w.en], false, k => markVocab(k < 0 ? -1 : i)); }
+function speakVocab(slow) { speakList(VOCAB_NOW.map(w => w.en), slow, markVocab); }
 function speakCurrent(slow) { const q = quizState && quizState.questions[quizState.idx]; if (q) speakText(questionSpeech(q), slow); }
 function listenBoxHtml(q, auto) {
   const t = questionSpeech(q);
@@ -3433,6 +3502,7 @@ function openUnitModal(key) {
   document.getElementById("quiz-content").innerHTML = `
     <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
+    ${unit.subject === "單字王" ? vocabCardsHtml(unit) : ""}
     ${readingBoost(unit.subject, unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>${FINAL ? `答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！`
       : `答對的分數 ×${READ.ptsMul}；一場答對 80% 以上，結算獎勵也 ×${READ.ptsMul}！`}</div>` : ""}
     ${covBox}
@@ -3456,6 +3526,7 @@ function newQuizState(mode, subject, unit, questions) {
 
 function startQuiz(key) {
   if (guardLocked()) return;
+  stopSpeak();
   if (closedForMe(WORLD.flatMap(s => s.units).find(u => u.key === key))) return toast("🔒 這座島目前關閉中");
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
@@ -3648,6 +3719,11 @@ function submitAnswer(choice) {
     ${pace.note ? `<div class="rush-warn" style="white-space:pre-line">${escapeHtml(pace.note)}</div>` : ""}
     ${lvNote}
     ${q.diagram && SVG_DIAGRAMS[q.diagram] ? SVG_DIAGRAMS[q.diagram] : ""}
+    ${isEnglishPassage(q) ? `<div class="lore-box" style="border-left-color:#0ea5e9; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <b>🎧 聽聽整篇文章：</b>
+      <button class="btn-primary" style="padding:8px 14px" onclick="readPassage(false)">🔊 朗讀全文</button>
+      <button class="btn-ghost" style="padding:8px 14px" onclick="readPassage(true)">🐢 慢速</button>
+      <button class="btn-ghost" style="padding:8px 14px" onclick="stopSpeak()">⏹ 停止</button></div>` : ""}
     <button id="next-btn" class="btn-primary" style="width:100%; padding:12px; margin-top:6px;" onclick="nextQuestion()">${pace.lock ? "⛓️ 結束這一局" : last ? "🏁 看本局成績" : "➡️ 看懂了，下一題"}</button>
     <div id="pace-note" class="pace-note"></div>`;
   startPaceTimer();
