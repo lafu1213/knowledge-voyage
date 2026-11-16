@@ -1267,7 +1267,7 @@ const SUBJECTS = [
 ];
 // 五大島外圍的兩座小島：題庫裡有這一科的題目才會出現在地圖上
 const EXTRA_SUBJECTS = [
-  { key: "武林大會", name: "武林大會島", icon: "🥋", title: "群英擂台海", pattern: "dojo", small: true,
+  { key: "武林大會", name: "武林大會島", icon: "🥋", title: "群英擂台海", pattern: "dojo", small: true, arenas: true,
     land: ["#fca5a5", "#991b1b"], sand: "#fde68a", sea: ["#fecaca", "#dc2626", "#450a0a"], banner: "#7f1d1d",
     shape: { points: 8, wobble: 0.22, sharp: true }, deco: ["🏯", "⚔️", "🥋", "🐉", "🏮", "🥁"],
     palette: ["#f87171", "#ef4444", "#dc2626", "#f59e0b", "#b91c1c", "#d97706", "#fb923c"],
@@ -1279,6 +1279,12 @@ const EXTRA_SUBJECTS = [
     palette: ["#a78bfa", "#8b5cf6", "#7c3aed", "#c084fc", "#6366f1", "#818cf8", "#e879f9"],
     unitIcons: ["🔤", "📖", "💬", "🎓", "✏️", "🌟", "📚", "🗝️", "🎧", "🧩"] }
 ];
+// 武林大會的五科擂台：圖示與群島主題（GROUP_THEMES 的第幾個）
+const ARENAS = [
+  { subj: "國語", icon: "📜", theme: 4 }, { subj: "數學", icon: "📐", theme: 2 }, { subj: "英語", icon: "🔤", theme: 5 },
+  { subj: "自然", icon: "🔬", theme: 3 }, { subj: "社會", icon: "🗺️", theme: 6 }
+];
+function arenaRank(key) { const i = ARENAS.findIndex(a => key.startsWith(a.subj)); return i < 0 ? 99 : i; }
 const SUBJECT_ALIASES = { "國文": "國語", "英文": "英語", "社會科": "社會", "自然科學": "自然", "自然與生活科技": "自然" };
 const SEAT_EMOJI = ["🦁", "🐰", "🦊", "🐼", "🐯", "🐨", "🐸", "🦄", "🦖", "🐱", "🐶", "🐹", "🦉", "🦋", "🐧", "🐬", "🐿️", "🦅", "🦩", "🐳", "🦌", "🐢"];
 // 可以換的頭像與底色
@@ -1543,12 +1549,20 @@ function unitGroups(s) {
   const sig = s.units.map(u => u.key).join("|") + JSON.stringify(custom);
   if (s._groupSig === sig) return s._groups;
   let out = null;
-  if (s.units.length >= GROUP_MIN) {
+  if (s.units.length >= (s.arenas ? 1 : GROUP_MIN)) {
     const by = new Map();
     s.units.forEach(u => { const k = groupKeyOf(u) || "其他"; if (!by.has(k)) by.set(k, []); by.get(k).push(u); });
-    if (by.size >= 2 && by.size < s.units.length) {
+    // 武林大會：照五科擂台排好（國語、數學、英語、自然、社會），一份考卷也先放進擂台
+    if (s.arenas) [...by.keys()].sort((a, b) => arenaRank(a) - arenaRank(b)).forEach(k => { const v = by.get(k); by.delete(k); by.set(k, v); });
+    if (s.arenas || (by.size >= 2 && by.size < s.units.length)) {
       out = [...by.entries()].map(([key, units], i) => {
-        const theme = GROUP_THEMES[(i + (seeded("grp" + s.key)() * GROUP_THEMES.length | 0)) % GROUP_THEMES.length];
+        const ar = s.arenas && ARENAS.find(a => key.startsWith(a.subj));
+        const theme = ar ? Object.assign({}, GROUP_THEMES[ar.theme], { icon: ar.icon, name: "" })
+          : GROUP_THEMES[(i + (seeded("grp" + s.key)() * GROUP_THEMES.length | 0)) % GROUP_THEMES.length];
+        if (ar) {
+          const name = custom[groupNameKey(s, key)] || "";
+          return { id: "GRP@" + s.key + "@" + key, key, units, theme, words: "", auto: ar.subj + "擂台", title: name ? `${key}・${name}` : key, arena: true };
+        }
         // 名稱：老師取的名字 → 課文標題 → 各單元共同的詞 → 主題名（名稱裡不要再重複「第七課」）
         const words = commonWords(units.map(u => (splitUnit(u.unit)[1] || u.unit).split(key).join("").trim()));
         const name = custom[groupNameKey(s, key)] || (s.plainGroups ? s.plainGroups[i % s.plainGroups.length] : passageTitle(units) || words || theme.name);
@@ -1559,6 +1573,8 @@ function unitGroups(s) {
   s._groupSig = sig; s._groups = out;
   return out;
 }
+/** 群島裡只有一座小島時直接顯示那座小島（武林大會的擂台例外：一份考卷也要先進擂台） */
+function soloUnit(g) { return g.units.length === 1 && !g.arena; }
 function groupOf(s, unitKeyStr) { const gs = unitGroups(s); return gs ? gs.find(g => g.units.some(u => u.key === unitKeyStr)) || null : null; }
 function curGroup() { const s = WORLD.find(x => x.key === view.subject); return s && view.group ? (unitGroups(s) || []).find(g => g.key === view.group) || null : null; }
 /** 從地點代號找出科目：W:數學、U:數學｜單元、U:DOCK@數學、U:GRP@數學@第6單元、U:UP@數學@第6單元 */
@@ -2641,7 +2657,7 @@ function subjectLayout(s, g) {
   const flip = rnd() > 0.5;
   const groups = g ? null : unitGroups(s);
   const items = g ? g.units.map(u => ({ id: u.key, unitObj: u }))
-    : groups ? groups.map(x => x.units.length === 1 ? { id: x.units[0].key, unitObj: x.units[0] } : { id: x.id, groupObj: x })
+    : groups ? groups.map(x => soloUnit(x) ? { id: x.units[0].key, unitObj: x.units[0] } : { id: x.id, groupObj: x })
     : s.units.map(u => ({ id: u.key, unitObj: u }));
   const nodes = [g ? { id: "UP@" + s.key + "@" + g.key, dock: true, up: true } : { id: "DOCK@" + s.key, dock: true }, ...items];
   const A = groups ? GROUP_ANCHORS : UNIT_ANCHORS;
@@ -2848,7 +2864,7 @@ function placeOnThisMap(place) {
   }
   if (id.startsWith("UP@")) return "GRP@" + id.slice(3);
   const g = groupOf(s, id);   // 人在群島裡的某座小島：顯示在那座群島上
-  return g ? (g.units.length === 1 ? id : g.id) : id;
+  return g ? (soloUnit(g) ? id : g.id) : id;
 }
 
 function renderAvatars() {
@@ -3438,7 +3454,7 @@ async function goAssigned(key) {
   if (!u) return;
   if (view.level !== "subject" || view.subject !== u.subject) await enterSubject(u.subject);
   const g = groupOf(WORLD.find(x => x.key === u.subject), key);
-  if (g && g.units.length > 1 && view.group !== g.key) await enterGroup(g.key);
+  if (g && !soloUnit(g) && view.group !== g.key) await enterGroup(g.key);
   openUnitModal(key);
 }
 function teacherIslandBox(unit) {
@@ -3458,7 +3474,7 @@ function islandsAdminHtml() {
       <button class="btn-accent" onclick="openAllIslands()">🔓 全部開放</button>
       <span style="align-self:center; font-size:.86rem">目前開放 ${WORLD.flatMap(s => s.units).filter(u => !c.includes(u.key)).length}／${WORLD.flatMap(s => s.units).length} 座島</span></div>
     ${WORLD.filter(s => unitGroups(s)).length ? `<div class="isl-subj"><div class="isl-head"><b>🏝️ 群島名稱</b><small style="opacity:.75">單元多的科目會先分成群島；空白就用系統取的名字</small></div>
-      <div class="grp-name-grid">${WORLD.filter(s => unitGroups(s)).flatMap(s => unitGroups(s).filter(g => g.key !== "其他" && g.units.length > 1).map(g => `<label class="grp-name-row"><span>${s.icon} ${escapeHtml(g.key)}・</span>
+      <div class="grp-name-grid">${WORLD.filter(s => unitGroups(s)).flatMap(s => unitGroups(s).filter(g => g.key !== "其他" && !soloUnit(g)).map(g => `<label class="grp-name-row"><span>${s.icon} ${escapeHtml(g.key)}・</span>
         <input maxlength="20" data-gk="${escapeHtml(groupNameKey(s, g.key))}" value="${escapeHtml((rulesNow().groupNames || {})[groupNameKey(s, g.key)] || "")}" placeholder="${escapeHtml(g.auto)}"></label>`)).join("")}</div>
       <button class="btn-accent" style="margin-top:8px" onclick="saveGroupNames()">💾 儲存群島名稱</button></div>` : ""}
     ${WORLD.filter(s => s.units.length).map(s => `<div class="isl-subj"><div class="isl-head"><b>${s.icon} ${escapeHtml(s.key)}</b>
