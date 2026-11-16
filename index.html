@@ -538,6 +538,25 @@
   .mail-badge[hidden] { display: none; }
   /* 學校班級標籤、使用規範 */
   .class-row { display: grid; gap: 4px; }
+  /* 計算紙 */
+  .scratch-btn { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 10px; padding: 7px 14px; border-radius: 999px; font-weight: 800; font-size: .88rem;
+    background: #fef3c7; color: #92400e; border: 2px dashed #f59e0b; box-shadow: none; cursor: pointer; }
+  .scratch { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: #fffdf5;
+    padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+  .scratch[hidden] { display: none; }
+  .sc-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #1e293b; color: #fff; }
+  .sc-title { margin-right: 4px; font-size: 1rem; }
+  .sc-bar button { border: none; box-shadow: none; cursor: pointer; border-radius: 10px; padding: 7px 11px; font-weight: 800; font-size: .88rem; background: #334155; color: #fff; min-height: 38px; }
+  .sc-tool { width: 42px; display: grid; place-items: center; }
+  .sc-tool i { display: block; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; }
+  .sc-tool.on { background: #f59e0b !important; color: #1e293b !important; }
+  .sc-close { margin-left: auto; background: #f59e0b !important; color: #1e293b !important; }
+  .sc-q { max-height: 24vh; overflow: auto; padding: 8px 14px; font-size: .95rem; line-height: 1.6; color: #1e293b; background: #fef9c3; border-bottom: 2px solid #fde68a; white-space: pre-line; }
+  .sc-q img { display: block; max-height: 16vh; max-width: 100%; margin-top: 6px; }
+  .sc-paper { position: relative; flex: 1; min-height: 0;
+    background-color: #fffdf5; background-image: linear-gradient(#e0e7ff 1px, transparent 1px), linear-gradient(90deg, #e0e7ff 1px, transparent 1px); background-size: 28px 28px; }
+  #scratch-cv { position: absolute; inset: 0; touch-action: none; cursor: crosshair; }
+  body.scratch-open { overflow: hidden; }
   .dash-class-tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; font-size: .8rem; }
   .dash-class-tabs button { padding: 3px 10px; font-size: .78rem; }
   .dash-class-tabs small { opacity: .7; }
@@ -936,6 +955,20 @@
 </div>
 <div class="modal-overlay" id="report-modal">
   <div class="modal-box" style="max-width:540px"><button class="close-btn" onclick="closeModal('report-modal')" aria-label="關閉">✕</button><div id="report-content"></div></div>
+</div>
+<div id="scratch" class="scratch" hidden>
+  <div class="sc-bar">
+    <b class="sc-title">✏️ 計算紙</b>
+    <button class="sc-tool" data-tool="pen" data-color="#1e293b" onclick="setScratchTool('pen','#1e293b')" title="黑筆"><i style="background:#1e293b"></i></button>
+    <button class="sc-tool" data-tool="pen" data-color="#2563eb" onclick="setScratchTool('pen','#2563eb')" title="藍筆"><i style="background:#2563eb"></i></button>
+    <button class="sc-tool" data-tool="pen" data-color="#dc2626" onclick="setScratchTool('pen','#dc2626')" title="紅筆"><i style="background:#dc2626"></i></button>
+    <button class="sc-tool" data-tool="eraser" onclick="setScratchTool('eraser')" title="橡皮擦">🧽</button>
+    <button class="sc-act" onclick="scratchUndo()" title="復原上一筆">↶ 復原</button>
+    <button class="sc-act" onclick="scratchClear()" title="整張擦乾淨">🗑️ 清除</button>
+    <button class="sc-close" onclick="closeScratch()">✕ 關閉</button>
+  </div>
+  <div id="scratch-q" class="sc-q"></div>
+  <div class="sc-paper"><canvas id="scratch-cv"></canvas></div>
 </div>
 <div class="modal-overlay" id="conduct-modal">
   <div class="modal-box" style="max-width:620px"><button class="close-btn conduct-x" onclick="closeModal('conduct-modal')" aria-label="關閉">✕</button><div id="conduct-content"></div></div>
@@ -1640,7 +1673,7 @@ function subjOfPlaceId(id) {
 function store(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
 function load(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } }
 function openModal(id) { document.getElementById(id).classList.add("open"); }
-function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal") stopSpeak(); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); if (id === "quiz-modal") { stopSpeak(); const sc = document.getElementById("scratch"); if (sc && !sc.hidden) closeScratch(); } }
 function seatEmoji(seat) { const n = parseInt(seat, 10); return n ? SEAT_EMOJI[(n - 1) % SEAT_EMOJI.length] : "🧑‍🏫"; }
 function shortName(name) { return String(name).replace(/^\d{3}(?=\D)/, ""); }
 
@@ -1666,6 +1699,7 @@ const DEMO_ROSTER = [
 ];
 
 async function boot() {
+  bindScratch();
   if (load(NIGHT_KEY, false)) document.body.classList.add("night");
   if (FINAL) {
     document.body.classList.add("season-final", "night");
@@ -3784,6 +3818,7 @@ function renderQuestion() {
     ${listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject, q.unit)}</h3>
+    ${scratchBtnHtml(q)}
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>
     <div id="feedback-box" style="margin-top:12px;"></div>
     ${reportRowHtml()}`;
@@ -3843,6 +3878,7 @@ function submitAnswer(choice) {
 }
 
 function nextQuestion() {
+  if (!document.getElementById("scratch").hidden) closeScratch();
   if (quizState.locked) { finishQuiz(true); return; }
   if (quizState.mode === "練習" && !isTrial() && stats.pending.length >= LOCK_LIMIT) {
     finishQuiz(true);
@@ -5117,6 +5153,87 @@ function finishTimeUp() {
 async function conductOp(op, name) {
   try { await bridgeCall(op, { name }); toast(op === "unmute" ? "🔊 已解除禁言" : "⏱️ 今天的使用時間已歸零"); renderBridge(); }
   catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+// =========================================================
+// 計算紙：數學題可以打開一張格線紙，用手指、觸控筆或滑鼠演算
+// 每題的筆跡留在記憶體，關掉再打開還在；換下一題就是新的一張
+// =========================================================
+const scratch = { qid: null, pages: {}, tool: "pen", color: "#1e293b", size: 3, drawing: null, ro: null };
+function isMathQ(q) { return !!q && (q.subject === "數學" || (q.subject === "武林大會" && /^數學/.test(q.unit || ""))); }
+function scratchBtnHtml(q) {
+  if (!isMathQ(q)) return "";
+  const has = (scratch.pages[q.id] || []).length;
+  return `<button class="scratch-btn" onclick="openScratch()" title="打開計算紙，可以用手指或筆演算">✏️ 計算紙${has ? "（有筆跡）" : ""}</button>`;
+}
+function openScratch() {
+  const q = quizState && quizState.questions[quizState.idx];
+  if (!q) return;
+  scratch.qid = q.id;
+  const img = questionImageUrl(q);
+  document.getElementById("scratch-q").innerHTML = `<b>Q${quizState.idx + 1}.</b> ${mathHtml(q.q, q.subject, q.unit)}${img ? `<img src="${escapeHtml(img)}" alt="題目附圖">` : ""}`;
+  document.getElementById("scratch").hidden = false;
+  document.body.classList.add("scratch-open");
+  setScratchTool(scratch.tool, scratch.color);
+  requestAnimationFrame(sizeScratch);
+}
+function closeScratch() {
+  document.getElementById("scratch").hidden = true;
+  document.body.classList.remove("scratch-open");
+  // 題目上的按鈕顯示「有筆跡」
+  const b = document.querySelector("#quiz-content .scratch-btn");
+  const q = quizState && quizState.questions[quizState.idx];
+  if (b && q) b.outerHTML = scratchBtnHtml(q);
+}
+function scratchStrokes() { return scratch.pages[scratch.qid] || (scratch.pages[scratch.qid] = []); }
+function sizeScratch() {
+  const cv = document.getElementById("scratch-cv"), box = cv.parentElement;
+  const dpr = window.devicePixelRatio || 1, w = box.clientWidth, h = box.clientHeight;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.width = w + "px"; cv.style.height = h + "px";
+  redrawScratch();
+}
+function redrawScratch() {
+  const cv = document.getElementById("scratch-cv"), cx = cv.getContext("2d"), dpr = window.devicePixelRatio || 1;
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, cv.width, cv.height); cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  scratchStrokes().forEach(s => drawStroke(cx, s));
+}
+function drawStroke(cx, s) {
+  cx.save();
+  cx.globalCompositeOperation = s.erase ? "destination-out" : "source-over";
+  cx.strokeStyle = s.color; cx.lineWidth = s.size; cx.lineCap = "round"; cx.lineJoin = "round";
+  cx.beginPath();
+  s.pts.forEach((p, i) => i ? cx.lineTo(p[0], p[1]) : cx.moveTo(p[0], p[1]));
+  if (s.pts.length === 1) cx.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
+  cx.stroke(); cx.restore();
+}
+function setScratchTool(tool, color) {
+  scratch.tool = tool;
+  if (color) scratch.color = color;
+  document.querySelectorAll("#scratch .sc-tool").forEach(b => b.classList.toggle("on", b.dataset.tool === tool && (tool === "eraser" || b.dataset.color === scratch.color)));
+}
+function scratchUndo() { scratchStrokes().pop(); redrawScratch(); }
+function scratchClear() { scratch.pages[scratch.qid] = []; redrawScratch(); }
+function bindScratch() {
+  const cv = document.getElementById("scratch-cv");
+  const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener("pointerdown", e => {
+    e.preventDefault(); cv.setPointerCapture(e.pointerId);
+    const erase = scratch.tool === "eraser";
+    scratch.drawing = { erase, color: scratch.color, size: erase ? 26 : (e.pointerType === "pen" ? 2.5 : scratch.size), pts: [pt(e)], id: e.pointerId };
+    scratchStrokes().push(scratch.drawing);
+    redrawScratch();
+  });
+  cv.addEventListener("pointermove", e => {
+    const d = scratch.drawing; if (!d || d.id !== e.pointerId) return;
+    e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    evs.forEach(ev => d.pts.push(pt(ev)));
+    const cx = cv.getContext("2d"); const dpr = window.devicePixelRatio || 1; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawStroke(cx, { erase: d.erase, color: d.color, size: d.size, pts: d.pts.slice(-evs.length - 1) });
+  });
+  const end = e => { if (scratch.drawing && scratch.drawing.id === e.pointerId) scratch.drawing = null; };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  window.addEventListener("resize", () => { if (!document.getElementById("scratch").hidden) sizeScratch(); });
 }
 function demoBridge(op, d) {
   const K = "508_DEMO_BRIDGE", db = load(K, { rules: null, dms: [], pace: [], unl: {} });
