@@ -5315,7 +5315,9 @@ async function resolveReport(i, status) {
 // =========================================================
 const HOME_SCHOOL = "北辰國小", HOME_CLASS = "508";
 function accOf(name) { return rosterList.find(a => a.name === name) || {}; }
-function orgOf(name) { const a = accOf(name); return { school: a.school || HOME_SCHOOL, cls: a.cls || HOME_CLASS }; }
+// 班級：「帳號」工作表的「班級」欄；沒填的話，看名字開頭的三位數（502陳楹筑 → 502）；都沒有就是 508
+function clsFromName(name) { const m = String(name || "").match(/^(\d{3})(?!\d)/); return m ? m[1] : ""; }
+function orgOf(name) { const a = accOf(name); return { school: a.school || HOME_SCHOOL, cls: a.cls || clsFromName(a.name || name) || HOME_CLASS }; }
 function schoolShort(s) { return String(s).replace(/(國民)?小學$|國小$/, ""); }
 function orgLabel(name) { const o = orgOf(name); return `${schoolShort(o.school)} ${o.cls}`; }
 function multiOrg() { return new Set(rosterList.filter(a => a.role === "student").map(a => orgLabel(a.name))).size > 1; }
