@@ -628,6 +628,11 @@
   .dict-opts .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; background: rgba(14,165,233,.15); }
   .dict-send { width: 100%; padding: 13px; margin-top: 12px; font-size: 1.05rem; }
   .dict-res { margin-top: 6px; line-height: 1.8; }
+  .ext-tag { display: inline-block; margin-top: 3px; padding: 2px 8px; border-radius: 999px; font-size: .78rem; font-weight: 800; background: rgba(245,158,11,.18); color: #b45309; }
+  body.night .ext-tag, body.season-final .ext-tag { color: #fcd34d; }
+  .ext-panel { border: 2px solid rgba(245,158,11,.55); background: rgba(245,158,11,.08); border-radius: 14px; padding: 12px 14px; margin: 8px 0 12px; }
+  .ext-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; font-weight: 700; }
+  .ext-row select, .ext-row input { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); font: inherit; font-weight: 500; }
   /* 題目回報 */
   .report-row { text-align: right; margin-top: 8px; }
   .report-link { background: none; border: none; box-shadow: none; color: var(--ink-soft); font-size: .8rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
@@ -1932,7 +1937,7 @@ async function boot() {
   }
   const saved = (() => { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch (e) { return null; } })();
   if (saved && saved.user) {
-    if (saved.user.role === "student" && !isOpenNow()) { try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {} setStatus(closedText()); return; }
+    if (saved.user.role === "student" && !isOpenNow(validExt(saved.user.ext))) { try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {} setStatus(closedText(validExt(saved.user.ext))); return; }
     session = saved; await enterApp();
   }
 }
@@ -2003,7 +2008,7 @@ async function doLogin() {
   if (!name) { err.textContent = role === "teacher" ? "請先選擇老師帳號" : "請先選擇班級和名字"; return; }
   if (!password) { err.textContent = "請輸入密碼"; return; }
   err.textContent = "";
-  if (role === "student" && !isOpenNow()) { err.textContent = closedText(); return; }
+  if (role === "student" && DEMO && !isOpenNow(demoExtOf(name))) { err.textContent = closedText(demoExtOf(name)); return; }
   btn.disabled = true;
   btn.textContent = "⏳ 驗證中…";
   try {
@@ -2011,6 +2016,7 @@ async function doLogin() {
       const acc = rosterList.find(a => a.name === name);
       if (role === "student") { const st = demoUsage(name, 0); if (st.lock) throw new Error(st.lock.text); }
       session = { token: "demo", user: { role, name, seat: acc.seat, child: role === "parent" ? name.replace(/家長$/, "") : role === "student" ? name : "" } };
+      if (role === "student") session.user.ext = demoExtOf(name);
       if (role === "teacher") { session.user.cls = accClass(acc); session.user.admin = session.user.cls === HOME_CLASS; }
     } else {
       session = await api("login", { role, name, password });
@@ -4664,8 +4670,19 @@ const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
 function hmNow() { const d = new Date(); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
-function isOpenNow() { const r = openRules(), hm = hmNow(); return hm >= r.openStart && hm < r.openEnd; }
-function closedText() { const r = openRules(); return `⏰ 系統開放時間是每天 ${r.openStart}～${r.openEnd}，現在休息中，明天再來喔！`; }
+// 老師可以幫個別學生延長（例如安親班比較晚回家）：ext = { end: "23:00", plus: 30, until: "2026-11-24", note }
+function validExt(e) { return e && (!e.until || nowStr().slice(0, 10) <= e.until) ? e : null; }
+function myExt() { return session && session.user.role === "student" ? validExt(session.user.ext) : null; }
+function endFor(ext) { const r = openRules(), e = validExt(ext); return e && e.end && e.end > r.openEnd ? e.end : r.openEnd; }
+function isOpenNow(ext = myExt()) { const r = openRules(), hm = hmNow(); return hm >= r.openStart && hm < endFor(ext); }
+function closedText(ext = myExt()) { const r = openRules(); return `⏰ 系統開放時間是每天 ${r.openStart}～${endFor(ext)}，現在休息中，明天再來喔！`; }
+function extText(e) {
+  if (!e) return "";
+  const parts = [];
+  if (e.end) parts.push(`開放到 ${e.end}`);
+  if (e.plus) parts.push(`每天多 ${e.plus} 分鐘`);
+  return parts.join("、") + (e.until ? `（到 ${e.until.slice(5).replace("-", "/")}）` : "");
+}
 function hmMinus(hm, min) { const [h, m] = hm.split(":").map(Number), t = (h * 60 + m - min + 1440) % 1440; return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0"); }
 let hoursTimer = null;
 function startHoursWatch() {
@@ -4673,9 +4690,9 @@ function startHoursWatch() {
   if (!session || session.user.role !== "student") return;
   const check = () => {
     if (!session || session.user.role !== "student") return clearInterval(hoursTimer);
-    const r = openRules(), hm = hmNow(), day = nowStr().slice(0, 10);
+    const end = endFor(myExt()), hm = hmNow(), day = nowStr().slice(0, 10) + "@" + end;
     if (!isOpenNow()) { clearInterval(hoursTimer); forceClose(); return; }
-    if (hm >= hmMinus(r.openEnd, 5) && load("508_CLOSE_WARN", "") !== day) { store("508_CLOSE_WARN", day); showCloseWarn(r.openEnd); }
+    if (hm >= hmMinus(end, 5) && load("508_CLOSE_WARN", "") !== day) { store("508_CLOSE_WARN", day); showCloseWarn(end); }
   };
   check(); hoursTimer = setInterval(check, 15000);
 }
@@ -4685,8 +4702,9 @@ function showCloseWarn(end) {
 }
 function forceClose() {
   closeModal("close-warn-modal");
+  const msg = closedText();
   logout();
-  setStatus(closedText());
+  setStatus(msg);
 }
 
 function bridgeCall(op, data = {}) { return DEMO ? Promise.resolve(demoBridge(op, data)) : api("bridge", Object.assign({ op }, data)); }
@@ -4713,6 +4731,13 @@ function pirateStatusText(r = rulesNow()) {
 /** 每 4 秒的回報帶回來的：未讀私訊、老師解除扣押、航海規則 */
 function applyBridgePulse(p) {
   if (!p || !session) return;
+  if (session.user.role === "student" && "ext" in p && JSON.stringify(p.ext || null) !== JSON.stringify(session.user.ext || null)) {
+    const had = session.user.ext;
+    session.user.ext = p.ext || null;
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
+    if (p.ext && !had) toast(`⏰ 老師幫你延長了上線時間：${extText(p.ext)}`, 6000);
+    useState.info && usageReport(0);
+  }
   if (session.user.role === "teacher" && typeof p.admin === "boolean" && session.user.admin !== p.admin) {
     session.user.admin = p.admin; session.user.cls = p.cls;
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
@@ -4826,10 +4851,13 @@ async function renderBridge() {
       set(`<div class="lore-box" style="font-size:.88rem">學生第一次登入要讀完並同意「使用規範」。聊天室裡不友善的字詞、電話和 LINE 等聯絡方式會被擋下、記在試算表「違規紀錄」，並私訊通知您；同一天 3 次會禁言 24 小時。<br>
         使用時間：連續最多 ${d.limits.session / 60} 分鐘、每天最多 ${d.limits.daily / 60} 分鐘（在「航海規則」調整）。</div>
         <h3 style="margin:12px 0 6px">⏱️ 今天的使用時間</h3>
+        <div style="font-size:.84rem; opacity:.85; margin-bottom:6px">有學生安親班比較晚回家？按「⏰ 延長」可以幫他把關閉時間往後延、或每天多一點時間，只對這位學生有效，到期自動恢復。</div>
+        <div id="ext-panel"></div>
         <div class="dash-table-wrap"><table><thead><tr><th>學生</th><th>今天</th><th>連續</th><th>狀態</th><th></th></tr></thead><tbody>
-        ${d.people.sort((a, b) => b.today - a.today).map(p => `<tr><td>${escapeHtml(shortName(p.name))} ${orgTag(p.name, true)}</td><td>${mm(p.today)} 分</td><td>${mm(p.cont)} 分</td>
-          <td>${p.lock === "daily" ? "⛔ 今天已用完" : p.lock === "session" ? "☕ 休息中" : ""}${p.muted ? ` 🔇 禁言到 ${escapeHtml(p.muted)}` : ""}</td>
-          <td style="white-space:nowrap">${p.muted ? `<button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='conductOp("unmute", ${JSON.stringify(p.name)})'>解除禁言</button>` : ""}
+        ${d.people.sort((a, b) => (b.ext ? 1 : 0) - (a.ext ? 1 : 0) || b.today - a.today).map(p => `<tr><td>${escapeHtml(shortName(p.name))} ${orgTag(p.name, true)}</td><td>${mm(p.today)} 分</td><td>${mm(p.cont)} 分</td>
+          <td>${p.lock === "daily" ? "⛔ 今天已用完" : p.lock === "session" ? "☕ 休息中" : ""}${p.muted ? ` 🔇 禁言到 ${escapeHtml(p.muted)}` : ""}${p.ext ? `<div class="ext-tag">⏰ ${escapeHtml(extText(p.ext))}${p.ext.note ? `・${escapeHtml(p.ext.note)}` : ""}</div>` : ""}</td>
+          <td style="white-space:nowrap"><button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='openExtend(${JSON.stringify(p.name)}, ${escapeHtml(JSON.stringify(p.ext || null))})'>⏰ 延長</button>
+          ${p.muted ? `<button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='conductOp("unmute", ${JSON.stringify(p.name)})'>解除禁言</button>` : ""}
           ${p.today ? `<button class="btn-ghost" style="padding:3px 8px; font-size:.78rem" onclick='conductOp("resetUsage", ${JSON.stringify(p.name)})'>時間歸零</button>` : ""}</td></tr>`).join("")}
         </tbody></table></div>
         <h3 style="margin:14px 0 6px">🚫 被擋下的訊息（最近 100 筆）</h3>
@@ -5307,8 +5335,10 @@ function demoChatCheck(text) {
 const useState = { info: null, timer: null, acc: 0, lastTick: 0, warned: "", ending: false };
 function useLimits() { const r = rulesNow(); return { session: (r.sessionMin || 60) * 60, daily: (r.dailyMin || 120) * 60, rest: (r.restMin || 10) * 60 }; }
 // 示範模式：存在這台裝置（雲端由 Apps Script 計算）
+function demoExtOf(name) { return validExt(load("508_DEMO_EXT", {})[name]); }
 function demoUsage(name, add) {
-  const lim = useLimits(), today = nowStr().slice(0, 10), key = "508_DEMO_USE_" + name;
+  const lim = useLimits(), ext = demoExtOf(name); if (ext && ext.plus) lim.daily += ext.plus * 60;
+  const today = nowStr().slice(0, 10), key = "508_DEMO_USE_" + name;
   let u = load(key, {}); if (u.d !== today) u = { d: today, total: 0, cont: 0, last: 0 };
   if (add) { if ((Date.now() - (u.last || 0)) / 1000 > lim.rest) u.cont = 0; u.total += add; u.cont += add; u.last = Date.now(); store(key, u); }
   const gap = (Date.now() - (u.last || 0)) / 1000, cont = gap > lim.rest ? 0 : u.cont;
@@ -5368,6 +5398,38 @@ function finishTimeUp() {
   const msg = useState.lockText;
   logout();
   if (msg) setStatus(`<div class="lore-box" style="text-align:left">${escapeHtml(msg)}</div>`);
+}
+/** 老師幫個別學生延長上線時間 */
+function openExtend(name, cur) {
+  const r = rulesNow(), e = cur || {};
+  const ends = []; { const [h, m] = (r.openEnd || "22:00").split(":").map(Number); for (let t = h * 60 + m + 30; t <= 23 * 60 + 30; t += 30) ends.push(String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0")); }
+  const days = e.until ? Math.max(1, Math.round((new Date(e.until + "T12:00:00") - new Date(nowStr().slice(0, 10) + "T12:00:00")) / 864e5) + 1) : 1;
+  const opt = (v, label, sel) => `<option value="${v}" ${String(sel) === String(v) ? "selected" : ""}>${label}</option>`;
+  const box = document.getElementById("ext-panel");
+  if (!box) return;
+  box.innerHTML = `<div class="ext-panel"><h3 style="margin:0 0 4px">⏰ 延長上線時間</h3>
+    <p style="margin:4px 0 10px"><b>${escapeHtml(shortName(name))}</b> ${orgTag(name, true)}　<small style="opacity:.75">平常：每天 ${escapeHtml(r.openStart)}～${escapeHtml(r.openEnd)}、最多 ${r.dailyMin || 120} 分鐘</small></p>
+    <label class="ext-row">🌙 關閉時間延到 <select id="ext-end">${opt("", "不延長（" + escapeHtml(r.openEnd) + "）", e.end || "")}${ends.map(x => opt(x, x, e.end || "")).join("")}</select></label>
+    <label class="ext-row">⏱️ 每天多給 <select id="ext-plus">${[0, 15, 30, 45, 60].map(x => opt(x, x ? x + " 分鐘" : "不增加", e.plus || 0)).join("")}</select></label>
+    <label class="ext-row">📅 有效期間 <select id="ext-days">${[[1, "只有今天"], [3, "3 天"], [7, "一週"], [14, "兩週"], [30, "一個月"]].map(([v, l]) => opt(v, l, [1, 3, 7, 14, 30].includes(days) ? days : 7)).join("")}</select></label>
+    <label class="ext-row">📝 原因（選填）<input id="ext-note" maxlength="20" placeholder="例如：安親班 9 點才回家" value="${escapeHtml(e.note || "")}"></label>
+    <p style="font-size:.8rem; opacity:.75">連續 ${r.sessionMin || 60} 分鐘要休息的規定不變。學生的畫面約 5 秒內就會更新，到期自動恢復原本的時間。</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px">
+      <button class="btn-accent" style="padding:9px 18px" onclick='saveExtend(${JSON.stringify(name)})'>💾 儲存</button>
+      ${cur ? `<button class="btn-ghost" style="padding:9px 14px" onclick='saveExtend(${JSON.stringify(name)}, true)'>取消延長</button>` : ""}
+      <button class="btn-ghost" style="padding:9px 14px" onclick="document.getElementById('ext-panel').innerHTML=''">關閉</button>
+    </div></div>`;
+  box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+async function saveExtend(name, off) {
+  const end = off ? "" : document.getElementById("ext-end").value, plus = off ? 0 : Number(document.getElementById("ext-plus").value) || 0;
+  const days = Number((document.getElementById("ext-days") || {}).value) || 1, note = off ? "" : document.getElementById("ext-note").value.trim();
+  if (!off && !end && !plus) return toast("請選擇要延長關閉時間，或每天多給幾分鐘");
+  try {
+    await bridgeCall("extend", { name, end, plus, days, note });
+    toast(off || (!end && !plus) ? "已取消延長" : `⏰ 已幫 ${shortName(name)} 延長上線時間`);
+    renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
 }
 async function conductOp(op, name) {
   try { await bridgeCall(op, { name }); toast(op === "unmute" ? "🔊 已解除禁言" : "⏱️ 今天的使用時間已歸零"); renderBridge(); }
@@ -5492,11 +5554,19 @@ function demoBridge(op, d) {
   if (op === "conduct") {
     const c = load("508_DEMO_CONDUCT", { vio: [], mute: {} });
     const people = rosterList.filter(a => a.role === "student").map(a => { const st = demoUsage(a.name, 0); const m = c.mute[a.name] || 0;
-      return { name: a.name, today: st.today, cont: st.cont, lock: st.lock ? st.lock.reason : "", muted: m > Date.now() ? new Date(m).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "" }; });
+      return { name: a.name, ext: demoExtOf(a.name), today: st.today, cont: st.cont, lock: st.lock ? st.lock.reason : "", muted: m > Date.now() ? new Date(m).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "" }; });
     return { people, vio: c.vio.slice(0, 100), limits: useLimits() };
   }
   if (op === "unmute") { const c = load("508_DEMO_CONDUCT", { vio: [], mute: {} }); delete c.mute[d.name]; store("508_DEMO_CONDUCT", c); return { ok: true }; }
   if (op === "resetUsage") { try { localStorage.removeItem("508_DEMO_USE_" + d.name); } catch (e) {} return { ok: true }; }
+  if (op === "extend") {
+    const all = load("508_DEMO_EXT", {});
+    if (!d.end && !d.plus) delete all[d.name];
+    else { const u = new Date(nowStr().slice(0, 10) + "T12:00:00"); u.setDate(u.getDate() + Math.max(1, Math.min(30, d.days || 1)) - 1);
+      all[d.name] = { end: d.end || "", plus: d.plus || 0, until: u.toISOString().slice(0, 10), note: d.note || "" }; }
+    store("508_DEMO_EXT", all);
+    return { ok: true, ext: all[d.name] || null };
+  }
   if (op === "setRules") { db.rules = Object.assign({}, DEFAULT_RULES, db.rules || {}, d.rules); save(); return { rules: db.rules }; }
   if (op === "dmSend") { db.dms.push({ t: nowStr(), from: me, to: me === "老師" ? d.to : "老師", text: d.text, read: false }); save(); return thread(me === "老師" ? d.to : "老師"); }
   if (op === "dmList") {
