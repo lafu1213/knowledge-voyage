@@ -1603,6 +1603,13 @@ function guideHtml(unit) {
     <div class="guide-text">${passageSpans(q.passage, ws)}</div>
   </div>`;
 }
+/** 單字王每座小島的名字：用這一篇閱讀文章的中文標題（Unit 1 → 老城的秘密） */
+function vocabIsleName(u) {
+  if (!u || u.subject !== "單字王") return "";
+  if (u._zhName != null) return u._zhName;
+  const q = u.questions.find(x => x.passage && isEnglishPassage(x)), z = q && passageZh(q.passage);
+  return (u._zhName = z ? z[0] : "");
+}
 function readGuide() { if (GUIDE_TEXT) speakList(englishSentences(GUIDE_TEXT), PASSAGE_RATE, markSentence); }
 function passageHtml(q) {
   const read = q.subject === "單字王" && isEnglishPassage(q);
@@ -3048,7 +3055,7 @@ function renderSubject(kw) {
     }
     const u = n.unitObj, st = accStars(u), cov = unitCoverage(u), fl = flagLevel(u);
     const color = th ? shade(th.land[0], ((i % 3) - 1) * 0.12) : s.palette[(i - 1) % s.palette.length];
-    const [l1, l2] = splitUnit(u.unit);
+    const [l1, u2] = splitUnit(u.unit), zhName = vocabIsleName(u), l2 = zhName || u2;
     const maxLen = g ? (isPortrait() ? 8 : 11) : isPortrait() ? 6 : 8;
     const name = l2.length > maxLen ? l2.slice(0, maxLen) + "…" : l2;
     const matches = kw && (u.unit.includes(kw) || u.keywords.includes(kw) || u.questions.some(q => q.q.includes(kw)));
@@ -3056,7 +3063,7 @@ function renderSubject(kw) {
     return islandSvg({ id: u.key, x: n.x, y: n.y, r: n.r, seed: u.key, land: [shade(color, 0.12), shade(color, -0.22)], sand: th ? th.sand : s.sand,
       shape: Object.assign({}, shp, { points: shp.sharp ? 5 + (i % 3) : shp.points }), deco: shuffleSeeded(th ? th.deco : s.deco, u.key),
       icon: locked || islandClosed(u) ? "🔒" : u.icon, label: l1 && !isPortrait() && !g ? `${l1}・${name}` : name,
-      sub: islandClosed(u) ? "🔒 老師暫時關閉" : `${isPortrait() && l1 && !g ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
+      sub: islandClosed(u) ? "🔒 老師暫時關閉" : `${zhName ? u2 + " " : ""}${isPortrait() && l1 && !g ? l1 + " " : ""}${"⭐".repeat(st)}${"☆".repeat(3 - st)}${"🌟".repeat(cov.stars)}${"☆".repeat(3 - cov.stars)}${cov.unseen ? `　🆕未做 ${cov.unseen}${isPortrait() ? "" : `／${cov.total}`}` : `${isPortrait() ? "" : `　${u.questions.length} 題`}　✅全做過`}`,
       badge: pendingCount(q => unitKey(q.subject, q.unit) === u.key), cls: (locked ? "locked" : "") + (islandClosed(u) ? " closed-isle" : "") + (kw ? (matches ? " hit" : " dim") : "") + (fl ? " conquered" : ""),
       flag: fl, flagText: myEmoji(),
       aria: `${u.unit}，正確率 ${st} 顆星，完成度 ${cov.stars} 顆星，還有 ${cov.unseen} 題沒做過${fl === 2 ? "，已完全征服" : fl ? "，已插旗拿下" : ""}` });
@@ -3844,7 +3851,7 @@ function openUnitModal(key) {
       </div>
     </div>`;
   document.getElementById("quiz-content").innerHTML = `
-    <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}</h2>
+    <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}${vocabIsleName(unit) ? `・${escapeHtml(vocabIsleName(unit))}` : ""}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
     ${unit.subject === "單字王" ? vocabCardsHtml(unit) + guideHtml(unit) : ""}
     ${readingBoost(unit.subject, unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>${FINAL ? `答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！`

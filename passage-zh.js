@@ -1005,7 +1005,7 @@ window.PASSAGE_ZH = {
 "她在辦公桌旁的牆上釘了一根釘子，掛上一張全家福照片。"
 ],
 "The New Neighbor Last night, we got a new neighbor. She is a": [
-"新鄰居",
+"九隻貓的新鄰居",
 "昨晚，我們搬來一位新鄰居。",
 "她是一位親切的老太太。",
 "她的脖子很長，頭髮很短。",
