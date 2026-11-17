@@ -5979,7 +5979,9 @@ function lifeQuestion(seen) {
       return [`買一個 ${a} 元的便當和一杯 ${b} 元的豆漿，付了 ${pay} 元，可以找回多少錢？`, [`${pay - a - b} 元`, `${pay - a} 元`, `${pay - a - b + 10} 元`, `${a + b} 元`], `${a} ＋ ${b} ＝ ${a + b}，${pay} － ${a + b} ＝ ${pay - a - b}（元）。`]; }
   ];
   let q;
-  if (Math.random() < 0.25) q = gen[Math.floor(Math.random() * gen.length)]();
+  if (Math.random() < 0.25) {
+    for (let t = 0; t < 20; t++) { q = gen[Math.floor(Math.random() * gen.length)](); if (new Set(q[1]).size === 4) break; }   // 數字湊巧重複時重出一題
+  }
   else {
     const pool = LIFE_QS.filter(x => !seen.has(x[0]));
     q = pickRandom(pool.length ? pool : LIFE_QS);
