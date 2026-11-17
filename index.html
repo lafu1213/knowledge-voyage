@@ -604,6 +604,15 @@
   .guide-box .vocab-head button { padding: 7px 12px; font-size: .86rem; }
   .guide-tip { font-size: .84rem; line-height: 1.65; opacity: .9; margin-bottom: 8px; }
   .guide-text { white-space: pre-line; font-size: 1.02rem; line-height: 1.85; max-height: 300px; overflow-y: auto; padding: 8px 10px; border-radius: 10px; background: var(--card-solid); }
+  .pz { display: none; }
+  .passage .bi-wrap { max-height: none; overflow: visible; margin-top: 0; }
+  .bi-wrap.bi { white-space: normal; }
+  .bi-wrap.bi .ps { display: block; margin-top: 6px; }
+  .bi-wrap.bi .pz { display: block; font-size: .86em; line-height: 1.6; color: #b45309; padding-left: 10px; border-left: 3px solid rgba(245,158,11,.5); margin-bottom: 4px; }
+  body.night .bi-wrap.bi .pz, body.season-final .bi-wrap.bi .pz { color: #fcd34d; }
+  .pw-zh { display: inline-block; margin: 0 3px; padding: 0 6px; border-radius: 8px; font-size: .78em; font-weight: 800; line-height: 1.5;
+    background: #7c3aed; color: #fff; vertical-align: 1px; animation: pwPop .18s ease-out; }
+  @keyframes pwPop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
   .ps.on { background: rgba(250,204,21,.55); box-shadow: 0 0 0 2px rgba(250,204,21,.55); }
   .dict-box { border: 2px solid rgba(14,165,233,.5); background: rgba(14,165,233,.07); border-radius: 16px; padding: 12px 14px; margin: 8px 0; }
   .dict-play { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
@@ -1020,6 +1029,7 @@
 </div>
 
 <script src="demo-bank.js"></script>
+<script src="passage-zh.js"></script>
 <script>
 // =========================================================
 // 0. 設定：把 Apps Script 部署後的「網頁應用程式網址」貼在引號裡
@@ -1520,7 +1530,25 @@ function speakList(list, slow, onEach) {
 function stopSpeak() { if (typeof AUDIO_NOW !== "undefined" && AUDIO_NOW) { try { AUDIO_NOW.pause(); } catch (e) {} AUDIO_NOW = null; } if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on, .ps.on").forEach(e => e.classList.remove("on")); }
 /** 英文文章切成句子 */
 function englishSentences(text) {
-  return String(text).split(/\n+/).flatMap(line => line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
+  return String(text).split(/\n+/).flatMap(splitLine);
+}
+/** 一行英文切成句子；Mr. / Dr. / a. m. 這類縮寫不切開（passage-zh.js 的翻譯也是照這個切法一句對一句） */
+function splitLine(line) {
+  const parts = (String(line).replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean), out = [];
+  parts.forEach(x => { if (out.length && (/\b(Mr|Mrs|Ms|Dr|Mt|St)\.$/.test(out[out.length - 1]) || /^[a-z0-9,;:]/.test(x))) out[out.length - 1] += " " + x; else out.push(x); });
+  return out;
+}
+/** 單字王文章的中文翻譯（一句一句）；句數對不上（文章改過）就不提供 */
+function passageZh(text) {
+  const z = (window.PASSAGE_ZH || {})[String(text).replace(/\s+/g, " ").trim().slice(0, 60)];
+  return z && z.length === englishSentences(text).length ? z : null;
+}
+let BI_ON = false;
+function biBtnHtml(text) { return passageZh(text) ? `<button class="btn-ghost bi-btn" onclick="toggleBi()">${BI_ON ? "🀄 關閉中文" : "🀄 中英對照"}</button>` : ""; }
+function toggleBi() {
+  BI_ON = !BI_ON;
+  document.querySelectorAll(".bi-wrap").forEach(e => e.classList.toggle("bi", BI_ON));
+  document.querySelectorAll(".bi-btn").forEach(b => (b.textContent = BI_ON ? "🀄 關閉中文" : "🀄 中英對照"));
 }
 function isEnglishPassage(q) { const t = String(q.passage || ""); return t.length > 20 && (t.match(/[A-Za-z]/g) || []).length / t.length > 0.5; }
 const PASSAGE_RATE = 0.8;   // 單字王閱讀文章朗讀：中速
@@ -1541,8 +1569,10 @@ function passageSpans(text, ws) {
   const re = vocabRegex(ws);
   const mark = h => re ? h.replace(re, m => { const w = ws.find(x => wordForms(x.en).some(f => m.toLowerCase().startsWith(f.toLowerCase()))) || {};
     return `<b class="pw" data-en="${escapeHtml(w.en || m)}" data-zh="${escapeHtml(w.zh || "")}" onclick="pwTap(this)">${m}</b>`; }) : h;
-  return String(text).split(/\n/).map(line => (line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || [])
-    .map(x => x.trim()).filter(Boolean).map(s => `<span class="ps" id="ps-${k++}">${mark(escapeHtml(s))}</span>`).join(" ")).join("\n");
+  const zh = passageZh(text);
+  const body = String(text).split(/\n/).map(line => splitLine(line).map(s => { const i = k++;
+    return `<span class="ps" id="ps-${i}">${mark(escapeHtml(s))}</span>${zh ? `<span class="pz">${escapeHtml(zh[i] || "")}</span>` : ""}`; }).join(" ")).join("\n");
+  return `<div class="bi-wrap ${BI_ON ? "bi" : ""}">${body}</div>`;
 }
 /** 文章裡找出本課單字（含 -s、-ed、-ing 等變化） */
 function vocabRegex(ws) {
@@ -1550,7 +1580,13 @@ function vocabRegex(ws) {
   const alts = ws.flatMap(w => wordForms(w.en)).filter(f => f.length > 1).sort((a, b) => b.length - a.length).map(f => f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   return alts.length ? new RegExp(`\\b(?:${alts.join("|")})(?:s|es|ed|d|ing)?\\b`, "gi") : null;
 }
-function pwTap(el) { speakText(dictSay(el.dataset.en), false); if (el.dataset.zh) toast(`🔤 ${el.dataset.en}：${el.dataset.zh}`, 2200); }
+/** 點文章裡的紫色單字：念出發音，並在字的後面直接顯示中文（再點一次收起來） */
+function pwTap(el) {
+  speakText(dictSay(el.dataset.en), false);
+  const nx = el.nextElementSibling;
+  if (nx && nx.classList.contains("pw-zh")) { nx.remove(); return; }
+  if (el.dataset.zh) el.insertAdjacentHTML("afterend", `<span class="pw-zh">${escapeHtml(el.dataset.zh)}</span>`);
+}
 function unitWords(q) { const u = WORLD.flatMap(s => s.units).find(x => x.key === unitKey(q.subject, q.unit)); return u ? vocabWords(u) : []; }
 /** 單字王登島前的「文章導讀」：先把文章聽一遍、看單字在文章裡怎麼用，再開始作答 */
 let GUIDE_TEXT = "";
@@ -1562,8 +1598,8 @@ function guideHtml(unit) {
   const used = ws.filter(w => { const re = vocabRegex([w]); return re && re.test(q.passage); });
   return `<div class="guide-box">
     <div class="vocab-head"><b>📖 第 2 步：文章導讀《${escapeHtml(title)}》</b>
-      <span><button class="btn-primary" onclick="readGuide()">🔊 中速朗讀</button><button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
-    <div class="guide-tip">💡 先聽一遍文章，跟著標亮的句子讀。<b class="pw-demo">紫色的字</b>是剛剛的單字（這篇用到 ${used.length} 個），點一下可以聽發音、看中文。讀懂大意後再開始闖關，閱讀測驗就是考這一篇！</div>
+      <span><button class="btn-primary" onclick="readGuide()">🔊 中速朗讀</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
+    <div class="guide-tip">💡 先聽一遍文章，跟著標亮的句子讀。<b class="pw-demo">紫色的字</b>是剛剛的單字（這篇用到 ${used.length} 個），點一下可以聽發音、看中文。看不懂的話，按「🀄 中英對照」，每一句下面會出現中文。讀懂大意後再開始闖關，閱讀測驗就是考這一篇！</div>
     <div class="guide-text">${passageSpans(q.passage, ws)}</div>
   </div>`;
 }
@@ -1571,7 +1607,7 @@ function readGuide() { if (GUIDE_TEXT) speakList(englishSentences(GUIDE_TEXT), P
 function passageHtml(q) {
   const read = q.subject === "單字王" && isEnglishPassage(q);
   return `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary>
-    ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button><button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button>
+    ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button>
       <span style="font-size:.78rem; opacity:.75">中速朗讀，念到哪一句會標亮</span></div>` : ""}
     <div>${read ? passageSpans(q.passage, unitWords(q)) : escapeHtml(q.passage)}</div></details>`;
 }
