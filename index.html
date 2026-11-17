@@ -2996,8 +2996,12 @@ function subjectLayout(s, g) {
   nodes.forEach((n, i) => {
     let [ax, ay] = i < A.length ? A[i] : [130 + ((i - A.length) % 5) * 190, 760 + Math.floor((i - A.length) / 5) * 180];
     if (flip) ax = 1000 - ax;
-    if (isPortrait()) [ax, ay] = [ay, ax];   // 手機直式：整張圖轉成直向
-    n.x = ax + (rnd() - 0.5) * (groups ? 24 : 50);
+    if (isPortrait() && groups) {   // 手機直式的群島：左右交錯往下排，一關一層，不會擠在一起（地圖會變長，往下滑就好）
+      ax = i === 0 ? 360 : i % 2 ? 200 : 520;
+      ay = i === 0 ? 90 : 120 + i * 185;
+      if (flip && i) ax = 720 - ax;
+    } else if (isPortrait()) [ax, ay] = [ay, ax];   // 手機直式：整張圖轉成直向
+    n.x = ax + (rnd() - 0.5) * (groups ? (isPortrait() ? 50 : 24) : 50);
     n.y = ay + (rnd() - 0.5) * (groups ? 20 : 40);
     n.r = (n.dock ? 48 : n.groupObj ? 62 + Math.min(14, n.groupObj.units.length * 2.5) + rnd() * 4 : 48 + Math.min(24, n.unitObj.questions.length / 3) + rnd() * 6) * (isPortrait() ? 1.12 : 1);
     n.idx = i;
