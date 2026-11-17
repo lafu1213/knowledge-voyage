@@ -2789,7 +2789,8 @@ function flagSvg(x, y, r, level, text) {
   </g>`;
 }
 // ===== 島嶼挑戰考：島上的題目都練習過，再考一次 10 題，全對就拿到這座島全部的星星並插旗 =====
-const CHALLENGE = { size: 10, cooldownMin: 30, virtualSessions: 3 };
+const CHALLENGE = { size: 10, cooldownMin: 30, dictCooldownMin: 10, virtualSessions: 3 };   // 單字王聽寫通關考失敗後等 10 分鐘
+function cooldownOf(subject) { return subject === "單字王" ? CHALLENGE.dictCooldownMin : CHALLENGE.cooldownMin; }
 const CHALLENGE_TAG = "挑戰考：";
 function challengeKey(key) { const i = key.indexOf("｜"); return key.slice(0, i + 1) + CHALLENGE_TAG + key.slice(i + 1); }
 function conquered(u, st) { st = st || stats; return !!st && ((st.stars || {})[challengeKey(u.key)] || 0) >= 3; }
@@ -2802,7 +2803,7 @@ function challengeState(u) {
   const ck = CHALLENGE_TAG + u.unit;
   const fails = mySessions.filter(x => x.subject === u.subject && x.unit === ck);
   const last = fails.length ? fails[fails.length - 1] : null;
-  const wait = last ? Math.ceil(CHALLENGE.cooldownMin - (Date.now() - new Date(String(last.t).replace(" ", "T") + "+08:00").getTime()) / 60000) : 0;
+  const wait = last ? Math.ceil(cooldownOf(u.subject) - (Date.now() - new Date(String(last.t).replace(" ", "T") + "+08:00").getTime()) / 60000) : 0;
   if (u.virtual && u.virtual.only) {
     const n = mySessions.filter(x => x.subject === u.subject && x.unit === u.unit).length;
     return { need: Math.max(0, CHALLENGE.virtualSessions - n), needKind: "場", wait: Math.max(0, wait), tries: fails.length };
@@ -4045,7 +4046,7 @@ function finishQuiz(lockedOut) {
     <div style="text-align:center;">
       <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
       <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= need ? (isDict ? "🏁 聽寫通關考全對，通關成功！" : "🏁 挑戰考全對！") : `🏁 ${isDict ? "聽寫通關考" : "挑戰考"}答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
-      ${quizState.mode === "挑戰" && !(acc === 1 && done >= need) && !isTrial() && !lockedOut ? `<div class="flag-box">${isDict ? "聽寫通關考" : "挑戰考"}要 ${need} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${CHALLENGE.cooldownMin} 分鐘後再來挑戰！</div>` : ""}
+      ${quizState.mode === "挑戰" && !(acc === 1 && done >= need) && !isTrial() && !lockedOut ? `<div class="flag-box">${isDict ? "聽寫通關考" : "挑戰考"}要 ${need} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${cooldownOf(quizState.subject)} 分鐘後再來挑戰！</div>` : ""}
       ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
       <div class="lore-box" style="text-align:left;">
         • 答對 <b>${quizState.correctCount} / ${done}</b> 題（正確率 ${Math.round(acc * 100)}%）<br>
@@ -5509,7 +5510,7 @@ function guideSections() {
       <li>挑戰考共 <b>${CHALLENGE.size} 題</b>：一半是你做過的題目（優先挑以前錯過的），另一半由系統出新題或從島上重新抽題。</li>
       <li><b>${CHALLENGE.size} 題全部答對</b>：拿到這座島全部 6 顆星，並插上你的 👑 <b>金旗</b>！</li>
       <li>👑 <b>1200單字王島</b>的挑戰考是 <b>單字聽寫通關考</b>：系統念出這一篇的 10 個單字，每題要<b>拼出英文</b>、<b>選出中文</b>，兩個一起送出、都對才算對，全部答對才能通關。</li>
-      <li>沒有全對：答錯的題目會進錯題島，<b>${CHALLENGE.cooldownMin} 分鐘後</b>才能再挑戰。</li>
+      <li>沒有全對：答錯的題目會進錯題島，<b>${CHALLENGE.cooldownMin} 分鐘後</b>才能再挑戰（1200單字王島的聽寫通關考是 <b>${CHALLENGE.dictCooldownMin} 分鐘後</b>）。</li>
     </ol>
     <h4>🚩 插旗</h4>
     <p>通過挑戰考的小島會插上金旗，旗面是你的頭像，一眼就看得出你征服了哪些島。世界地圖的大島會寫出「🚩 已插旗幾座」，一科全部征服時旗面變成 👑。右邊的「各科大島進度」也看得到每科插旗的數量。</p>
