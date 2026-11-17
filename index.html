@@ -584,6 +584,35 @@
   .vc-zh { font-size: .86rem; opacity: .85; }
   .vc-no { position: absolute; top: 4px; left: 7px; font-size: .66rem; opacity: .55; }
   .vc-sp { position: absolute; top: 3px; right: 6px; font-size: .75rem; opacity: .6; }
+  /* 單字王：閱讀題旁的單字小表、文章朗讀、聽寫通關 */
+  .vocab-mini { border: 1px solid rgba(139,92,246,.45); background: rgba(139,92,246,.07); border-radius: 12px; padding: 6px 10px; margin: 8px 0; }
+  .vocab-mini summary { cursor: pointer; font-weight: 900; color: #6d28d9; font-size: .9rem; }
+  body.night .vocab-mini summary, body.season-final .vocab-mini summary { color: #c4b5fd; }
+  .vm-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 6px; }
+  @media (max-width: 700px) { .vm-grid { grid-template-columns: repeat(2, 1fr); } }
+  .vm { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card-solid); color: var(--ink); box-shadow: none; cursor: pointer; text-align: left; font-size: .82rem; }
+  .vm b { font-family: Georgia, "Times New Roman", serif; font-size: .95rem; }
+  .vm span { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vm:hover { box-shadow: 0 0 0 2px #a78bfa; }
+  .ps-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 6px 0 2px; }
+  .ps-bar button { padding: 5px 12px; font-size: .84rem; }
+  .ps { border-radius: 4px; transition: background .2s; }
+  .ps.on { background: rgba(250,204,21,.55); box-shadow: 0 0 0 2px rgba(250,204,21,.55); }
+  .dict-box { border: 2px solid rgba(14,165,233,.5); background: rgba(14,165,233,.07); border-radius: 16px; padding: 12px 14px; margin: 8px 0; }
+  .dict-play { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .dict-play button { padding: 9px 16px; }
+  .dict-step { font-weight: 900; margin: 10px 0 6px; }
+  .dict-input { width: 100%; box-sizing: border-box; font: 800 1.4rem Georgia, "Times New Roman", serif; letter-spacing: 1px; padding: 10px 12px; border-radius: 12px;
+    border: 2px solid var(--line); background: var(--card-solid); color: var(--ink); }
+  .dict-input:focus { outline: none; border-color: #0ea5e9; }
+  .dict-input.right { border-color: #16a34a; background: rgba(22,163,74,.1); }
+  .dict-input.wrong { border-color: #dc2626; background: rgba(220,38,38,.08); }
+  .dict-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dict-opts .option-btn { margin: 0; }
+  .dict-opts .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; background: rgba(14,165,233,.15); }
+  .dict-send { width: 100%; padding: 13px; margin-top: 12px; font-size: 1.05rem; }
+  .dict-res { margin-top: 6px; line-height: 1.8; }
   /* 題目回報 */
   .report-row { text-align: right; margin-top: 8px; }
   .report-link { background: none; border: none; box-shadow: none; color: var(--ink-soft); font-size: .8rem; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 4px 2px; }
@@ -1476,22 +1505,118 @@ function speakList(list, slow, onEach) {
   speechVoice = speechVoice || pickVoice();
   list.filter(Boolean).forEach((t, i) => {
     const u = new SpeechSynthesisUtterance(t);
-    u.lang = "en-US"; u.rate = slow ? 0.6 : 0.85;
+    u.lang = "en-US"; u.rate = typeof slow === "number" ? slow : slow ? 0.6 : 0.85;
     if (speechVoice) u.voice = speechVoice;
     if (onEach) { u.onstart = () => onEach(i); u.onend = () => onEach(-1); }
     speechSynthesis.speak(u);
   });
 }
-function stopSpeak() { if (typeof AUDIO_NOW !== "undefined" && AUDIO_NOW) { try { AUDIO_NOW.pause(); } catch (e) {} AUDIO_NOW = null; } if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on").forEach(e => e.classList.remove("on")); }
+function stopSpeak() { if (typeof AUDIO_NOW !== "undefined" && AUDIO_NOW) { try { AUDIO_NOW.pause(); } catch (e) {} AUDIO_NOW = null; } if ("speechSynthesis" in window) speechSynthesis.cancel(); document.querySelectorAll(".vc.on, .ps.on").forEach(e => e.classList.remove("on")); }
 /** 英文文章切成句子 */
 function englishSentences(text) {
   return String(text).split(/\n+/).flatMap(line => line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean);
 }
 function isEnglishPassage(q) { const t = String(q.passage || ""); return t.length > 20 && (t.match(/[A-Za-z]/g) || []).length / t.length > 0.5; }
+const PASSAGE_RATE = 0.8;   // 單字王閱讀文章朗讀：中速
 function readPassage(slow) {
   const q = quizState && quizState.questions[quizState.idx];
   if (!q || !isEnglishPassage(q)) return;
-  speakList(englishSentences(q.passage), slow);
+  speakList(englishSentences(q.passage), slow === "mid" ? PASSAGE_RATE : slow, markSentence);
+}
+/** 朗讀時把正在念的句子標亮 */
+function markSentence(i) {
+  document.querySelectorAll(".ps.on").forEach(e => e.classList.remove("on"));
+  const el = i >= 0 && document.getElementById("ps-" + i);
+  if (el) { el.classList.add("on"); try { el.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {} }
+}
+/** 文章切成一句一句的 <span>，順序和 englishSentences 一樣，朗讀時才對得上 */
+function passageSpans(text) {
+  let k = 0;
+  return String(text).split(/\n/).map(line => (line.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || [])
+    .map(x => x.trim()).filter(Boolean).map(s => `<span class="ps" id="ps-${k++}">${escapeHtml(s)}</span>`).join(" ")).join("\n");
+}
+function passageHtml(q) {
+  const read = q.subject === "單字王" && isEnglishPassage(q);
+  return `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary>
+    ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button><button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button>
+      <span style="font-size:.78rem; opacity:.75">中速朗讀，念到哪一句會標亮</span></div>` : ""}
+    <div>${read ? passageSpans(q.passage) : escapeHtml(q.passage)}</div></details>`;
+}
+/** 閱讀題、克漏字旁邊的 10 單字小表（作答時對照用，點一下聽發音） */
+let VM_OPEN = true;
+function vocabMiniHtml(q) {
+  if (q.subject !== "單字王" || q.dict || /^單字/.test(q.type || "")) return "";
+  const unit = WORLD.flatMap(s => s.units).find(u => u.key === unitKey(q.subject, q.unit));
+  const ws = unit ? vocabWords(unit) : [];
+  if (!ws.length) return "";
+  return `<details class="vocab-mini" ${VM_OPEN ? "open" : ""} ontoggle="VM_OPEN = this.open"><summary>🔤 這一篇的 ${ws.length} 個單字（點單字聽發音）</summary>
+    <div class="vm-grid">${ws.map(w => `<button class="vm" onclick="speakText(${escapeHtml(JSON.stringify(dictSay(w.en)))}, false)"><b>${escapeHtml(w.en)}</b><span>${escapeHtml(w.zh)}</span></button>`).join("")}</div></details>`;
+}
+
+// ── 單字王：聽寫通關考（系統念單字 → 拼出英文＋選出中文，兩個一起送出，都對才算對） ──
+const DICT_SAY = { "pe(physical education)": "P.E." };
+/** 一個單字可以接受的拼法：parent(s) → parent／parents；(tv) set → set／tv set；a (an) → a／an */
+function wordForms(en) {
+  const s = String(en).trim(), m = s.match(/^(.*?)\s*\(([^)]+)\)\s*(.*)$/);
+  if (!m) return [s];
+  const [, pre, inner, post] = m, join = (...p) => p.filter(Boolean).join(" ");
+  const forms = [join(pre, post)];
+  if (/\s/.test(inner)) forms.push(inner);
+  else if (pre && !/\s\(/.test(s)) forms.push(pre + inner + (post ? " " + post : ""));
+  else if (pre && !post) forms.push(inner);
+  else forms.push(join(pre, inner, post));
+  return forms.filter(Boolean);
+}
+function dictSay(en) { const f = wordForms(en); return DICT_SAY[String(en).toLowerCase()] || (/^\(/.test(String(en).trim()) ? f[f.length - 1] : f[0]); }   // (tv) set 念成 tv set
+function normSpell(s) { return String(s || "").toLowerCase().replace(/[’'.\-]/g, "").replace(/\s+/g, "").trim(); }
+function spellOk(typed, en) { const t = normSpell(typed); return !!t && wordForms(en).some(f => normSpell(f) === t); }
+function dictQuestion(unit, w) {
+  const ws = vocabWords(unit);
+  let others = shuffle(ws.filter(x => x.zh !== w.zh)).map(x => x.zh);
+  if (others.length < 3) others = others.concat(shuffle(WORLD.filter(s => s.key === unit.subject).flatMap(s => s.units).flatMap(u => vocabWords(u)).map(x => x.zh).filter(z => z !== w.zh && !others.includes(z))));
+  const zhs = shuffle([w.zh, ...others.slice(0, 3)]);
+  return { id: "dict-" + w.en.toLowerCase(), subject: unit.subject, unit: unit.unit, type: "聽寫", q: "🎧 聽寫：聽發音，拼出這個英文單字，再選出它的中文意思",
+    opts: zhs.map((z, i) => CIRCLED[i] + z), ans: zhs.indexOf(w.zh), exp: `${w.en}：${w.zh}${w.no < 9999 ? `（1200 字第 ${w.no} 個）` : ""}`,
+    dict: { en: w.en, zh: w.zh, say: dictSay(w.en) }, src: "dict" };
+}
+function findDictQuestion(id) {
+  const en = String(id).slice(5);
+  for (const s of WORLD.filter(s => s.key === "單字王")) for (const u of s.units) {
+    const w = vocabWords(u).find(x => x.en.toLowerCase() === en);
+    if (w) return dictQuestion(u, w);
+  }
+  return null;
+}
+function dictHtml(q) {
+  return `<div class="dict-box">
+    <div class="dict-play"><button class="btn-primary" onclick="speakDict(false)">🔊 再聽一次</button><button class="btn-ghost" onclick="speakDict(true)">🐢 慢速</button>
+      <span style="font-size:.8rem; opacity:.75">可以重複聽</span></div>
+    <div class="dict-step">① 拼出你聽到的英文單字</div>
+    <input id="dict-input" class="dict-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="在這裡輸入英文"
+      oninput="dictReady()" onkeydown="if (event.key === 'Enter') { event.preventDefault(); if (!document.getElementById('dict-send').disabled) sendDict(); }">
+    <div class="dict-step">② 選出它的中文意思</div>
+    <div id="opts-box" class="dict-opts">${q.opts.map((o, i) => `<button class="option-btn" onclick="pickDict(${i})">${escapeHtml(stripNum(o))}</button>`).join("")}</div>
+    <button id="dict-send" class="btn-danger dict-send" disabled onclick="sendDict()">✅ 拼字和中文一起送出</button>
+  </div>`;
+}
+function speakDict(slow) { const q = quizState && quizState.questions[quizState.idx]; if (q && q.dict) speakList([q.dict.say], slow ? 0.5 : 0.8); }
+function pickDict(i) {
+  quizState.dictPick = i;
+  document.querySelectorAll("#opts-box .option-btn").forEach((b, k) => b.classList.toggle("sel", k === i));
+  dictReady();
+}
+function dictReady() {
+  const inp = document.getElementById("dict-input"), btn = document.getElementById("dict-send");
+  if (btn) btn.disabled = !(inp && inp.value.trim() && quizState.dictPick != null);
+}
+function sendDict() {
+  const inp = document.getElementById("dict-input");
+  if (!inp || !inp.value.trim()) return toast("✏️ 先拼出你聽到的單字");
+  if (quizState.dictPick == null) return toast("👉 再選出它的中文意思");
+  quizState.dictTyped = inp.value.trim();
+  inp.disabled = true;
+  document.getElementById("dict-send").disabled = true;
+  submitAnswer(quizState.dictPick);
 }
 
 // ── 單字王：每座島先看這一篇的 10 個單字（可以點來聽發音） ──
@@ -1517,7 +1642,7 @@ function vocabCardsHtml(unit) {
       <button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
     <div class="vocab-grid">${ws.map((w, i) => `<button class="vc" id="vc-${i}" onclick="speakWord(${i})" aria-label="${escapeHtml(w.en)} ${escapeHtml(w.zh)}，點一下聽發音">
       <span class="vc-en">${escapeHtml(w.en)}</span><span class="vc-zh">${escapeHtml(w.zh)}</span>${w.no < 9999 ? `<span class="vc-no">${w.no}</span>` : ""}<span class="vc-sp">🔊</span></button>`).join("")}</div>
-    <div style="font-size:.8rem; opacity:.75; margin-top:6px">點單字卡就會念給你聽；先把 10 個單字念熟，再開始闖關！</div>
+    <div style="font-size:.8rem; opacity:.75; margin-top:6px">點單字卡就會念給你聽；先把 10 個單字念熟，再開始闖關！島上題目都練習過後，最後要通過 <b>🏁 聽寫通關考</b>（聽發音拼出英文＋選中文）才能通關。</div>
   </div>`;
 }
 let VOCAB_NOW = [];
@@ -1967,7 +2092,7 @@ const UNIT_META = {
   "Review 1 綜合複習": { icon: "🎯", lore: "<b>【Review 1 複習島】</b>Unit 1、Unit 2 的總複習：母音拼法、單字分類、回應句、對話理解、句子配中文。聽力和看圖題已改成文字題。" }
 };
 
-function findQuestion(id) { return BANK.find(q => q.id === id); }
+function findQuestion(id) { return BANK.find(q => q.id === id) || (/^dict-/.test(id) ? findDictQuestion(id) : undefined); }
 
 /** 統計一位學生：每題答幾次、錯幾次、訂正幾次、目前是否還沒訂正好（Apps Script 端有一份一樣的） */
 function aggregate(rows, sessions) {
@@ -2274,7 +2399,7 @@ function maybePirate(trigger) {
   openPirate(Math.random() < captainOdds ? "captain" : "minion");
 }
 function pirateQuestions(n) {
-  const ok = q => q && !q.passage && q.opts && q.opts.length >= 2;
+  const ok = q => q && !q.passage && !q.dict && q.opts && q.opts.length >= 2;
   const pend = shuffle(pendingQuestionObjects().filter(ok)), ever = shuffle(questionObjects(stats.wrongEver).filter(ok));
   const rest = shuffle(BANK.filter(ok));
   const out = [], seen = new Set();
@@ -2664,7 +2789,8 @@ function flagSvg(x, y, r, level, text) {
   </g>`;
 }
 // ===== 島嶼挑戰考：島上的題目都練習過，再考一次 10 題，全對就拿到這座島全部的星星並插旗 =====
-const CHALLENGE = { size: 10, cooldownMin: 30, virtualSessions: 3 };
+const CHALLENGE = { size: 10, cooldownMin: 30, dictCooldownMin: 10, virtualSessions: 3 };   // 單字王聽寫通關考失敗後等 10 分鐘
+function cooldownOf(subject) { return subject === "單字王" ? CHALLENGE.dictCooldownMin : CHALLENGE.cooldownMin; }
 const CHALLENGE_TAG = "挑戰考：";
 function challengeKey(key) { const i = key.indexOf("｜"); return key.slice(0, i + 1) + CHALLENGE_TAG + key.slice(i + 1); }
 function conquered(u, st) { st = st || stats; return !!st && ((st.stars || {})[challengeKey(u.key)] || 0) >= 3; }
@@ -2677,7 +2803,7 @@ function challengeState(u) {
   const ck = CHALLENGE_TAG + u.unit;
   const fails = mySessions.filter(x => x.subject === u.subject && x.unit === ck);
   const last = fails.length ? fails[fails.length - 1] : null;
-  const wait = last ? Math.ceil(CHALLENGE.cooldownMin - (Date.now() - new Date(String(last.t).replace(" ", "T") + "+08:00").getTime()) / 60000) : 0;
+  const wait = last ? Math.ceil(cooldownOf(u.subject) - (Date.now() - new Date(String(last.t).replace(" ", "T") + "+08:00").getTime()) / 60000) : 0;
   if (u.virtual && u.virtual.only) {
     const n = mySessions.filter(x => x.subject === u.subject && x.unit === u.unit).length;
     return { need: Math.max(0, CHALLENGE.virtualSessions - n), needKind: "場", wait: Math.max(0, wait), tries: fails.length };
@@ -2686,6 +2812,7 @@ function challengeState(u) {
 }
 /** 挑戰考出題：一半是做過的題目（優先挑以前錯過的），一半由系統出題；系統出不了題的島，就從島上題目重新抽 */
 function buildChallenge(unit) {
+  if (unit.subject === "單字王" && vocabWords(unit).length) return shuffle(vocabWords(unit).map(w => dictQuestion(unit, w)));   // 單字王：聽寫通關考
   const picked = [], used = new Set(), half = Math.ceil(CHALLENGE.size / 2);
   const take = (qs, n) => qs.forEach(q => { if (picked.length < n && q && !used.has(q.id)) { used.add(q.id); picked.push(prepareQuestion(q)); } });
   if (unit.virtual && unit.virtual.only) {
@@ -3616,10 +3743,12 @@ function islandsAdminHtml() {
 function flagBox(unit, st, cov) {
   const cs = challengeState(unit);
   if (cs.done) return `<div class="flag-box gold">👑 <b>已經征服！</b>你的金旗插在這座島上，全部 6 顆星都拿到了。</div>`;
-  const rule = `島上題目全部練習過後，就能參加 <b>🏁 島嶼挑戰考</b>：${CHALLENGE.size} 題（一半是你做過的題目，另一半由系統出新題或從島上重新抽題），<b>全部答對</b>就拿到這座島全部的星星，並插上你的旗子！平常練習最多拿到 ⭐⭐🌟🌟。`;
+  const nw = unit.subject === "單字王" ? vocabWords(unit).length : 0;
+  const rule = nw ? `島上題目全部練習過後，就能參加 <b>🏁 單字聽寫通關考</b>：系統念出這一篇的 ${nw} 個單字，每一題都要<b>拼出英文</b>、<b>選出中文</b>，兩個一起送出、都對才算對；<b>${nw} 題全部答對</b>才能通關，拿到全部星星並插上你的旗子！平常練習最多拿到 ⭐⭐🌟🌟。`
+    : `島上題目全部練習過後，就能參加 <b>🏁 島嶼挑戰考</b>：${CHALLENGE.size} 題（一半是你做過的題目，另一半由系統出新題或從島上重新抽題），<b>全部答對</b>就拿到這座島全部的星星，並插上你的旗子！平常練習最多拿到 ⭐⭐🌟🌟。`;
   if (cs.need) return `<div class="flag-box">🏳️ ${rule}<br>📘 還有 <b>${cs.need}</b> ${cs.needKind}沒練習${cs.needKind === "題" ? `<div class="bar"><i style="width:${cov.total ? Math.round(cov.done / cov.total * 100) : 0}%"></i></div>` : "。"}</div>`;
   return `<div class="flag-box ready">🏁 ${rule}${cs.tries ? `<br>已經挑戰 ${cs.tries} 次，再接再厲！` : ""}
-    <button class="btn-danger" style="width:100%; margin-top:8px; padding:12px; font-size:1.02rem" ${cs.wait ? "disabled" : ""} data-key="${escapeHtml(unit.key)}" onclick="startChallenge(this.dataset.key)">${cs.wait ? `⏳ ${cs.wait} 分鐘後可以再挑戰` : "🏁 開始島嶼挑戰考"}</button></div>`;
+    <button class="btn-danger" style="width:100%; margin-top:8px; padding:12px; font-size:1.02rem" ${cs.wait ? "disabled" : ""} data-key="${escapeHtml(unit.key)}" onclick="startChallenge(this.dataset.key)">${cs.wait ? `⏳ ${cs.wait} 分鐘後可以再挑戰` : nw ? "🏁 開始聽寫通關考" : "🏁 開始島嶼挑戰考"}</button></div>`;
 }
 function openUnitModal(key) {
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
@@ -3718,7 +3847,7 @@ function applyPace(q, choice, ok, pts) {
   if (!paceOn()) return { pts, note: "", lock: false };
   const st = paceState();
   const why = isRushed(q, choice, ok);
-  const streakOn = quizState.mode === "練習" || quizState.mode === "挑戰";
+  const streakOn = (quizState.mode === "練習" || quizState.mode === "挑戰") && !q.dict;   // 聽寫拼錯是不會拼，不算亂答連錯
   if (streakOn) st.wrongStreak = ok ? 0 : (st.wrongStreak || 0) + 1;
   let note = "", lock = false, reason = "", kind = "";
   if (why) {
@@ -3814,15 +3943,18 @@ function renderQuestion() {
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
     ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
     ${quizState.mode === "複習" ? `<div class="trial-note" style="background:#e0e7ff;color:#3730a3">📚 歷史錯題複習：答對 +${SCORE_RULES.reviewOk}，又錯 ${SCORE_RULES.reviewWrong} 並回到待訂正</div>` : ""}
-    ${q.passage ? `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary><div>${escapeHtml(q.passage)}</div></details>` : ""}
-    ${listenBoxHtml(q, true)}
+    ${q.passage ? passageHtml(q) : ""}
+    ${vocabMiniHtml(q)}
+    ${q.dict ? "" : listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
     <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject, q.unit)}</h3>
-    ${scratchBtnHtml(q)}
-    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>
+    ${q.dict ? dictHtml(q) : `${scratchBtnHtml(q)}
+    <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>`}
     <div id="feedback-box" style="margin-top:12px;"></div>
     ${reportRowHtml()}`;
-  if (hasListen(q)) setTimeout(() => speakCurrent(false), 350);
+  quizState.dictPick = null; quizState.dictTyped = "";
+  if (q.dict) { stopSpeak(); setTimeout(() => speakDict(false), 350); setTimeout(() => { const i = document.getElementById("dict-input"); if (i && matchMedia("(pointer: fine)").matches) i.focus(); }, 400); }
+  else if (hasListen(q)) setTimeout(() => speakCurrent(false), 350);
   else stopSpeak();
 }
 
@@ -3831,7 +3963,8 @@ function submitAnswer(choice) {
   quizState.lastPassage = q.passage || "";
   const btns = document.querySelectorAll("#opts-box .option-btn");
   btns.forEach(b => (b.disabled = true));
-  const ok = choice === q.ans;
+  const spellRight = q.dict ? spellOk(quizState.dictTyped, q.dict.en) : true;
+  const ok = choice === q.ans && spellRight;
   if (ok) { quizState.correctCount++; quizState.combo++; quizState.maxCombo = Math.max(quizState.maxCombo, quizState.combo); }
   else quizState.combo = 0;
   const pace = applyPace(q, choice, ok, answerPoints(q, ok, quizState.mode, quizState.combo));
@@ -3843,7 +3976,8 @@ function submitAnswer(choice) {
 
   saveRecord({
     t: nowStr(), subject: q.subject, unit: q.unit, qId: q.id, q: q.q, opts: q.opts.map(stripNum),
-    chosen: stripNum(q.opts[choice]), correctText: stripNum(q.opts[q.ans]), ok, mode: quizState.mode,
+    chosen: q.dict ? `${quizState.dictTyped || "（沒寫）"}／${stripNum(q.opts[choice])}` : stripNum(q.opts[choice]),
+    correctText: q.dict ? `${q.dict.en}／${q.dict.zh}` : stripNum(q.opts[q.ans]), ok, mode: quizState.mode,
     exp: q.exp || "", sid: quizState.sid, uid: uid(), pts
   });
   if (pace.lock) { pacePunish(pace); return; }
@@ -3856,12 +3990,16 @@ function submitAnswer(choice) {
 
   btns[q.ans].classList.add("correct");
   btns[q.ans].insertAdjacentText("beforeend", " ⬅ 正確答案");
-  if (!ok) { btns[choice].classList.add("wrong"); btns[choice].insertAdjacentText("beforeend", " ⬅ 你的選擇"); }
+  if (choice !== q.ans) { btns[choice].classList.add("wrong"); btns[choice].insertAdjacentText("beforeend", " ⬅ 你的選擇"); }
+  if (q.dict) { const inp = document.getElementById("dict-input"); if (inp) inp.classList.add(spellRight ? "right" : "wrong"); }
   const last = quizState.idx + 1 >= quizState.questions.length;
   document.getElementById("feedback-box").innerHTML = `
     <div class="lore-box" style="border-left-color:${ok ? "#16a34a" : "#dc2626"}; background:${ok ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)"}">
-      <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
-      ${q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${mathHtml(q.exp, q.subject, q.unit)}</div>` : ""}
+      <div style="font-weight:900; color:${ok ? "#15803d" : "#b91c1c"};">${ptsNote} ${ok ? (quizState.mode === "訂正" ? "🎉 訂正成功！這題已從錯題本消滅" : "🎉 答對了！觀念很清楚！") : `💡 答錯囉！正確答案是【${escapeHtml(q.dict ? `${q.dict.en}（${q.dict.zh}）` : stripNum(q.opts[q.ans]))}】${isTrial() ? "" : "（已加入錯題本）"}`}</div>
+      ${q.dict ? `<div class="dict-res">✏️ 拼字：你寫 <b>${escapeHtml(quizState.dictTyped)}</b> ${spellRight ? "✅" : `❌　正確是 <b style="font-family:Georgia,serif; font-size:1.1rem">${escapeHtml(q.dict.en)}</b>`}<br>
+        🀄 中文：你選 <b>${escapeHtml(stripNum(q.opts[choice]))}</b> ${choice === q.ans ? "✅" : `❌　正確是 <b>${escapeHtml(q.dict.zh)}</b>`}
+        <button class="btn-ghost" style="padding:4px 10px; margin-left:6px" onclick="speakDict(false)">🔊 再聽一次</button></div>`
+        : q.exp ? `<div style="margin-top:6px;">📝 <b>詳解：</b>${mathHtml(q.exp, q.subject, q.unit)}</div>` : ""}
     </div>
     ${pace.note ? `<div class="rush-warn" style="white-space:pre-line">${escapeHtml(pace.note)}</div>` : ""}
     ${lvNote}
@@ -3903,11 +4041,12 @@ function finishQuiz(lockedOut) {
   });
   const lv = getLevelInfo(stats.score);
   const stars = acc === 1 ? 3 : acc >= 0.7 ? 2 : acc >= 0.4 ? 1 : 0;
+  const isDict = quizState.questions.some(q => q.dict), need = isDict ? quizState.questions.length : CHALLENGE.size;
   document.getElementById("quiz-content").innerHTML = `
     <div style="text-align:center;">
       <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
-      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= CHALLENGE.size ? "🏁 挑戰考全對！" : `🏁 挑戰考答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
-      ${quizState.mode === "挑戰" && !(acc === 1 && done >= CHALLENGE.size) && !isTrial() && !lockedOut ? `<div class="flag-box">挑戰考要 ${CHALLENGE.size} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${CHALLENGE.cooldownMin} 分鐘後再來挑戰！</div>` : ""}
+      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= need ? (isDict ? "🏁 聽寫通關考全對，通關成功！" : "🏁 挑戰考全對！") : `🏁 ${isDict ? "聽寫通關考" : "挑戰考"}答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      ${quizState.mode === "挑戰" && !(acc === 1 && done >= need) && !isTrial() && !lockedOut ? `<div class="flag-box">${isDict ? "聽寫通關考" : "挑戰考"}要 ${need} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${cooldownOf(quizState.subject)} 分鐘後再來挑戰！</div>` : ""}
       ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
       <div class="lore-box" style="text-align:left;">
         • 答對 <b>${quizState.correctCount} / ${done}</b> 題（正確率 ${Math.round(acc * 100)}%）<br>
@@ -5370,7 +5509,8 @@ function guideSections() {
       <li>島上<b>每一題都練習過</b>以後，登島視窗會出現紅色的「🏁 開始島嶼挑戰考」按鈕（全部由程式出題的島，練習 ${CHALLENGE.virtualSessions} 場後就能挑戰）。</li>
       <li>挑戰考共 <b>${CHALLENGE.size} 題</b>：一半是你做過的題目（優先挑以前錯過的），另一半由系統出新題或從島上重新抽題。</li>
       <li><b>${CHALLENGE.size} 題全部答對</b>：拿到這座島全部 6 顆星，並插上你的 👑 <b>金旗</b>！</li>
-      <li>沒有全對：答錯的題目會進錯題島，<b>${CHALLENGE.cooldownMin} 分鐘後</b>才能再挑戰。</li>
+      <li>👑 <b>1200單字王島</b>的挑戰考是 <b>單字聽寫通關考</b>：系統念出這一篇的 10 個單字，每題要<b>拼出英文</b>、<b>選出中文</b>，兩個一起送出、都對才算對，全部答對才能通關。</li>
+      <li>沒有全對：答錯的題目會進錯題島，<b>${CHALLENGE.cooldownMin} 分鐘後</b>才能再挑戰（1200單字王島的聽寫通關考是 <b>${CHALLENGE.dictCooldownMin} 分鐘後</b>）。</li>
     </ol>
     <h4>🚩 插旗</h4>
     <p>通過挑戰考的小島會插上金旗，旗面是你的頭像，一眼就看得出你征服了哪些島。世界地圖的大島會寫出「🚩 已插旗幾座」，一科全部征服時旗面變成 👑。右邊的「各科大島進度」也看得到每科插旗的數量。</p>
@@ -5975,7 +6115,7 @@ const demo = (() => {
   function pickQuestion(subject, challenger) {
     // 第一優先：挑戰者曾經答錯的題目（示範模式只知道自己的紀錄）
     if (challenger === session.user.name) {
-      const ok = q => q && q.src !== "gen" && (!subject || q.subject === subject) && !q.passage && !q.diagram;
+      const ok = q => q && q.src !== "gen" && !q.dict && (!subject || q.subject === subject) && !q.passage && !q.diagram;
       const wrong = questionObjects(stats.wrongEver).filter(ok);
       const pend = wrong.filter(q => stats.pending.some(p => p.qId === q.id));
       const pool0 = pend.length ? pend : wrong;
