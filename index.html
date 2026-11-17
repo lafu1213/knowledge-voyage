@@ -628,6 +628,10 @@
   .dict-opts .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; background: rgba(14,165,233,.15); }
   .dict-send { width: 100%; padding: 13px; margin-top: 12px; font-size: 1.05rem; }
   .dict-res { margin-top: 6px; line-height: 1.8; }
+  details.ug { border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; padding: 0 10px 6px; background: rgba(148,163,184,.05); }
+  details.ug > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 2px; font-weight: 900; position: sticky; top: 0; }
+  details.ug > summary b { font-size: .8rem; padding: 2px 10px; border-radius: 999px; background: rgba(220,38,38,.14); color: var(--danger); white-space: nowrap; }
+  details.ug:not([open]) { padding-bottom: 0; }
   .ext-tag { display: inline-block; margin-top: 3px; padding: 2px 8px; border-radius: 999px; font-size: .78rem; font-weight: 800; background: rgba(245,158,11,.18); color: #b45309; }
   body.night .ext-tag, body.season-final .ext-tag { color: #fcd34d; }
   .ext-panel { border: 2px solid rgba(245,158,11,.55); background: rgba(245,158,11,.08); border-radius: 14px; padding: 12px 14px; margin: 8px 0 12px; }
@@ -4292,7 +4296,7 @@ function startReview() {   // 扣押中也可以練錯題
 // =========================================================
 // 10. 後台：老師看全班、家長只看自己的孩子
 // =========================================================
-let dashState = { data: null, student: null, tab: "repeated", sort: "seat", season: FINAL ? "final" : "mid" };
+let dashState = { data: null, student: null, tab: "repeated", sort: "seat", season: FINAL ? "final" : "mid", subj: "" };
 
 async function openDashboard(student) {
   const box = document.getElementById("dash-content");
@@ -4392,6 +4396,63 @@ async function showChatLog() {
   }
 }
 
+
+// ── 錯題依「科目 → 單元順序」排列：先看課次（第九課、第8單元、Unit 3…），同一課再照地圖上島的順序 ──
+const CN_DIGIT = { 零: 0, 一: 1, 二: 2, 兩: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+function cnToNum(t) {
+  t = String(t).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 65248));
+  if (/^\d+$/.test(t)) return Number(t);
+  let n = 0, cur = 0;
+  for (const c of t) {
+    if (c === "百") { n += (cur || 1) * 100; cur = 0; }
+    else if (c === "十") { n += (cur || 1) * 10; cur = 0; }
+    else if (c in CN_DIGIT) cur = CN_DIGIT[c];
+  }
+  return n + cur;
+}
+function unitNumOf(unit) {
+  const u = String(unit || "");
+  const sub = (u.match(/\d+\s*-\s*(\d+)/) || [])[1];   // 第4單元 4-2 → 4.002，同一單元的小節也照順序
+  let m = u.match(/第\s*([0-9０-９零一二兩三四五六七八九十百]+)\s*[課單關回章冊]/);
+  if (m) return cnToNum(m[1]) + (sub ? Number(sub) / 1000 : 0);
+  if ((m = u.match(/unit\s*(\d+)/i))) return Number(m[1]);
+  if ((m = u.match(/^\s*(\d+)/))) return Number(m[1]);
+  return null;
+}
+let UNIT_POS = null;
+function unitPos(subject, unit) {
+  if (!UNIT_POS || UNIT_POS.n !== BANK.length) { const m = {}; let i = 0; WORLD.forEach(sb => sb.units.forEach(u => { m[u.key] = i++; })); UNIT_POS = { n: BANK.length, m }; }
+  const k = unitKey(subject, unit);
+  return k in UNIT_POS.m ? UNIT_POS.m[k] : 1e6;
+}
+function subjPos(subject) { const i = WORLD.findIndex(sb => sb.key === subject); return i < 0 ? 99 : i; }
+function unitCmp(a, b) {
+  const na = unitNumOf(a.unit), nb = unitNumOf(b.unit);
+  return subjPos(a.subject) - subjPos(b.subject)
+    || (na == null ? 1e6 : na) - (nb == null ? 1e6 : nb)
+    || unitPos(a.subject, a.unit) - unitPos(b.subject, b.unit)
+    || byNum(a.unit, b.unit);
+}
+/** 把一串題目照「科目 → 單元」分組，每組裡面照 inner 排序 */
+function groupByUnit(list, inner) {
+  const map = new Map();
+  list.forEach(q => { const k = q.subject + "｜" + q.unit; if (!map.has(k)) map.set(k, { subject: q.subject, unit: q.unit, items: [] }); map.get(k).items.push(q); });
+  const groups = [...map.values()].sort(unitCmp);
+  if (inner) groups.forEach(g => g.items.sort(inner));
+  return groups;
+}
+function subjIcon(subject) { const sb = WORLD.find(x => x.key === subject); return sb ? sb.icon : "📘"; }
+/** 分組後的 HTML：每個單元一個可收合的區塊 */
+function unitGroupsHtml(list, rowFn, inner, showSubject) {
+  return groupByUnit(list, inner).map(g => `<details class="ug" open><summary><span>${showSubject ? `${subjIcon(g.subject)} ${escapeHtml(g.subject)}・` : ""}${escapeHtml(g.unit)}</span><b>${g.items.length} 題</b></summary>
+    ${g.items.map(rowFn).join("")}</details>`).join("");
+}
+/** 分科按鈕：全部＋有題目的科目（照地圖順序），後面帶題數 */
+function subjChips(list, cur, js) {
+  const subs = [...new Set(list.map(q => q.subject))].sort((a, b) => subjPos(a) - subjPos(b));
+  const b = (on, label, v) => `<button class="${on ? "btn-primary" : "btn-ghost"}" style="padding:4px 12px; font-size:.82rem" onclick="${js.replace("$V", escapeHtml(JSON.stringify(v)))}">${label}</button>`;
+  return `<div class="mk-bar">${subs.map(sb => b(cur === sb, `${subjIcon(sb)} ${escapeHtml(sb)}（${list.filter(q => q.subject === sb).length}）`, sb)).join("")}${b(cur === "全部", `全部（${list.length}）`, "全部")}</div>`;
+}
 const DASH_TABS = [
   ["repeated", "🔁 一錯再錯"], ["pending", "👾 還沒訂正"], ["wrongEver", "❌ 答錯過的題目"], ["right", "✅ 答對的題目"], ["units", "📚 各科單元"]
 ];
@@ -4411,14 +4472,21 @@ function detailHtml(det) {
   const tab = dashState.tab;
   let body;
   if (tab === "units") {
-    const islands = WORLD.flatMap(s => s.units).map(u => ({ u, a: (st.stars || {})[u.key] || 0, c: unitCoverage(u, { byId }) }));
-    body = `<div class="lore-box" style="font-size:.86rem"><b>各島星星</b><br>${islands.map(x => `<span style="display:inline-block; margin:2px 10px 2px 0">${escapeHtml(x.u.subject)}・${escapeHtml(x.u.unit)} ${"⭐".repeat(x.a)}${"🌟".repeat(x.c.stars)}${x.a + x.c.stars ? "" : "—"}</span>`).join("")}</div>` + (st.units.length ? st.units.map(u => {
+    const islands = WORLD.flatMap(s => s.units).slice().sort(unitCmp).map(u => ({ u, a: (st.stars || {})[u.key] || 0, c: unitCoverage(u, { byId }) }));
+    body = `<div class="lore-box" style="font-size:.86rem"><b>各島星星</b><br>${islands.map(x => `<span style="display:inline-block; margin:2px 10px 2px 0">${escapeHtml(x.u.subject)}・${escapeHtml(x.u.unit)} ${"⭐".repeat(x.a)}${"🌟".repeat(x.c.stars)}${x.a + x.c.stars ? "" : "—"}</span>`).join("")}</div>` + (st.units.length ? st.units.slice().sort(unitCmp).map(u => {
       const p = Math.round(u.correct / u.total * 100);
       return `<div class="subj-row"><div><span>${escapeHtml(u.subject)}・${escapeHtml(u.unit)}</span><span>${p}%（${u.correct}/${u.total}）</span></div><div class="bar"><i style="width:${p}%; background:${p < 65 ? "#dc2626" : ""}"></i></div></div>`;
     }).join("") : `<div class="empty-note">還沒有作答紀錄</div>`);
   } else {
     const list = lists[tab];
-    body = list.length ? list.map(qRowHtml).join("") : `<div class="empty-note">${tab === "repeated" ? "太棒了，沒有一錯再錯的題目！" : tab === "pending" ? "錯題都訂正完了！" : "還沒有資料"}</div>`;
+    // 分科：預設選第一科；選「全部」時一樣照科目→單元分組
+    const subs = [...new Set(list.map(q => q.subject))];
+    if (subs.length && dashState.subj !== "全部" && !subs.includes(dashState.subj)) dashState.subj = subs.sort((a, b) => subjPos(a) - subjPos(b))[0] || "全部";   // 預設從地圖上第一科開始
+    const shown = list.filter(q => dashState.subj === "全部" || q.subject === dashState.subj);
+    const inner = tab === "right" ? null : (a, b) => b.wrong - a.wrong;
+    body = list.length ? subjChips(list, dashState.subj, "dashState.subj=$V; renderDashboard();") +
+        `<p style="font-size:.8rem; opacity:.75; margin:2px 0 8px">依單元順序排列，點單元名稱可以收合。</p>` + unitGroupsHtml(shown, qRowHtml, inner, dashState.subj === "全部")
+      : `<div class="empty-note">${tab === "repeated" ? "太棒了，沒有一錯再錯的題目！" : tab === "pending" ? "錯題都訂正完了！" : "還沒有資料"}</div>`;
   }
   return `
     <h3 style="margin:18px 0 4px;">📌 ${escapeHtml(det.seat)} 號 ${escapeHtml(shortName(det.name))} ${lvPill(st.score)} <span style="font-size:.85rem">${escapeHtml(lvInfo.title)}</span></h3>
@@ -4660,7 +4728,7 @@ const net = {
 // =========================================================
 // 11. 老師艦橋（期末）：航海規則、發金幣、私訊、亂答紀錄、分科錯題
 // =========================================================
-const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "全部", unit: "全部", sort: "wrong",
+const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "", unit: "全部", sort: "wrong",
   peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set(),
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"]];
@@ -5039,13 +5107,13 @@ function mistakeCard(q, compact) {
 }
 function mistakesHtml() {
   const all = bridgeState.mistakes || [];
-  const subjects = ["全部", ...new Set(all.map(q => q.subject))];
-  if (!subjects.includes(bridgeState.subject)) bridgeState.subject = "全部";
+  const subjects = ["全部", ...[...new Set(all.map(q => q.subject))].sort((a, b) => subjPos(a) - subjPos(b))];
+  if (!subjects.includes(bridgeState.subject)) bridgeState.subject = subjects[1] || "全部";   // 預設先看第一科，不要全部混在一起
   const inSubj = all.filter(q => bridgeState.subject === "全部" || q.subject === bridgeState.subject);
-  const units = ["全部", ...new Set(inSubj.map(q => q.unit))];
+  const units = ["全部", ...groupByUnit(inSubj).map(g => g.unit).filter((u, i, a) => a.indexOf(u) === i)];
   if (!units.includes(bridgeState.unit)) bridgeState.unit = "全部";
-  const list = inSubj.filter(q => bridgeState.unit === "全部" || q.unit === bridgeState.unit)
-    .sort((a, b) => bridgeState.sort === "rate" ? b.wrong / b.n - a.wrong / a.n : bridgeState.sort === "unfixed" ? b.students.filter(s => !s.fixed).length - a.students.filter(s => !s.fixed).length : b.wrong - a.wrong);
+  const sorter = (a, b) => bridgeState.sort === "rate" ? b.wrong / b.n - a.wrong / a.n : bridgeState.sort === "unfixed" ? b.students.filter(s => !s.fixed).length - a.students.filter(s => !s.fixed).length : b.wrong - a.wrong;
+  const list = inSubj.filter(q => bridgeState.unit === "全部" || q.unit === bridgeState.unit);
   const btn = (on, label, js) => `<button class="${on ? "btn-primary" : "btn-ghost"}" style="padding:4px 12px; font-size:.82rem" onclick="${js}">${label}</button>`;
   return `<div class="mk-bar">
       ${btn(bridgeState.season === "final", "期末", "bridgeState.season='final'; renderBridge();")}${btn(bridgeState.season === "mid", "期中", "bridgeState.season='mid'; renderBridge();")}
@@ -5058,8 +5126,8 @@ function mistakesHtml() {
       ${btn(bridgeState.sort === "rate", "錯誤率", "bridgeState.sort='rate'; document.getElementById('bridge-body').innerHTML=mistakesHtml();")}
       ${btn(bridgeState.sort === "unfixed", "還沒訂正人數", "bridgeState.sort='unfixed'; document.getElementById('bridge-body').innerHTML=mistakesHtml();")}
     </div>
-    <p style="font-size:.82rem; opacity:.8; margin:4px 0 10px">共 ${list.length} 題。❌ 是還沒訂正好的同學、✅ 是已經訂正好的同學，×2 代表錯了 2 次。</p>
-    ${list.length ? list.map(q => mistakeCard(q)).join("") : `<div class="empty-note">這裡還沒有人答錯 👍</div>`}`;
+    <p style="font-size:.82rem; opacity:.8; margin:4px 0 10px">共 ${list.length} 題，依單元順序排列（點單元名稱可以收合）。❌ 是還沒訂正好的同學、✅ 是已經訂正好的同學，×2 代表錯了 2 次。</p>
+    ${list.length ? unitGroupsHtml(list, q => mistakeCard(q), sorter, bridgeState.subject === "全部") : `<div class="empty-note">這裡還沒有人答錯 👍</div>`}`;
 }
 async function remindUnfixed(qId) {
   const q = (bridgeState.mistakes || []).find(x => x.qId === qId);
