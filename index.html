@@ -1421,7 +1421,7 @@ const FINAL_SID = "F-";
 // 期末航海圖：五片海域與錯題島的名字（照設計稿）
 const FINAL_SEA = { 國語: "書卷群島", 數學: "齒輪海峽", 英語: "風帆港灣", 自然: "火山實驗礁", 社會: "古地圖海" };
 const WRECK = FINAL ? "沉船寶藏灣" : "錯題島", WRECK_ICON = FINAL ? "⚓" : "🌋";
-const PACE = { minSeconds: 20, fastSeconds: 3, lockMinutes: 20, doubleCount: 10, warnStreak: 6, lockStreak: 8, penaltyMin: 30 };   // 期末：每題至少停 20 秒、3 秒內作答算太快；連錯 6 題警告、8 題判定亂答
+const PACE = { minSeconds: 12, fastSeconds: 3, lockMinutes: 20, doubleCount: 10, warnStreak: 6, lockStreak: 8, penaltyMin: 30 };   // 期末：每題至少停 12 秒、3 秒內作答算太快；連錯 6 題警告、8 題判定亂答
 
 // 計分規則：答對加分、答錯扣分，一錯再錯扣更多；總分最低 0，每 100 分一級，分數掉了等級也會降
 const LEVEL_STEP = 100;
@@ -1963,7 +1963,7 @@ async function boot() {
     document.title = "寶藏海知識大冒險：五年級期末航線";
     document.querySelector(".splash-title").textContent = "寶藏海知識大冒險";
     document.querySelector(".splash-subtitle").textContent = "⚓ 五年級期末航線 ⚓";
-    document.querySelector(".splash-sub").textContent = "黑帆海盜出沒的寶藏海！每題停留 20 秒、看懂詳解，把錯題寶箱一個個撈上來。";
+    document.querySelector(".splash-sub").textContent = "黑帆海盜出沒的寶藏海！每題停留 12 秒、看懂詳解，把錯題寶箱一個個撈上來。";
     document.querySelector(".brand").innerHTML = "🏴‍☠️ 寶藏海 <small>五年級期末航線・試航版</small>";
   }
   if (DEMO) {
@@ -4037,7 +4037,7 @@ function pacePunish(pace) {
   tick(); pacePunish.t = setInterval(tick, 1000);
   renderPills();
 }
-// 「下一題」按鈕要等題目出現滿 20 秒才能按
+// 「下一題」按鈕要等題目出現滿 12 秒才能按
 function startPaceTimer() {
   if (!paceOn()) return;
   const btn = document.getElementById("next-btn"), noteEl = document.getElementById("pace-note");
