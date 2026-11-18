@@ -628,6 +628,10 @@
   .dict-opts .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; background: rgba(14,165,233,.15); }
   .dict-send { width: 100%; padding: 13px; margin-top: 12px; font-size: 1.05rem; }
   .dict-res { margin-top: 6px; line-height: 1.8; }
+  .voice-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
+  .voice-row.on { border-color: #0ea5e9; background: rgba(14,165,233,.1); }
+  .voice-row .vn { flex: 1; font-weight: 800; }
+  .voice-row .vn small { display: block; font-weight: 500; opacity: .7; font-size: .76rem; }
   details.ug { border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; padding: 0 10px 6px; background: rgba(148,163,184,.05); }
   details.ug > summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 9px 2px; font-weight: 900; position: sticky; top: 0; }
   details.ug > summary b { font-size: .8rem; padding: 2px 10px; border-radius: 999px; background: rgba(220,38,38,.14); color: var(--danger); white-space: nowrap; }
@@ -1508,11 +1512,46 @@ function questionImageHtml(q) {
 
 // ---- 英聽：用瀏覽器內建的英語朗讀念出「聽：」後面的原文 ----
 let speechVoice = null;
-function pickVoice() {
-  if (!("speechSynthesis" in window)) return null;
-  const vs = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
-  return vs.find(v => /en[-_]US/i.test(v.lang) && /Google|Samantha|Microsoft|Natural/i.test(v.name)) || vs.find(v => /en[-_]US/i.test(v.lang)) || vs[0] || null;
+// 裝置上的英語聲音好壞差很多：優先挑「自然（Natural／Neural／Premium）」的真人感聲音，避開老式機器音
+const VOICE_KEY = "508_VOICE";
+function voiceScore(v) {
+  const n = v.name;
+  let sc = 0;
+  if (/Natural|Neural|Online/i.test(n)) sc += 100;                       // Edge 的 Ava、Andrew、Emma、Aria…（最自然）
+  if (/Premium|Enhanced|進階|高品質/i.test(n)) sc += 90;                   // iPhone／Mac 下載過的高品質聲音
+  if (/^Google/i.test(n)) sc += 70;                                       // Chrome 的 Google US English
+  if (/\b(Ava|Allison|Samantha|Susan|Zoe|Evan|Nathan|Tom|Joelle|Noelle|Nicky|Aaron|Karen|Daniel|Serena|Moira|Tessa)\b/i.test(n)) sc += 55;
+  if (/Desktop|Zira|David|Mark|Hazel|eSpeak|espeak|Fred|Albert|Bahh|Bells|Boing|Bubbles|Cellos|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Junior|Ralph|Kathy|Bad News|Good News/i.test(n)) sc -= 80;
+  if (/en[-_]US/i.test(v.lang)) sc += 12; else if (/en[-_](GB|AU|CA|IE|NZ)/i.test(v.lang)) sc += 6;
+  if (v.localService === false) sc += 4;
+  return sc;
 }
+function englishVoices() {
+  if (!("speechSynthesis" in window)) return [];
+  return speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang)).sort((a, b) => voiceScore(b) - voiceScore(a));
+}
+function pickVoice() {
+  const vs = englishVoices();
+  let want = ""; try { want = localStorage.getItem(VOICE_KEY) || ""; } catch (e) {}
+  return (want && vs.find(v => v.name === want)) || vs[0] || null;
+}
+/** 讓使用者自己挑聲音：列出這台裝置上最自然的幾個，可以先試聽 */
+function openVoicePicker() {
+  const vs = englishVoices().filter(v => voiceScore(v) > -20).slice(0, 10), cur = (speechVoice || pickVoice() || {}).name;
+  const box = document.getElementById("report-content");
+  box.innerHTML = `<h2 style="margin-top:0">🗣️ 選擇英語朗讀的聲音</h2>
+    <p style="font-size:.86rem; opacity:.85; margin:4px 0 10px">每台裝置內建的聲音不一樣，排在前面的比較像真人。按 ▶ 試聽，喜歡就按「用這個」，這台裝置會記住。</p>
+    ${vs.length ? vs.map((v, i) => `<div class="voice-row ${v.name === cur ? "on" : ""}">
+        <button class="btn-ghost" style="padding:5px 10px" onclick="testVoice(${i})">▶</button>
+        <span class="vn">${escapeHtml(v.name.replace(/\s*\(.*?\)\s*$/, "") || v.name)}<small>${escapeHtml(v.lang)}${voiceScore(v) >= 90 ? "・✨ 自然" : ""}</small></span>
+        <button class="${v.name === cur ? "btn-primary" : "btn-ghost"}" style="padding:5px 12px" onclick="useVoice(${i})">${v.name === cur ? "使用中" : "用這個"}</button></div>`).join("")
+      : `<div class="empty-note">這台裝置沒有英語聲音，請換用 Chrome、Edge 或 Safari。</div>`}
+    <p style="font-size:.78rem; opacity:.7; margin-top:10px">💡 想要更自然：電腦用 <b>Microsoft Edge</b> 開網站，會有「Ava、Andrew、Emma（Natural）」等自然聲音；iPhone／iPad 可以到「設定 → 輔助使用 → 朗讀內容 → 聲音 → 英文」下載「高品質」聲音。</p>`;
+  box._voices = vs;
+  openModal("report-modal");
+}
+function testVoice(i) { const v = (document.getElementById("report-content")._voices || [])[i]; if (!v) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance("Hello! Last weekend, Leo and his grandfather went hiking in the mountain."); u.voice = v; u.lang = v.lang; u.rate = 0.85; speechSynthesis.speak(u); }
+function useVoice(i) { const v = (document.getElementById("report-content")._voices || [])[i]; if (!v) return; speechVoice = v; try { localStorage.setItem(VOICE_KEY, v.name); } catch (e) {} toast(`🗣️ 已改用 ${v.name.replace(/\s*\(.*?\)\s*$/, "")}`); openVoicePicker(); }
 if ("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => { speechVoice = pickVoice(); };
 function speakText(text, slow) {
   if (!text) return;
@@ -1607,7 +1646,7 @@ function guideHtml(unit) {
   const used = ws.filter(w => { const re = vocabRegex([w]); return re && re.test(q.passage); });
   return `<div class="guide-box">
     <div class="vocab-head"><b>📖 第 2 步：文章導讀《${escapeHtml(title)}》</b>
-      <span><button class="btn-primary" onclick="readGuide()">🔊 中速朗讀</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
+      <span><button class="btn-primary" onclick="readGuide()">🔊 中速朗讀</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹</button><button class="btn-ghost" title="換聲音" onclick="openVoicePicker()">🗣️</button></span></div>
     <div class="guide-tip">💡 先聽一遍文章，跟著標亮的句子讀。<b class="pw-demo">紫色的字</b>是剛剛的單字（這篇用到 ${used.length} 個），點一下可以聽發音、看中文。看不懂的話，按「🀄 中英對照」，每一句下面會出現中文。讀懂大意後再開始闖關，閱讀測驗就是考這一篇！</div>
     <div class="guide-text">${passageSpans(q.passage, ws)}</div>
   </div>`;
@@ -1623,7 +1662,7 @@ function readGuide() { if (GUIDE_TEXT) speakList(englishSentences(GUIDE_TEXT), P
 function passageHtml(q) {
   const read = q.subject === "單字王" && isEnglishPassage(q);
   return `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary>
-    ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button>
+    ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button><button class="btn-ghost" onclick="openVoicePicker()">🗣️ 換聲音</button>
       <span style="font-size:.78rem; opacity:.75">中速朗讀，念到哪一句會標亮</span></div>` : ""}
     <div>${read ? passageSpans(q.passage, unitWords(q)) : escapeHtml(q.passage)}</div></details>`;
 }
@@ -1674,7 +1713,7 @@ function findDictQuestion(id) {
 }
 function dictHtml(q) {
   return `<div class="dict-box">
-    <div class="dict-play"><button class="btn-primary" onclick="speakDict(false)">🔊 再聽一次</button><button class="btn-ghost" onclick="speakDict(true)">🐢 慢速</button>
+    <div class="dict-play"><button class="btn-primary" onclick="speakDict(false)">🔊 再聽一次</button><button class="btn-ghost" onclick="speakDict(true)">🐢 慢速</button><button class="btn-ghost" title="換聲音" onclick="openVoicePicker()">🗣️</button>
       <span style="font-size:.8rem; opacity:.75">可以重複聽</span></div>
     <div class="dict-step">① 拼出你聽到的英文單字</div>
     <input id="dict-input" class="dict-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="在這裡輸入英文"
@@ -1724,6 +1763,7 @@ function vocabCardsHtml(unit) {
     <div class="vocab-head"><b>🔤 第 1 步：這一篇的 ${ws.length} 個單字</b>
       <span><button class="btn-primary" onclick="speakVocab(false)">🔊 全部念一遍</button>
       <button class="btn-ghost" onclick="speakVocab(true)">🐢 慢速</button>
+      <button class="btn-ghost" title="換聲音" onclick="openVoicePicker()">🗣️</button>
       <button class="btn-ghost" onclick="stopSpeak()">⏹</button></span></div>
     <div class="vocab-grid">${ws.map((w, i) => `<button class="vc" id="vc-${i}" onclick="speakWord(${i})" aria-label="${escapeHtml(w.en)} ${escapeHtml(w.zh)}，點一下聽發音">
       <span class="vc-en">${escapeHtml(w.en)}</span><span class="vc-zh">${escapeHtml(w.zh)}</span>${w.no < 9999 ? `<span class="vc-no">${w.no}</span>` : ""}<span class="vc-sp">🔊</span></button>`).join("")}</div>
@@ -1765,6 +1805,7 @@ function listenBoxHtml(q, auto) {
     <b>🎧 英聽題：</b>
     <button class="btn-primary" style="padding:8px 14px" onclick="${auto ? "speakCurrent(false)" : `speakText(${escapeHtml(JSON.stringify(t))}, false)`}">🔊 播放</button>
     <button class="btn-ghost" style="padding:8px 14px" onclick="${auto ? "speakCurrent(true)" : `speakText(${escapeHtml(JSON.stringify(t))}, true)`}">🐢 慢速再聽</button>
+    <button class="btn-ghost" style="padding:8px 12px" title="換聲音" onclick="openVoicePicker()">🗣️ 換聲音</button>
     <span style="font-size:.8rem; opacity:.75">可以重複聽，聽完再作答</span></div>`;
 }
 
