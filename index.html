@@ -5037,7 +5037,7 @@ function examHtml() {
       <div class="exam-out">
         <label>標題 <input id="exam-title" maxlength="40" value="${escapeHtml(examState.title)}" oninput="examState.title=this.value" style="min-width:240px"></label>
         <label>紙張 <select onchange="examState.paper=this.value">${["A4", "B4"].map(p => `<option ${examState.paper === p ? "selected" : ""}>${p}</option>`).join("")}</select></label>
-        <label>版面 <select onchange="examState.cols=Number(this.value)"><option value="1" ${examState.cols === 1 ? "selected" : ""}>單欄</option><option value="2" ${examState.cols === 2 ? "selected" : ""}>雙欄</option></select></label>
+        <span style="font-size:.84rem; opacity:.8">版面：${examZh() ? "國語・橫式紙張、直書（由上而下、由右而左），上下兩欄＋分欄線" : "直式紙張、橫書（由左而右），左右兩欄＋分欄線"}</span>
         <label><input type="checkbox" ${examState.key ? "checked" : ""} onchange="examState.key=this.checked"> 附答案頁</label>
         <label><input type="checkbox" ${examState.exp ? "checked" : ""} onchange="examState.exp=this.checked"> 答案頁附詳解</label>
       </div>
@@ -5132,9 +5132,12 @@ function examResultsHtml() {
 
 // ---- 紙本：A4／B4 列印（存成 PDF）與 Word ----
 const PAPER = { A4: { w: 210, h: 297 }, B4: { w: 257, h: 364 } };
+// 版面依科目固定：國語＝橫式紙張＋直書（由上而下、由右而左），上下兩欄；數學／社會／自然／英語＝直式紙張＋橫書，左右兩欄。兩種都有分欄線
+function examZh() { return examState.subject === "國語"; }
 function examAbs(url) { try { return new URL(url, location.href).href; } catch (e) { return url; } }
 function examPaperHtml(forWord) {
-  const L = examState.list, sz = PAPER[examState.paper] || PAPER.A4;
+  const L = examState.list, zh = examZh(), p0 = PAPER[examState.paper] || PAPER.A4, sz = zh ? { w: p0.h, h: p0.w } : p0;
+  const num = n => zh ? `<span class="tcy">${n}</span>` : String(n);
   const t = forWord ? (x, q) => escapeHtml(x) : (x, q) => mathHtml(x, q.subject, q.unit);
   const imgs = q => diagramParts(q).filter(x => /^https?:\/\//i.test(x) && !isAudioUrl(x)).map(raw => {
     const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
@@ -5145,57 +5148,121 @@ function examPaperHtml(forWord) {
     if (q.passage && q.passage !== lastP) {
       const n2 = i + L.slice(i).findIndex(x => x.passage !== q.passage);
       const end = n2 < i ? L.length : n2;
-      body += `<div class="psg"><div class="psg-h">閱讀下文，回答第 ${i + 1}${end - 1 > i ? "～" + end : ""} 題</div>${escapeHtml(q.passage).replace(/\n/g, "<br>")}</div>`;
+      body += `<div class="psg it"><div class="psg-h">閱讀下文，回答第 ${num(i + 1)}${end - 1 > i ? (zh ? "至" : "～") + num(end) : ""} 題</div>${forWord ? escapeHtml(q.passage).replace(/\n/g, "<br>") : q.passage.split("\n").map(x => `<div class="pl">${escapeHtml(x) || "&nbsp;"}</div>`).join("")}</div>`;
     }
     lastP = q.passage || "";
-    const opts = q.opts.map(stripNum), lim = examState.cols > 1 ? 8 : 14, long = opts.some(o => o.length > lim) || opts.join("").length > lim * 3;
-    body += `<div class="q"><div class="qt"><span class="br">（　　）</span>${i + 1}. ${t(q.q, q).replace(/\n/g, "<br>")}</div>
+    const opts = q.opts.map(stripNum), lim = zh ? 10 : 8, long = opts.some(o => o.length > lim) || opts.join("").length > lim * 3;
+    body += `<div class="q it"><div class="qt"><span class="br">（　　）</span>${num(i + 1)}${zh ? "、" : ". "}${t(q.q, q).replace(/\n/g, "<br>")}</div>
       ${imgs(q).map(u => `<div class="qi"><img src="${escapeHtml(examAbs(u))}" ${forWord ? examImgSize(examAbs(u)) : ""}></div>`).join("")}
       <div class="op ${long ? "long" : ""}">${opts.map((o, k) => `<span>${CIRCLED[k]} ${t(o, q)}</span>`).join(forWord ? "　" : "")}</div></div>`;
   });
-  const key = examState.key ? `<div class="key"><h2>${escapeHtml(examState.title || "測驗卷")}　答案</h2>
-    <div class="kg">${L.map((q, i) => `<span>${i + 1}. ${CIRCLED[q.ans]}</span>`).join(forWord ? "　" : "")}</div>
-    ${examState.exp ? L.map((q, i) => q.exp ? `<p class="ke"><b>${i + 1}. ${CIRCLED[q.ans]}</b> ${escapeHtml(q.exp).replace(/\n/g, "<br>")}</p>` : "").join("") : ""}</div>` : "";
+  const key = examState.key ? `<div class="key"><div class="pb"></div><h2 class="it">${escapeHtml(examState.title || "測驗卷")}　答案</h2>
+    <div class="kg it">${L.map((q, i) => `<span>${num(i + 1)}${zh ? "、" : ". "}${CIRCLED[q.ans]}</span>`).join(forWord ? "　" : "")}</div>
+    ${examState.exp ? L.map((q, i) => q.exp ? `<p class="ke it"><b>${num(i + 1)}${zh ? "、" : ". "}${CIRCLED[q.ans]}</b> ${escapeHtml(q.exp).replace(/\n/g, "<br>")}</p>` : "").join("") : ""}</div>` : "";
   const school = HOME_SCHOOL, cls = isAdmin() ? HOME_CLASS : teacherCls();
   const css = `@page { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; }
     body { font-family: "Noto Serif TC", "標楷體", DFKai-SB, "PMingLiU", serif; font-size: ${examState.paper === "B4" ? 13 : 12}pt; line-height: 1.65; color: #000; margin: 0; }
+    .tcy { text-combine-upright: all; }
     h1 { text-align: center; font-size: 17pt; margin: 0 0 4pt; letter-spacing: 2pt; }
-    .info { display: flex; justify-content: space-between; border-bottom: 1.5pt solid #000; padding-bottom: 4pt; margin-bottom: 8pt; font-size: 11.5pt; }
+    .info { display: flex; justify-content: space-between; border-block-end: 1.5pt solid #000; padding-block-end: 4pt; margin-block-end: 8pt; font-size: 11.5pt; }
     .info span { white-space: nowrap; }
-    .cols { column-count: ${examState.cols}; column-gap: 9mm; ${examState.cols > 1 ? "column-rule: 0.5pt solid #999;" : ""} }
-    .q { break-inside: avoid; page-break-inside: avoid; margin: 0 0 9pt; }
-    .qt { text-indent: -4.2em; padding-left: 4.2em; }
+    .cols { column-count: 2; column-gap: ${zh ? 8 : 9}mm; column-rule: 0.6pt solid #666; column-fill: auto; }
+    .q { break-inside: avoid; page-break-inside: avoid; margin: 0; margin-block-end: 9pt; }
+    .qt { text-indent: -4.2em; padding-inline-start: 4.2em; }
     .br { letter-spacing: -1pt; }
-    .op { display: grid; grid-template-columns: repeat(${examState.cols > 1 ? 2 : 4}, auto); justify-content: start; column-gap: 18pt; padding-left: 4.2em; }
-    .op.long { grid-template-columns: repeat(${examState.cols > 1 ? 1 : 2}, auto); }
+    .op { display: grid; grid-template-columns: repeat(2, auto); justify-content: start; column-gap: 18pt; padding-inline-start: 4.2em; }
+    .op.long { grid-template-columns: auto; }
     .op span { white-space: nowrap; }
-    .qi { padding-left: 4.2em; margin: 3pt 0; } .qi img { max-width: 100%; max-height: 45mm; }
-    .psg { border: 0.8pt solid #444; padding: 6pt 8pt; margin: 4pt 0 8pt; font-size: 0.94em; break-inside: avoid-page; }
+    .qi { padding-inline-start: 4.2em; margin: 3pt 0; } .qi img { max-width: 100%; max-height: 45mm; }
+    .psg { border: 0.8pt solid #444; padding: 6pt 8pt; margin: 0; margin-block: 4pt 8pt; font-size: 0.94em; }
     .psg-h { font-weight: bold; margin-bottom: 2pt; }
     .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.8em; line-height: 1.1; margin: 0 2px; }
     .frac > span:first-child { border-bottom: 1pt solid currentColor; padding: 0 2px; }
     .key { page-break-before: always; break-before: page; }
     .key h2 { font-size: 14pt; text-align: center; }
-    .kg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4pt 10pt; margin-bottom: 10pt; }
+    .kg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4pt 10pt; margin-block-end: 10pt; }
     .ke { margin: 3pt 0; font-size: 0.92em; }
-    @media screen { body { max-width: ${sz.w - 26}mm; margin: 10mm auto; } }`;
+    ${zh ? `@media screen { body { height: ${sz.h - 28}mm; margin: 10mm; } .cols { column-fill: balance; } }` : `@media screen { body { max-width: ${sz.w - 26}mm; margin: 10mm auto; } }`}`;
   const head = `<h1>${escapeHtml(school)}　${escapeHtml(examState.title || "測驗卷")}</h1>
     <div class="info"><span>${escapeHtml(cls)} 班　座號：＿＿＿</span><span>姓名：＿＿＿＿＿＿＿</span><span>共 ${L.length} 題</span><span>得分：＿＿＿＿</span></div>`;
   if (forWord) return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${escapeHtml(examState.title)}</title>
     <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
-    <style>@page Section1 { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; } div.Section1 { page: Section1; }
+    <style>@page Section1 { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; ${zh ? "mso-page-orientation: landscape; layout-flow: vertical-ideographic;" : ""} mso-columns: 2 even ${zh ? 8 : 9}mm; mso-column-separator: solid; } div.Section1 { page: Section1; }
     body { font-family: "標楷體", DFKai-SB, serif; font-size: ${examState.paper === "B4" ? 13 : 12}pt; } h1 { text-align: center; font-size: 17pt; } .info { border-bottom: 1.5pt solid #000; } .q { margin: 0 0 8pt; } .op { margin-left: 4em; } .qi { margin-left: 4em; }
     .psg { border: 0.8pt solid #444; padding: 6pt; } .key { page-break-before: always; }</style></head>
     <body><div class="Section1"><h1>${escapeHtml(school)}　${escapeHtml(examState.title || "測驗卷")}</h1>
     <p class="info">${escapeHtml(cls)} 班　座號：＿＿＿　姓名：＿＿＿＿＿＿＿　共 ${L.length} 題　得分：＿＿＿＿</p>${body}${key}</div></body></html>`;
+  if (zh) return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(examState.title)}</title><style>${css}${examZhCss(sz)}</style></head>
+    <body><div id="src"><div class="hdr">${head}</div>${body}${key}</div><div id="out"></div><script>${examZhPaginate.toString()}<\/script></body></html>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(examState.title)}</title><style>${css}</style></head>
     <body>${head}<div class="cols">${body}</div>${key}</body></html>`;
+}
+// 國語直書：每一頁是橫式紙張，分上下兩欄（中間一條分欄線），每欄由右而左排；題目一題一題往欄裡放，放不下就換下一欄、下一頁
+function examZhCss(sz) {
+  const W = sz.w - 26, H = sz.h - 28;
+  return `@page { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; }
+    html { writing-mode: horizontal-tb; } #src { position: absolute; left: -9999px; top: 0; width: ${W}mm; }
+    .page { width: ${W}mm; height: ${H}mm; display: flex; flex-direction: row-reverse; break-after: page; page-break-after: always; overflow: hidden; }
+    .page:last-child { break-after: auto; page-break-after: auto; }
+    .page > .hdr { writing-mode: vertical-rl; height: 100%; margin-left: 5mm; }
+    .hdr h1 { margin: 0 0 0 4pt; } .hdr .info { height: 100%; }
+    .bands { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .band { flex: 1; min-height: 0; writing-mode: vertical-rl; overflow: hidden; padding: 2mm 0; }
+    .band + .band { border-top: 0.8pt solid #444; }
+    .band .q { margin-block-end: 0; margin-inline-end: 0; margin-left: 7pt; }
+    .band .psg { margin: 0 0 0 7pt; }
+    .band .kg { grid-template-columns: repeat(5, auto); }
+    .pb { display: none; }
+    @media screen { body { margin: 10mm; height: auto; } .page { outline: 1px dashed #bbb; margin-bottom: 8mm; } }`;
+}
+function examZhPaginate() {
+  var src = document.getElementById("src"), out = document.getElementById("out"), band = null, bands = [];
+  function newPage(withHdr) {
+    var pg = document.createElement("div"); pg.className = "page";
+    if (withHdr) pg.appendChild(src.querySelector(".hdr"));
+    var bs = document.createElement("div"); bs.className = "bands"; pg.appendChild(bs);
+    bands = []; for (var i = 0; i < 2; i++) { var b = document.createElement("div"); b.className = "band"; bs.appendChild(b); bands.push(b); }
+    out.appendChild(pg); band = bands[0];
+  }
+  function next() { var i = bands.indexOf(band); if (i < bands.length - 1) band = bands[i + 1]; else newPage(false); }
+  function over() { return band.scrollWidth > band.clientWidth + 1; }
+  function put(el) {
+    var last = band.lastElementChild, rem = last ? last.offsetLeft / band.clientWidth : 1;
+    band.appendChild(el);
+    if (!over()) return;
+    var empty = band.children.length === 1, isPsg = el.classList.contains("psg");
+    // 文章放不下時：這一欄還空一大半就從這裡開始排、接到下一欄；否則整篇移到下一欄
+    if (!empty && !(isPsg && rem > 0.45)) { band.removeChild(el); next(); band.appendChild(el); if (!over()) return; }
+    // 一欄放不下的長文章：一段一段拆到下一欄
+    if (!isPsg) return;
+    var lines = [].slice.call(el.querySelectorAll(".pl")); if (lines.length < 2) return;
+    lines.forEach(function (l) { el.removeChild(l); });
+    var cur = el, k = 0;
+    while (k < lines.length) {
+      cur.appendChild(lines[k]);
+      if (over() && cur.querySelectorAll(".pl").length > 1) {
+        cur.removeChild(lines[k]); next();
+        cur = document.createElement("div"); cur.className = "psg";
+        cur.innerHTML = '<div class="psg-h">（文章接續）</div>'; band.appendChild(cur);
+        continue;
+      }
+      k++;
+    }
+  }
+  var items = [].slice.call(src.querySelectorAll(".it, .pb"));
+  newPage(true);
+  items.forEach(function (el) {
+    if (el.classList.contains("pb")) { newPage(false); return; }
+    put(el);
+  });
+  [].slice.call(out.querySelectorAll(".page")).forEach(function (p) { if (!p.querySelector(".band *")) p.remove(); });
+  src.remove();
 }
 function printExam() {
   if (!examState.list.length) return;
   const w = window.open("", "_blank");
   if (!w) return toast("瀏覽器擋住了新視窗，請允許彈出視窗後再按一次");
-  w.document.write(examPaperHtml(false) + `<script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script>`);
+  w.document.write(examPaperHtml(false) + `<script>window.onload=()=>{ if (window.examZhPaginate) examZhPaginate(); setTimeout(()=>window.print(),500); }<\/script>`);
   w.document.close();
 }
 // Word 要明確的寬高，圖才不會被放大到整頁寬
