@@ -628,6 +628,27 @@
   .dict-opts .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; background: rgba(14,165,233,.15); }
   .dict-send { width: 100%; padding: 13px; margin-top: 12px; font-size: 1.05rem; }
   .dict-res { margin-top: 6px; line-height: 1.8; }
+  .option-btn.sel { box-shadow: 0 0 0 3px #0ea5e9; }
+  .exam-step { margin: 12px 0; }
+  .exam-step > b { display: inline-block; margin-bottom: 6px; }
+  .exam-units { display: flex; flex-wrap: wrap; gap: 6px; max-height: 190px; overflow: auto; padding: 4px; border: 1px solid var(--line); border-radius: 10px; }
+  .exam-list { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px 8px; }
+  .exam-q { display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+  .exam-q:last-child { border-bottom: 0; }
+  .eq-n { font-weight: 900; min-width: 26px; }
+  .eq-body { flex: 1; min-width: 0; }
+  .eq-meta { font-size: .76rem; opacity: .8; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .eq-hot { background: rgba(220,38,38,.14); color: var(--danger); padding: 0 7px; border-radius: 999px; font-weight: 800; }
+  .eq-rand { background: rgba(14,165,233,.14); color: #0369a1; padding: 0 7px; border-radius: 999px; font-weight: 800; }
+  .eq-q { font-weight: 700; white-space: pre-line; margin: 2px 0; }
+  .eq-o { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .86rem; }
+  .eq-o .ok { color: #15803d; font-weight: 900; }
+  .eq-act { display: flex; gap: 4px; } .eq-act button { padding: 3px 8px; }
+  .eq-rate { font-weight: 900; font-size: 1.1rem; text-align: right; min-width: 52px; } .eq-rate small { display: block; font-size: .7rem; opacity: .7; font-weight: 500; }
+  .exam-out { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: .9rem; }
+  .exam-out input, .exam-out select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); font: inherit; }
+  .tq-pill { background: #dc2626 !important; color: #fff !important; animation: tqPulse 1.6s ease-in-out infinite; }
+  @keyframes tqPulse { 50% { box-shadow: 0 0 0 6px rgba(220,38,38,.25); } }
   .voice-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
   .voice-row.on { border-color: #0ea5e9; background: rgba(14,165,233,.1); }
   .voice-row .vn { flex: 1; font-weight: 800; }
@@ -1437,6 +1458,7 @@ function answerPoints(q, ok, mode, combo) {
   const R = SCORE_RULES;
   if (mode === "訂正") return ok ? R.fixOk : R.fixWrong;
   if (mode === "複習") return ok ? R.reviewOk : R.reviewWrong;
+  if (mode === "考卷") return ok ? R.correct : 0;   // 老師的考卷：答對照常加分，答錯不扣分（一樣會進錯題本）
   if (ok) return (R.correct + Math.min(R.comboMax, Math.max(0, combo - 1) * R.comboBonus)) * (readingBoost(q.subject, q.unit) ? READ.ptsMul : 1);
   const before = stats.byId[q.id];
   return before && before.wrong > 0 ? R.wrongAgain : R.wrongFirst;
@@ -3509,6 +3531,7 @@ function renderPills() {
     html += `<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
       <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>
       <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>
+      ${tqPillHtml()}
       <span class="pill" id="use-pill" style="cursor:pointer" onclick="showConduct(true)" title="今天累計的使用時間；連續最多 ${rulesNow().sessionMin || 60} 分鐘、每天最多 ${rulesNow().dailyMin || 120} 分鐘">${usageText()}</span>`;
   }
   if (FINAL && u.role === "student" && !isTrial()) {
@@ -4011,7 +4034,7 @@ function pacePunish(pace) {
   const lvBefore = getLevelInfo(stats.score), penalty = pacePenalty();
   const done = quizState.idx + 1;
   saveRecord(null, {
-    t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "挑戰" ? CHALLENGE_TAG + quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
+    t: nowStr(), subject: quizState.subject, unit: sessionUnitLabel(),
     total: done, correct: quizState.correctCount, score: -penalty, sid: quizState.sid
   });
   const lvAfter = getLevelInfo(stats.score);
@@ -4069,7 +4092,7 @@ function renderQuestion() {
   document.getElementById("quiz-content").innerHTML = `
     <div class="q-head">
       <span>📍 ${escapeHtml(q.subject)}・${escapeHtml(q.unit)}｜【${escapeHtml(q.type)}】${q.diagram && SVG_DIAGRAMS[q.diagram] ? "📊 含圖解" : ""}${questionImageUrl(q) ? "🖼️ 含圖" : ""}${hasListen(q) ? "🎧 英聽" : ""}${q.src !== "gen" && stats.byId && !stats.byId[q.id] ? `<span class="src-badge" style="background:rgba(245,158,11,.15);color:#b45309;border-color:rgba(245,158,11,.4)">🆕 第一次作答</span>` : ""}${sourceBadge(q)}</span>
-      <span>🔥 連擊 x${quizState.combo}｜第 ${quizState.idx + 1} / ${total} 題</span>
+      <span>${quizState.mode === "考卷" ? `📝 ${escapeHtml(quizState.unit)}｜` : ""}${tqHidden() ? "" : `🔥 連擊 x${quizState.combo}｜`}第 ${quizState.idx + 1} / ${total} 題</span>
     </div>
     <div class="bar"><i style="width:${Math.round(quizState.idx / total * 100)}%"></i></div>
     ${quizState.mode === "訂正" ? `<div class="trial-note" style="background:#fee2e2;color:#991b1b">👾 錯題訂正中：答對就能把這題從待訂正消滅（歷史紀錄會留著）</div>` : ""}
@@ -4119,6 +4142,16 @@ function submitAnswer(choice) {
   const gotCoin = FINAL && !isTrial() ? coinForAnswer(myRows[myRows.length - 1] || {}) : 0;
   const ptsNote = isTrial() ? "" : `<span class="pts ${pts >= 0 ? "plus" : "minus"}">${fmtPts(pts)} 分</span>${gotCoin ? `<span class="pts plus coin-gain">🪙 +${gotCoin}</span>` : ""}${wasRepeat ? `<span style="font-size:.8rem;">（這題以前錯過，一錯再錯扣更多）</span>` : ""}`;
 
+  if (quizState.log) quizState.log.push({ q, chosen: q.dict ? `${quizState.dictTyped}／${stripNum(q.opts[choice])}` : stripNum(q.opts[choice]), ok });
+  if (tqHidden()) {   // 老師設定「交卷後才看答案」：先不公布對錯
+    btns[choice].classList.add("sel");
+    const lastQ = quizState.idx + 1 >= quizState.questions.length;
+    document.getElementById("feedback-box").innerHTML = `<div class="lore-box">✔ 已作答（這份考卷交卷後才公布答案）</div>
+      ${pace.note ? `<div class="rush-warn" style="white-space:pre-line">${escapeHtml(pace.note)}</div>` : ""}
+      <button id="next-btn" class="btn-primary" style="width:100%; padding:12px; margin-top:6px;" onclick="nextQuestion()">${lastQ ? "📤 交卷" : "➡️ 下一題"}</button>
+      <div id="pace-note" class="pace-note"></div>`;
+    startPaceTimer(); renderPills(); return;
+  }
   btns[q.ans].classList.add("correct");
   btns[q.ans].insertAdjacentText("beforeend", " ⬅ 正確答案");
   if (choice !== q.ans) { btns[choice].classList.add("wrong"); btns[choice].insertAdjacentText("beforeend", " ⬅ 你的選擇"); }
@@ -4164,10 +4197,10 @@ function finishQuiz(lockedOut) {
   const sec = Math.max(5, Math.round((Date.now() - quizState.startTime) / 1000));
   const acc = done ? quizState.correctCount / done : 0;
   const reading = quizState.mode === "練習" && readingBoost(quizState.subject, quizState.unit);
-  const bonus = sessionBonus(quizState.correctCount, done) * (reading && quizState.correctCount / done >= 0.8 ? READ.ptsMul : 1);
-  const score = bonus;
+  const bonus = quizState.mode === "考卷" ? 0 : sessionBonus(quizState.correctCount, done) * (reading && quizState.correctCount / done >= 0.8 ? READ.ptsMul : 1);
+  const score = bonus;   // 老師的考卷不加結算獎勵、也不扣分（bonus＝0）
   saveRecord(null, {
-    t: nowStr(), subject: quizState.subject, unit: quizState.mode === "練習" ? quizState.unit : quizState.mode === "挑戰" ? CHALLENGE_TAG + quizState.unit : quizState.mode === "訂正" ? "錯題本" : "歷史錯題複習",
+    t: nowStr(), subject: quizState.subject, unit: sessionUnitLabel(),
     total: done, correct: quizState.correctCount, score, sid: quizState.sid
   });
   const lv = getLevelInfo(stats.score);
@@ -4176,7 +4209,7 @@ function finishQuiz(lockedOut) {
   document.getElementById("quiz-content").innerHTML = `
     <div style="text-align:center;">
       <div style="font-size:3.2rem;">${lockedOut ? "⚠️" : "🏆"}</div>
-      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= need ? (isDict ? "🏁 聽寫通關考全對，通關成功！" : "🏁 挑戰考全對！") : `🏁 ${isDict ? "聽寫通關考" : "挑戰考"}答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : "單元闖關完成！"}</h2>
+      <h2>${quizState.locked ? "⛓️ 船被扣押了！先看詳解，休息一下再出航" : lockedOut ? "錯題已滿 10 題，先去訂正！" : quizState.mode === "挑戰" ? (acc === 1 && done >= need ? (isDict ? "🏁 聽寫通關考全對，通關成功！" : "🏁 挑戰考全對！") : `🏁 ${isDict ? "聽寫通關考" : "挑戰考"}答對 ${quizState.correctCount}／${done}，差一點點！`) : quizState.mode === "訂正" ? "錯題訂正完成！" : quizState.mode === "複習" ? "歷史錯題複習完成！" : quizState.mode === "考卷" ? `📝 ${escapeHtml(quizState.unit)}：交卷完成！` : "單元闖關完成！"}</h2>
       ${quizState.mode === "挑戰" && !(acc === 1 && done >= need) && !isTrial() && !lockedOut ? `<div class="flag-box">${isDict ? "聽寫通關考" : "挑戰考"}要 ${need} 題全部答對才算通過。答錯的題目已經放進${FINAL ? WRECK : "錯題島"}，先把它們訂正好，${cooldownOf(quizState.subject)} 分鐘後再來挑戰！</div>` : ""}
       ${quizState.mode === "練習" && !lockedOut ? `<div style="font-size:2rem; letter-spacing:4px;">${"⭐".repeat(stars)}${"☆".repeat(3 - stars)}</div>` : ""}
       <div class="lore-box" style="text-align:left;">
@@ -4190,6 +4223,7 @@ function finishQuiz(lockedOut) {
         <div style="font-size:.85rem;">累計 ${stats.score} 分</div></div>`}
       ${reading && !isTrial() ? (FINAL ? readingResultHtml(acc, done) : `<div class="reading-reward">📖 <b>閱讀島加碼</b>：答對分數 ×${READ.ptsMul}${acc >= 0.8 && done >= READ.minQ ? `，結算獎勵也 ×${READ.ptsMul}` : "，一場答對 80% 以上結算獎勵也加倍！"}</div>`) : ""}
       ${flagResultHtml()}
+      ${quizState.mode === "考卷" ? tqReviewHtml() : ""}
       <button class="btn-primary" style="width:100%; padding:12px;" onclick="${lockedOut ? "openMistakeBook('pending')" : "closeQuiz()"}">${lockedOut ? "🌋 前往錯題島" : "🗺️ 回到地圖"}</button>
     </div>`;
   if (FINAL && reading && !isTrial() && !lockedOut && !quizState.locked) maybeTreasure(acc, done);
@@ -4772,7 +4806,7 @@ const net = {
 const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", subject: "", unit: "全部", sort: "wrong",
   peer: null, threads: [], msgs: [], pace: null, mistakes: null, picked: new Set(),
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
-const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"]];
+const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
 const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10 };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
@@ -4847,6 +4881,7 @@ function applyBridgePulse(p) {
     if (p.ext && !had) toast(`⏰ 老師幫你延長了上線時間：${extText(p.ext)}`, 6000);
     useState.info && usageReport(0);
   }
+  if (session.user.role === "student" && "tq" in p && JSON.stringify(p.tq || []) !== JSON.stringify(TQ_LIST)) setTqList(p.tq);
   if (session.user.role === "teacher" && typeof p.admin === "boolean" && session.user.admin !== p.admin) {
     session.user.admin = p.admin; session.user.cls = p.cls;
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
@@ -4913,6 +4948,335 @@ const ADMIN_TABS = ["reports", "islands", "rules"];   // 只有 508 老師能用
 function bridgeTabs() { return BRIDGE_TABS.filter(t => isAdmin() || !ADMIN_TABS.includes(t[0])); }
 function studentsList() { return rosterList.filter(a => a.role === "student" && (!session || session.user.role !== "teacher" || inMyClass(a.name))); }
 
+// =========================================================
+// ===== 📝 老師出考卷：從全班常錯題或題庫隨機挑題 → A4／B4 列印（PDF）、Word、派成線上測驗 =====
+const examState = { subject: "", units: new Set(), source: "mix", n: 20, list: [], title: "", paper: "A4", cols: 1, key: true, exp: false, listen: false,
+  mk: null, view: "build", tqs: null, res: null, assign: false };
+const EXAM_SRC = { mistake: "🔥 全班常錯題", random: "🎲 系統隨機", mix: "🔀 常錯題＋隨機各半" };
+function examSubjects() { return WORLD.filter(s => s.units.length).map(s => s.key); }
+function examUnits() { const s = WORLD.find(x => x.key === examState.subject); return s ? s.units.slice().sort(unitCmp) : []; }
+function examUnitOk(q) { return q.subject === examState.subject && (!examState.units.size || examState.units.has(q.unit)); }
+/** 紙本不適合的題目：要聽音檔的英聽題、聽寫題 */
+function examPrintable(q) { return !q.dict && !hasListen(q); }
+/** 錯題紀錄裡的題目：題庫找得到就用題庫的（有圖、有文章），找不到（系統自動出的題）就用作答時的題目內容 */
+function examFromMistake(m) {
+  const b = findQuestion(m.qId);
+  if (b) return Object.assign(prepareQuestion(b), { _wrong: m.wrong, _n: m.n });
+  const opts = (m.opts || []).map(stripNum), ans = opts.indexOf(stripNum(m.correctText || ""));
+  if (ans < 0) return null;
+  return { id: m.qId, subject: m.subject, unit: m.unit, type: "錯題", q: m.q, opts, ans, exp: m.exp || "", _snap: true, _wrong: m.wrong, _n: m.n };
+}
+function examPools() {
+  const used = new Set(examState.list.map(q => q.id));
+  const okType = q => examState.listen ? !q.dict : examPrintable(q);
+  const rand = shuffle(BANK.filter(q => examUnitOk(q) && okType(q) && !used.has(q.id))).map(q => prepareQuestion(q));
+  const mist = (examState.mk || []).filter(m => examUnitOk(m) && !used.has(m.qId) && m.wrong > 0)
+    .sort((a, b) => b.wrong - a.wrong || b.wrong / b.n - a.wrong / a.n).map(examFromMistake).filter(q => q && okType(q));
+  return { rand, mist };
+}
+/** 同一篇文章的題目排在一起，再照單元順序 */
+function examSort(list) {
+  const first = {};
+  list.forEach((q, i) => { const k = q.passage ? "P" + q.passage.slice(0, 40) : "Q" + i; if (!(k in first)) first[k] = i; q._k = k; });
+  return list.slice().sort((a, b) => unitCmp(a, b) || first[a._k] - first[b._k]);
+}
+function buildExam() {
+  if (!examState.subject) return toast("請先選科目");
+  examState.list = [];
+  const { rand, mist } = examPools(), n = examState.n;
+  let pick = [];
+  if (examState.source === "mistake") pick = mist.slice(0, n);
+  else if (examState.source === "mix") pick = mist.slice(0, Math.ceil(n / 2));
+  const ids = new Set(pick.map(q => q.id));
+  rand.forEach(q => { if (pick.length < n && !ids.has(q.id)) { pick.push(q); ids.add(q.id); } });
+  if (!pick.length) return toast("這個範圍沒有可以出的題目");
+  examState.list = examSort(pick);
+  if (!examState.title) examState.title = `${examState.subject}${examState.units.size === 1 ? " " + [...examState.units][0] : ""} 測驗卷`;
+  if (examState.source !== "random" && mist.length < Math.ceil(n / (examState.source === "mix" ? 2 : 1)))
+    toast(`全班常錯題只有 ${mist.length} 題，其餘用題庫隨機補足`, 4500);
+  renderBridge();
+}
+function examRemove(i) { examState.list.splice(i, 1); renderBridge(); }
+function examSwap(i) {
+  const cur = examState.list[i], { rand, mist } = examPools();
+  const pool = cur._wrong ? mist.concat(rand) : rand;
+  const next = pool.find(q => q.subject === cur.subject && q.unit === cur.unit) || pool[0];
+  if (!next) return toast("沒有其他題目可以換了");
+  examState.list[i] = next; renderBridge();
+}
+function examAddMore(k) {
+  const { rand } = examPools();
+  if (!rand.length) return toast("這個範圍的題目都用完了");
+  examState.list = examSort(examState.list.concat(rand.slice(0, k))); renderBridge();
+}
+function examHtml() {
+  const tabs = `<div class="mk-bar">${[["build", "📝 出考卷"], ["list", "📋 我派的線上考卷"]].map(([k, l]) => `<button class="${examState.view === k || (k === "list" && examState.view === "results") ? "btn-primary" : "btn-ghost"}" style="padding:5px 14px" onclick="examState.view='${k}'; renderBridge()">${l}</button>`).join("")}</div>`;
+  if (examState.view === "list") return tabs + examListHtml();
+  if (examState.view === "results") return tabs + examResultsHtml();
+  const subs = examSubjects(), units = examUnits();
+  const chip = (on, label, js) => `<button class="${on ? "btn-primary" : "btn-ghost"}" style="padding:4px 12px; font-size:.84rem" onclick="${js}">${label}</button>`;
+  const L = examState.list;
+  return tabs + `<div class="lore-box" style="font-size:.88rem">從 <b>全班常錯題</b>（越多人錯的越優先）或 <b>題庫隨機</b> 挑題，排好後可以 <b>🖨️ 列印／存成 PDF</b>、<b>📄 下載 Word</b>，或 <b>💻 派成線上測驗</b> 讓學生在系統裡作答，成績自動統計。</div>
+    <div class="exam-step"><b>① 科目</b><div class="mk-bar">${subs.map(s => chip(examState.subject === s, `${subjIcon(s)} ${escapeHtml(s)}`, `examState.subject=${escapeHtml(JSON.stringify(s))}; examState.units=new Set(); examState.list=[]; examState.title=''; renderBridge()`)).join("")}</div></div>
+    ${examState.subject ? `<div class="exam-step"><b>② 範圍</b>（不勾＝全部單元）
+      <div class="exam-units">${units.map(u => `<label class="pick-chip"><input type="checkbox" ${examState.units.has(u.unit) ? "checked" : ""} onchange='examState.units[this.checked ? "add" : "delete"](${escapeHtml(JSON.stringify(u.unit))})'> ${escapeHtml(u.unit)} <small style="opacity:.6">${u.questions.length}</small></label>`).join("")}</div></div>
+    <div class="exam-step"><b>③ 題目來源</b><div class="mk-bar">${Object.keys(EXAM_SRC).map(k => chip(examState.source === k, EXAM_SRC[k], `examState.source='${k}'; renderBridge()`)).join("")}</div>
+      <div class="mk-bar" style="align-items:center">題數 ${[10, 15, 20, 25, 30, 40].map(n => chip(examState.n === n, n + " 題", `examState.n=${n}; renderBridge()`)).join("")}
+        <label style="font-size:.84rem; margin-left:8px"><input type="checkbox" ${examState.listen ? "checked" : ""} onchange="examState.listen=this.checked"> 包含英聽題（只適合線上測驗）</label></div>
+      ${examState.mk ? `<small style="opacity:.75">全班期末有人答錯的題目：這個範圍共 ${(examState.mk || []).filter(m => examUnitOk(m)).length} 題</small>` : `<small style="opacity:.75">讀取全班錯題中…</small>`}
+    </div>
+    <button class="btn-accent" style="padding:10px 18px" onclick="buildExam()">🎲 ${L.length ? "重新出題" : "產生考卷"}</button>` : ""}
+    ${L.length ? `<div class="exam-step" style="margin-top:14px"><b>④ 檢查題目</b>（共 ${L.length} 題；🔄 換一題、✕ 刪掉）
+      <div class="exam-list">${L.map((q, i) => `<div class="exam-q"><span class="eq-n">${i + 1}.</span>
+        <div class="eq-body"><div class="eq-meta">${escapeHtml(q.unit)}${q._wrong ? `<span class="eq-hot">🔥 錯 ${q._wrong} 人次</span>` : `<span class="eq-rand">🎲 隨機</span>`}${q.passage ? " 📖 有文章" : ""}${questionImageUrl(q) ? " 🖼️ 有圖" : ""}${hasListen(q) ? " 🎧 英聽" : ""}${q._snap ? " ⚠️ 系統出的題（只能紙本）" : ""}</div>
+          <div class="eq-q">${mathHtml(q.q, q.subject, q.unit)}</div>
+          <div class="eq-o">${q.opts.map((o, k) => `<span class="${k === q.ans ? "ok" : ""}">${CIRCLED[k]}${mathHtml(stripNum(o), q.subject, q.unit)}</span>`).join("")}</div></div>
+        <span class="eq-act"><button class="btn-ghost" title="換一題" onclick="examSwap(${i})">🔄</button><button class="btn-ghost" title="刪掉" onclick="examRemove(${i})">✕</button></span></div>`).join("")}</div>
+      <div class="mk-bar"><button class="btn-ghost" onclick="examAddMore(5)">＋ 再加 5 題</button></div></div>
+    <div class="exam-step"><b>⑤ 輸出</b>
+      <div class="exam-out">
+        <label>標題 <input id="exam-title" maxlength="40" value="${escapeHtml(examState.title)}" oninput="examState.title=this.value" style="min-width:240px"></label>
+        <label>紙張 <select onchange="examState.paper=this.value">${["A4", "B4"].map(p => `<option ${examState.paper === p ? "selected" : ""}>${p}</option>`).join("")}</select></label>
+        <label>版面 <select onchange="examState.cols=Number(this.value)"><option value="1" ${examState.cols === 1 ? "selected" : ""}>單欄</option><option value="2" ${examState.cols === 2 ? "selected" : ""}>雙欄</option></select></label>
+        <label><input type="checkbox" ${examState.key ? "checked" : ""} onchange="examState.key=this.checked"> 附答案頁</label>
+        <label><input type="checkbox" ${examState.exp ? "checked" : ""} onchange="examState.exp=this.checked"> 答案頁附詳解</label>
+      </div>
+      <div class="mk-bar" style="margin-top:8px">
+        <button class="btn-accent" onclick="printExam()">🖨️ 列印／存成 PDF</button>
+        <button class="btn-primary" onclick="wordExam()">📄 下載 Word</button>
+        <button class="btn-primary" onclick="examState.assign=!examState.assign; renderBridge()">💻 派成線上測驗</button>
+        <button class="btn-ghost" onclick="previewExam()">👀 先試做一次</button>
+      </div>
+      ${examState.assign ? examAssignHtml() : ""}
+      <p style="font-size:.78rem; opacity:.7; margin:6px 0 0">💡 存成 PDF：按「列印」後，印表機選「另存為 PDF」。${L.some(q => !examPrintable(q)) ? "英聽題在紙本上只會印題目和選項。" : ""}</p>
+    </div>` : ""}`;
+}
+function examAssignHtml() {
+  const admin = isAdmin(), mine = teacherCls();
+  const classes = admin ? [...new Set(studentsList().filter(s => !isTestAcc(s.name)).map(s => stuClass(s.name)))].sort(byNum) : [mine];
+  const today = nowStr().slice(0, 10), wk = new Date(today + "T12:00:00"); wk.setDate(wk.getDate() + 7);
+  return `<div class="ext-panel" style="margin-top:10px"><b>💻 派成線上測驗</b>
+    <div class="exam-out" style="margin-top:6px">
+      <span>派給：${classes.map(c => `<label class="pick-chip"><input type="checkbox" class="tq-cls" value="${escapeHtml(c)}" ${c === mine ? "checked" : ""}> ${escapeHtml(c)} 班</label>`).join("")}</span>
+      <label>截止日 <input type="date" id="tq-due" value="${wk.toISOString().slice(0, 10)}" min="${today}"></label>
+      <label>看答案 <select id="tq-show"><option value="after">交卷後才看（像考試）</option><option value="now">每題答完就看詳解（像練習）</option></select></label>
+    </div>
+    <p style="font-size:.8rem; opacity:.75; margin:6px 0">學生地圖上方會出現「📝 老師的考卷」，每人只計第一次作答的成績；答錯的題目一樣會進錯題本。</p>
+    <button class="btn-accent" onclick="assignExam()">📤 派出考卷</button></div>`;
+}
+async function assignExam() {
+  const cls = [...document.querySelectorAll(".tq-cls:checked")].map(x => x.value);
+  if (!cls.length) return toast("請勾選要派給哪一班");
+  const ok = examState.list.filter(q => !q._snap);
+  if (!ok.length) return toast("這份考卷都是系統自動出的題，只能列印");
+  if (ok.length < examState.list.length) toast(`有 ${examState.list.length - ok.length} 題是系統自動出的題，線上測驗會略過`, 4500);
+  try {
+    await bridgeCall("tqSave", { title: examState.title || "老師的考卷", ids: ok.map(q => q.id), cls, due: document.getElementById("tq-due").value, show: document.getElementById("tq-show").value });
+    examState.assign = false; examState.view = "list"; examState.tqs = null;
+    toast("📤 考卷已派出！學生的畫面約 5 秒內就會出現");
+    renderBridge();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+function previewExam() {
+  const qs = examState.list.filter(q => !q._snap).map(q => Object.assign({}, q));
+  if (!qs.length) return toast("沒有可以線上作答的題目");
+  closeModal("bridge-modal");
+  startTqQuiz({ id: "preview", title: examState.title || "老師的考卷", show: "now" }, qs);
+}
+function examListHtml() {
+  if (!examState.tqs) { bridgeCall("tqList").then(r => { examState.tqs = r.list || []; renderBridge(); }).catch(e => toast("⚠️ " + e.message)); return bridgeLoading(); }
+  if (!examState.tqs.length) return `<div class="empty-note">還沒有派過線上考卷。到「📝 出考卷」產生題目後，按「💻 派成線上測驗」。</div>`;
+  const today = nowStr().slice(0, 10);
+  return `<div class="dash-table-wrap"><table><thead><tr><th>考卷</th><th>班級</th><th class="num">題數</th><th>截止</th><th>出題</th><th></th></tr></thead><tbody>
+    ${examState.tqs.map(t => `<tr><td><b>${escapeHtml(t.title)}</b>${t.show === "after" ? ` <small style="opacity:.7">交卷後看答案</small>` : ""}</td><td>${escapeHtml(t.cls.map(c => c === "all" ? "全部" : c).join("、"))}</td><td class="num">${t.ids.length}</td>
+      <td>${t.due ? escapeHtml(t.due.slice(5).replace("-", "/")) + (t.due < today ? " <small>已截止</small>" : "") : "—"}</td><td><small>${escapeHtml(shortName(t.by))}<br>${escapeHtml(String(t.t).slice(5, 16))}</small></td>
+      <td style="white-space:nowrap"><button class="btn-primary" style="padding:3px 10px; font-size:.8rem" onclick='openTqResults(${JSON.stringify(t.id)})'>📊 成績</button>
+        <button class="btn-ghost" style="padding:3px 8px; font-size:.8rem" onclick='reuseTq(${JSON.stringify(t.id)})'>🖨️ 再印</button>
+        <button class="btn-ghost" style="padding:3px 8px; font-size:.8rem" onclick='deleteTq(${JSON.stringify(t.id)})'>🗑️</button></td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+async function openTqResults(id) {
+  examState.view = "results"; examState.res = null; renderBridge();
+  try { examState.res = await bridgeCall("tqResults", { id }); renderBridge(); } catch (e) { toast("⚠️ " + e.message); examState.view = "list"; renderBridge(); }
+}
+function reuseTq(id) {
+  const t = (examState.tqs || []).find(x => x.id === id); if (!t) return;
+  const qs = t.ids.map(findQuestion).filter(Boolean).map(q => prepareQuestion(q));
+  if (!qs.length) return toast("題庫裡找不到這份考卷的題目");
+  examState.list = examSort(qs); examState.title = t.title; examState.subject = qs[0].subject; examState.view = "build"; renderBridge();
+}
+async function deleteTq(id) {
+  if (!confirm("確定要收回這份考卷嗎？學生將看不到它（已作答的紀錄會保留）。")) return;
+  try { await bridgeCall("tqDelete", { id }); examState.tqs = null; renderBridge(); } catch (e) { toast("⚠️ " + e.message); }
+}
+function examResultsHtml() {
+  const r = examState.res;
+  if (!r) return bridgeLoading();
+  const done = r.people.slice().sort((a, b) => b.correct / b.total - a.correct / a.total);
+  const missing = r.target.filter(n => !r.people.some(p => p.name === n));
+  const avg = done.length ? Math.round(done.reduce((s, p) => s + p.correct / p.total, 0) / done.length * 100) : 0;
+  const perQ = r.tq.ids.map((id, i) => { const p = r.perQ.find(x => x.qId === id) || { n: 0, ok: 0 }; return { i, id, q: findQuestion(id), n: p.n, rate: p.n ? p.ok / p.n : null }; })
+    .sort((a, b) => (a.rate == null ? 2 : a.rate) - (b.rate == null ? 2 : b.rate));
+  return `<h3 style="margin:6px 0">📊 ${escapeHtml(r.tq.title)}</h3>
+    <div class="tiles bridge-kpis"><div class="tile-kpi"><b>${done.length}／${r.target.length}</b><span>已交卷</span></div><div class="tile-kpi"><b>${avg}%</b><span>平均答對率</span></div><div class="tile-kpi"><b>${r.tq.ids.length}</b><span>題數</span></div></div>
+    ${missing.length ? `<div class="lore-box" style="font-size:.86rem">還沒交卷：${missing.map(n => escapeHtml(shortName(n))).join("、")}</div>` : ""}
+    <h3 style="margin:12px 0 6px">👩‍🎓 每位學生</h3>
+    ${done.length ? `<div class="dash-table-wrap"><table><thead><tr><th>學生</th><th class="num">答對</th><th class="num">分數</th><th>交卷時間</th></tr></thead><tbody>
+      ${done.map(p => `<tr><td>${escapeHtml(shortName(p.name))} ${orgTag(p.name, true)}</td><td class="num">${p.correct}／${p.total}</td><td class="num"><b>${Math.round(p.correct / r.tq.ids.length * 100)}</b></td><td>${escapeHtml(String(p.t).slice(5, 16))}</td></tr>`).join("")}</tbody></table></div>`
+      : `<div class="empty-note">還沒有人交卷</div>`}
+    <h3 style="margin:12px 0 6px">❓ 每一題的答對率（低的排前面）</h3>
+    ${perQ.map(x => `<div class="exam-q"><span class="eq-n">${x.i + 1}.</span><div class="eq-body"><div class="eq-q">${x.q ? mathHtml(x.q.q, x.q.subject, x.q.unit) : escapeHtml(x.id)}</div>
+      ${x.q ? `<div class="eq-o">${x.q.opts.map((o, k) => `<span class="${k === x.q.ans ? "ok" : ""}">${CIRCLED[k]}${mathHtml(stripNum(o), x.q.subject, x.q.unit)}</span>`).join("")}</div>` : ""}</div>
+      <span class="eq-rate" style="color:${x.rate == null ? "inherit" : x.rate < 0.5 ? "var(--danger)" : x.rate < 0.8 ? "#b45309" : "#15803d"}">${x.rate == null ? "—" : Math.round(x.rate * 100) + "%"}<small>${x.n} 人</small></span></div>`).join("")}`;
+}
+
+// ---- 紙本：A4／B4 列印（存成 PDF）與 Word ----
+const PAPER = { A4: { w: 210, h: 297 }, B4: { w: 257, h: 364 } };
+function examAbs(url) { try { return new URL(url, location.href).href; } catch (e) { return url; } }
+function examPaperHtml(forWord) {
+  const L = examState.list, sz = PAPER[examState.paper] || PAPER.A4;
+  const t = forWord ? (x, q) => escapeHtml(x) : (x, q) => mathHtml(x, q.subject, q.unit);
+  const imgs = q => diagramParts(q).filter(x => /^https?:\/\//i.test(x) && !isAudioUrl(x)).map(raw => {
+    const m = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]{20,})/);
+    return m ? "https://drive.google.com/thumbnail?id=" + m[1] + "&sz=w1200" : raw;
+  });
+  let lastP = "", body = "";
+  L.forEach((q, i) => {
+    if (q.passage && q.passage !== lastP) {
+      const n2 = i + L.slice(i).findIndex(x => x.passage !== q.passage);
+      const end = n2 < i ? L.length : n2;
+      body += `<div class="psg"><div class="psg-h">閱讀下文，回答第 ${i + 1}${end - 1 > i ? "～" + end : ""} 題</div>${escapeHtml(q.passage).replace(/\n/g, "<br>")}</div>`;
+    }
+    lastP = q.passage || "";
+    const opts = q.opts.map(stripNum), lim = examState.cols > 1 ? 8 : 14, long = opts.some(o => o.length > lim) || opts.join("").length > lim * 3;
+    body += `<div class="q"><div class="qt"><span class="br">（　　）</span>${i + 1}. ${t(q.q, q).replace(/\n/g, "<br>")}</div>
+      ${imgs(q).map(u => `<div class="qi"><img src="${escapeHtml(examAbs(u))}" ${forWord ? examImgSize(examAbs(u)) : ""}></div>`).join("")}
+      <div class="op ${long ? "long" : ""}">${opts.map((o, k) => `<span>${CIRCLED[k]} ${t(o, q)}</span>`).join(forWord ? "　" : "")}</div></div>`;
+  });
+  const key = examState.key ? `<div class="key"><h2>${escapeHtml(examState.title || "測驗卷")}　答案</h2>
+    <div class="kg">${L.map((q, i) => `<span>${i + 1}. ${CIRCLED[q.ans]}</span>`).join(forWord ? "　" : "")}</div>
+    ${examState.exp ? L.map((q, i) => q.exp ? `<p class="ke"><b>${i + 1}. ${CIRCLED[q.ans]}</b> ${escapeHtml(q.exp).replace(/\n/g, "<br>")}</p>` : "").join("") : ""}</div>` : "";
+  const school = HOME_SCHOOL, cls = isAdmin() ? HOME_CLASS : teacherCls();
+  const css = `@page { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; }
+    body { font-family: "Noto Serif TC", "標楷體", DFKai-SB, "PMingLiU", serif; font-size: ${examState.paper === "B4" ? 13 : 12}pt; line-height: 1.65; color: #000; margin: 0; }
+    h1 { text-align: center; font-size: 17pt; margin: 0 0 4pt; letter-spacing: 2pt; }
+    .info { display: flex; justify-content: space-between; border-bottom: 1.5pt solid #000; padding-bottom: 4pt; margin-bottom: 8pt; font-size: 11.5pt; }
+    .info span { white-space: nowrap; }
+    .cols { column-count: ${examState.cols}; column-gap: 9mm; ${examState.cols > 1 ? "column-rule: 0.5pt solid #999;" : ""} }
+    .q { break-inside: avoid; page-break-inside: avoid; margin: 0 0 9pt; }
+    .qt { text-indent: -4.2em; padding-left: 4.2em; }
+    .br { letter-spacing: -1pt; }
+    .op { display: grid; grid-template-columns: repeat(${examState.cols > 1 ? 2 : 4}, auto); justify-content: start; column-gap: 18pt; padding-left: 4.2em; }
+    .op.long { grid-template-columns: repeat(${examState.cols > 1 ? 1 : 2}, auto); }
+    .op span { white-space: nowrap; }
+    .qi { padding-left: 4.2em; margin: 3pt 0; } .qi img { max-width: 100%; max-height: 45mm; }
+    .psg { border: 0.8pt solid #444; padding: 6pt 8pt; margin: 4pt 0 8pt; font-size: 0.94em; break-inside: avoid-page; }
+    .psg-h { font-weight: bold; margin-bottom: 2pt; }
+    .frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.8em; line-height: 1.1; margin: 0 2px; }
+    .frac > span:first-child { border-bottom: 1pt solid currentColor; padding: 0 2px; }
+    .key { page-break-before: always; break-before: page; }
+    .key h2 { font-size: 14pt; text-align: center; }
+    .kg { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4pt 10pt; margin-bottom: 10pt; }
+    .ke { margin: 3pt 0; font-size: 0.92em; }
+    @media screen { body { max-width: ${sz.w - 26}mm; margin: 10mm auto; } }`;
+  const head = `<h1>${escapeHtml(school)}　${escapeHtml(examState.title || "測驗卷")}</h1>
+    <div class="info"><span>${escapeHtml(cls)} 班　座號：＿＿＿</span><span>姓名：＿＿＿＿＿＿＿</span><span>共 ${L.length} 題</span><span>得分：＿＿＿＿</span></div>`;
+  if (forWord) return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${escapeHtml(examState.title)}</title>
+    <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+    <style>@page Section1 { size: ${sz.w}mm ${sz.h}mm; margin: 14mm 13mm; } div.Section1 { page: Section1; }
+    body { font-family: "標楷體", DFKai-SB, serif; font-size: ${examState.paper === "B4" ? 13 : 12}pt; } h1 { text-align: center; font-size: 17pt; } .info { border-bottom: 1.5pt solid #000; } .q { margin: 0 0 8pt; } .op { margin-left: 4em; } .qi { margin-left: 4em; }
+    .psg { border: 0.8pt solid #444; padding: 6pt; } .key { page-break-before: always; }</style></head>
+    <body><div class="Section1"><h1>${escapeHtml(school)}　${escapeHtml(examState.title || "測驗卷")}</h1>
+    <p class="info">${escapeHtml(cls)} 班　座號：＿＿＿　姓名：＿＿＿＿＿＿＿　共 ${L.length} 題　得分：＿＿＿＿</p>${body}${key}</div></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(examState.title)}</title><style>${css}</style></head>
+    <body>${head}<div class="cols">${body}</div>${key}</body></html>`;
+}
+function printExam() {
+  if (!examState.list.length) return;
+  const w = window.open("", "_blank");
+  if (!w) return toast("瀏覽器擋住了新視窗，請允許彈出視窗後再按一次");
+  w.document.write(examPaperHtml(false) + `<script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script>`);
+  w.document.close();
+}
+// Word 要明確的寬高，圖才不會被放大到整頁寬
+const EXAM_IMG = {};
+function examImgSize(u) { const z = EXAM_IMG[u]; if (!z) return 'width="220"'; const k = Math.min(1, 220 / z.w, 170 / z.h); return `width="${Math.round(z.w * k)}" height="${Math.round(z.h * k)}"`; }
+function examMeasure() {
+  const urls = [...new Set(examState.list.flatMap(q => diagramParts(q).filter(x => /^https?:\/\//i.test(x) && !isAudioUrl(x)).map(examAbs)))].filter(u => !EXAM_IMG[u]);
+  return Promise.all(urls.map(u => new Promise(res => { const im = new Image(); im.onload = () => { EXAM_IMG[u] = { w: im.naturalWidth || 300, h: im.naturalHeight || 200 }; res(); }; im.onerror = () => res(); im.src = u; setTimeout(res, 4000); })));
+}
+async function wordExam() {
+  if (!examState.list.length) return;
+  await examMeasure();
+  const blob = new Blob(["﻿" + examPaperHtml(true)], { type: "application/msword" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (examState.title || "測驗卷").replace(/[\\/:*?"<>|]/g, "_") + `_${examState.paper}.doc`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("📄 已下載 Word 檔（用 Word 開啟後可以再編輯）");
+}
+
+// ---- 學生端：老師派的線上考卷 ----
+let TQ_LIST = [];
+function tqTag(id) { return "tq_" + id + "_"; }
+function tqDone(id) { return (mySessions || []).find(s => String(s.sid || "").indexOf(tqTag(id)) >= 0) || null; }
+function tqPending() { return TQ_LIST.filter(t => !tqDone(t.id)); }
+function setTqList(list) {
+  const before = new Set(TQ_LIST.map(t => t.id));
+  TQ_LIST = Array.isArray(list) ? list : [];
+  const fresh = TQ_LIST.filter(t => !before.has(t.id) && !tqDone(t.id));
+  if (before.size && fresh.length) toast(`📝 老師派了新考卷：${fresh[0].title}`, 6000);
+  renderPills();
+}
+function tqPillHtml() {
+  const p = tqPending().length;
+  return TQ_LIST.length ? `<span class="pill${p ? " tq-pill" : ""}" style="cursor:pointer" onclick="openTqList()">📝 老師的考卷${p ? ` ${p}` : ""}</span>` : "";
+}
+function openTqList() {
+  const box = document.getElementById("report-content");
+  box.innerHTML = `<h2 style="margin-top:0">📝 老師的考卷</h2>
+    ${TQ_LIST.length ? TQ_LIST.map(t => { const d = tqDone(t.id);
+      return `<div class="voice-row ${d ? "" : "on"}"><span class="vn">${escapeHtml(t.title)}<small>${t.n} 題${t.due ? `・${escapeHtml(t.due.slice(5).replace("-", "/"))} 截止` : ""}${t.show === "after" ? "・交卷後才看答案" : ""}</small></span>
+        ${d ? `<b style="white-space:nowrap">✅ ${d.correct}／${d.total}</b>` : `<button class="btn-accent" style="padding:7px 16px" onclick='takeTq(${JSON.stringify(t.id)})'>開始作答</button>`}</div>`; }).join("")
+      : `<div class="empty-note">目前沒有考卷</div>`}
+    <p style="font-size:.8rem; opacity:.75">每份考卷只算第一次作答的成績，請專心作答；答錯的題目會放進錯題本。</p>`;
+  openModal("report-modal");
+}
+async function takeTq(id) {
+  try {
+    const r = await bridgeCall("tqTake", { id });
+    const qs = r.tq.ids.map(findQuestion).filter(Boolean).map(q => prepareQuestion(q));
+    if (!qs.length) return toast("題庫還沒更新，請稍後再試");
+    closeModal("report-modal");
+    startTqQuiz(r.tq, qs);
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+function startTqQuiz(tq, qs) {
+  stopSpeak();
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box challenge";
+  quizState = newQuizState("考卷", "老師考卷", tq.title, qs);
+  quizState.tq = { id: tq.id, title: tq.title, show: tq.show };
+  quizState.sid = (FINAL ? FINAL_SID : "") + tqTag(tq.id) + uid();
+  quizState.log = [];
+  openModal("quiz-modal");
+  renderQuestion();
+}
+/** 一局結束時寫進闖關紀錄的「單元」名稱 */
+function sessionUnitLabel() {
+  const m = quizState.mode;
+  return m === "練習" ? quizState.unit : m === "挑戰" ? CHALLENGE_TAG + quizState.unit : m === "訂正" ? "錯題本" : m === "考卷" ? "📝 " + quizState.unit : "歷史錯題複習";
+}
+function tqHidden() { return quizState && quizState.mode === "考卷" && quizState.tq && quizState.tq.show === "after"; }
+function tqReviewHtml() {
+  if (!quizState.log || !quizState.log.length) return "";
+  return `<details class="ug" style="text-align:left" ${tqHidden() ? "open" : ""}><summary><span>📋 對答案</span><b>${quizState.correctCount}／${quizState.log.length}</b></summary>
+    ${quizState.log.map((x, i) => `<div class="exam-q"><span class="eq-n">${x.ok ? "✅" : "❌"}</span><div class="eq-body">
+      <div class="eq-q">${i + 1}. ${mathHtml(x.q.q, x.q.subject, x.q.unit)}</div>
+      <div style="font-size:.86rem">你的答案：<b>${escapeHtml(x.chosen)}</b>${x.ok ? "" : `　正確答案：<b style="color:#15803d">${escapeHtml(stripNum(x.q.opts[x.q.ans]))}</b>`}</div>
+      ${!x.ok && x.q.exp ? `<div style="font-size:.84rem; opacity:.85">📝 ${mathHtml(x.q.exp, x.q.subject, x.q.unit)}</div>` : ""}</div></div>`).join("")}</details>`;
+}
+
 async function renderBridge() {
   const box = document.getElementById("bridge-content");
   const t = bridgeState.tab;
@@ -4940,6 +5304,10 @@ async function renderBridge() {
           <button class="btn-accent" onclick="closeModal('bridge-modal'); dashState.season='final'; openDashboard();">📊 ${isAdmin() ? "全年級" : "全班"}成績（期末）</button>
           <button class="btn-ghost" onclick="closeModal('bridge-modal'); dashState.season='mid'; openDashboard();">📊 ${isAdmin() ? "全年級" : "全班"}成績（期中）</button>
         </div>`);
+    } else if (t === "exam") {
+      if (!examState.subject) examState.subject = examSubjects()[0] || "";
+      set(examHtml());
+      if (!examState.mk) { examState.mk = []; bridgeCall("mistakes", { season: "final" }).then(r => { examState.mk = r.mistakes || []; if (bridgeState.tab === "exam") renderBridge(); }).catch(() => {}); }
     } else if (t === "rules") {
       const r = rulesNow();
       set(`<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
@@ -5636,7 +6004,30 @@ function demoBridge(op, d) {
     return { messages: db.dms.filter(m => (m.from === me && m.to === peer) || (m.from === peer && m.to === me)).map(m => ({ t: m.t, from: m.from, text: m.text, mine: m.from === me })) };
   };
   db.reports = db.reports || [];
+  db.tq = db.tq || [];
+  if (op === "tqSave") {
+    const cls = isAdmin() ? d.cls : [teacherCls()];
+    const tq = { id: uid().slice(-8), title: d.title, ids: d.ids, cls, due: d.due || "", show: d.show, by: session.user.name, t: nowStr() };
+    db.tq.unshift(tq); save(); return { ok: true, tq };
+  }
+  if (op === "tqList") return { list: db.tq.filter(t => isAdmin() || t.by === session.user.name || t.cls.includes(teacherCls())) };
+  if (op === "tqDelete") { db.tq = db.tq.filter(t => t.id !== d.id); save(); return { ok: true }; }
+  if (op === "tqTake") { const t = db.tq.find(x => x.id === d.id); if (!t) throw new Error("這份考卷已經被老師收回了"); return { tq: t }; }
+  if (op === "tqResults") {
+    const tq = db.tq.find(x => x.id === d.id); if (!tq) throw new Error("找不到這份考卷");
+    const tag = tqTag(tq.id), people = [], perQ = {};
+    studentsList().filter(s => !isTestAcc(s.name)).forEach(s => {
+      const rows = load("508_DEMO_DATA_" + s.name, { answers: [] }).answers.filter(r => String(r.sid || "").indexOf(tag) >= 0);
+      if (!rows.length) return;
+      const sid = rows[0].sid, mine = rows.filter(r => r.sid === sid);
+      people.push({ name: s.name, total: mine.length, correct: mine.filter(r => r.ok).length, t: mine[mine.length - 1].t });
+      mine.forEach(r => { const q = perQ[r.qId] || (perQ[r.qId] = { qId: r.qId, n: 0, ok: 0 }); q.n++; if (r.ok) q.ok++; });
+    });
+    const target = studentsList().filter(s => !isTestAcc(s.name) && (tq.cls.includes("all") || tq.cls.includes(stuClass(s.name)))).map(s => s.name);
+    return { tq, people, perQ: Object.values(perQ), target };
+  }
   if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES,
+    tq: session.user.role === "student" ? db.tq.filter(t => (!t.due || t.due >= nowStr().slice(0, 10)) && (t.cls.includes("all") || t.cls.includes(stuClass(session.user.name)))).map(t => ({ id: t.id, title: t.title, n: t.ids.length, due: t.due, show: t.show })) : undefined,
     reports: session.user.role === "teacher" ? db.reports.filter(r => r.status === "待處理").length : undefined };
   if (op === "qReport") {
     if (db.reports.some(r => r.name === session.user.name && r.qId === d.qId && r.status === "待處理")) throw new Error("這題你已經回報過了，老師處理後會用私訊通知你");
