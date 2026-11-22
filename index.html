@@ -649,6 +649,8 @@
   .exam-out input, .exam-out select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); font: inherit; }
   .tq-pill { background: #dc2626 !important; color: #fff !important; animation: tqPulse 1.6s ease-in-out infinite; }
   @keyframes tqPulse { 50% { box-shadow: 0 0 0 6px rgba(220,38,38,.25); } }
+  u.typo { text-decoration: none; border-bottom: 3px solid #ef4444; background: rgba(239,68,68,.15); padding: 0 2px; border-radius: 3px; }
+  .typo-note { font-size: .86rem; margin: -4px 0 10px; padding: 6px 10px; border-radius: 10px; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35); }
   .voice-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
   .voice-row.on { border-color: #0ea5e9; background: rgba(14,165,233,.1); }
   .voice-row .vn { flex: 1; font-weight: 800; }
@@ -4085,6 +4087,24 @@ function mathHtml(text, subject, unit) {
           .replace(/(\d+)\/(\d+)/g, (m, n, d) => fr(n, d));
 }
 
+// ── 改錯字（短文）：同一段話有好幾個錯字，每個錯字是一題。標出這一題要改的字，並提醒其他錯字是別題 ──
+function typoInfo(q) {
+  const m = String(q.q || "").match(/^找出錯字：句子裡的「(.)」寫錯了/);
+  if (!m) return null;
+  const text = String(q.q).split("\n").slice(1).join("\n");
+  const n = new Set(BANK.filter(b => b.subject === q.subject && b.unit === q.unit && String(b.q || "").indexOf("\n" + text) > 0).map(b => (String(b.q).match(/^找出錯字：句子裡的「(.)」/) || [])[1]).filter(Boolean)).size;
+  return { ch: m[1], text, n };
+}
+function typoMark(q, html) {
+  const t = typoInfo(q);
+  if (!t) return html;
+  const i = html.indexOf("\n"); if (i < 0) return html;
+  return html.slice(0, i + 1) + html.slice(i + 1).replace(t.ch, `<u class="typo">${t.ch}</u>`);
+}
+function typoNote(q) {
+  const t = typoInfo(q);
+  return t && t.n > 1 ? `<div class="typo-note">💡 這段話一共有 <b>${t.n} 個錯字</b>，這一題只要改畫線的「${escapeHtml(t.ch)}」；其他錯字是別的題目，看到了也先不用管。</div>` : "";
+}
 function renderQuestion() {
   const q = quizState.questions[quizState.idx];
   quizState.shownAt = Date.now();
@@ -4101,7 +4121,8 @@ function renderQuestion() {
     ${vocabMiniHtml(q)}
     ${q.dict ? "" : listenBoxHtml(q, true)}
     ${questionImageHtml(q)}
-    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${mathHtml(q.q, q.subject, q.unit)}</h3>
+    <h3 style="margin:16px 0 10px; line-height:1.6; white-space:pre-line;">Q${quizState.idx + 1}. ${typoMark(q, mathHtml(q.q, q.subject, q.unit))}</h3>
+    ${typoNote(q)}
     ${q.dict ? dictHtml(q) : `${scratchBtnHtml(q)}
     <div id="opts-box">${q.opts.map((o, i) => `<button class="option-btn" onclick="submitAnswer(${i})">${mathHtml(o, q.subject, q.unit)}</button>`).join("")}</div>`}
     <div id="feedback-box" style="margin-top:12px;"></div>
