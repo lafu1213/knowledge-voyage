@@ -650,6 +650,58 @@
   .tq-pill { background: #dc2626 !important; color: #fff !important; animation: tqPulse 1.6s ease-in-out infinite; }
   @keyframes tqPulse { 50% { box-shadow: 0 0 0 6px rgba(220,38,38,.25); } }
   u.typo { text-decoration: none; border-bottom: 3px solid #ef4444; background: rgba(239,68,68,.15); padding: 0 2px; border-radius: 3px; }
+  /* 唐詩島 */
+  .zy { display: inline-flex; align-items: center; margin: 0 .42em 0 1px; vertical-align: middle; }
+  .zy > b { font-weight: 700; }
+  .zy-r { position: relative; display: inline-flex; flex-direction: column; justify-content: center; font-style: normal; font-size: .42em; line-height: 1.02; margin-left: 2px; min-width: 1.1em; font-weight: 500; }
+  .zy-r > span { display: block; text-align: center; }
+  .zy-t { position: absolute; right: -.8em; font-style: normal; font-size: 1em; top: 50%; transform: translateY(-50%); }
+  .zy-r.n2 .zy-t, .zy-r.n3 .zy-t { top: auto; bottom: 0; transform: none; }
+  .zy-l { font-style: normal; text-align: center; display: block; line-height: .6; }
+  .zy-p { font-weight: 700; margin-right: .2em; }
+  .tg-poem { text-align: center; font-family: "Noto Serif TC", "標楷體", DFKai-SB, serif; font-size: min(1.75rem, 5.4vw); line-height: 1.6; padding: 6px 4px; }
+  .tg-poem.small { font-size: min(1.3rem, 4.9vw); }
+  .tg-line { white-space: nowrap; }
+  .tg-ptitle { font-size: 1.05em; font-weight: 900; }
+  .tg-ptitle small { font-size: .5em; opacity: .7; }
+  .tg-pauth { font-size: .62em; opacity: .8; margin-bottom: 4px; }
+  .tg-line { border-radius: 10px; transition: background .2s; padding: 0 6px; }
+  .tg-line.on { background: rgba(250,204,21,.35); }
+  .tg-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 12px; align-items: center; }
+  .tg-scene { width: 100%; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,.18); display: block; }
+  @media (max-width: 640px) { .tg-top { grid-template-columns: 1fr; } }
+  .tg-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+  .tg-tags span { background: rgba(225,29,72,.12); color: #9f1239; border-radius: 999px; padding: 1px 10px; font-size: .78rem; font-weight: 800; }
+  body.night .tg-tags span { color: #fda4af; }
+  .tg-nav { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tg-nav button { padding: 4px 10px; font-size: .84rem; }
+  #quiz-content > .tg-nav:first-child { padding-right: 38px; }
+  .tg-sec { border: 1px solid var(--line); border-radius: 12px; padding: 6px 12px; margin: 8px 0; text-align: left; }
+  .tg-sec summary { font-weight: 900; cursor: pointer; }
+  .tg-sec p { margin: 6px 0; line-height: 1.8; }
+  .tg-notes { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 6px 0; }
+  .tg-notes dt { font-weight: 900; color: #be123c; } .tg-notes dd { margin: 0; }
+  .tg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; margin: 8px 0; }
+  .tg-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px 8px 36px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); text-align: left; cursor: pointer; font: inherit; }
+  .tg-card:hover { border-color: #e11d48; }
+  .tg-card b { font-size: .95rem; } .tg-card small { opacity: .7; font-size: .74rem; }
+  .tg-card .tg-no { position: absolute; left: 8px; top: 9px; width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; font-size: .72rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+  .tg-card.done { border-color: #16a34a; } .tg-card i { position: absolute; right: 6px; top: 6px; font-style: normal; font-size: .8rem; }
+  .tg-auth-note { font-size: .82rem; opacity: .85; margin: 4px 0; text-align: left; }
+  .tg-lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin: 8px 0; }
+  .tg-lesson { display: flex; gap: 8px; align-items: center; padding: 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card-solid); color: var(--ink); cursor: pointer; font: inherit; text-align: left; }
+  .tg-lesson span { font-size: 1.4rem; }
+  .tg-lesson-body { text-align: left; line-height: 1.85; }
+  .tg-lesson-body ul, .tg-lesson-body ol { padding-left: 1.3em; }
+  .tg-tbl { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: .9rem; }
+  .tg-tbl th, .tg-tbl td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; }
+  .tg-tbl th { background: rgba(225,29,72,.08); }
+  .tg-ex { background: rgba(250,204,21,.12); border-left: 4px solid #f59e0b; border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-family: "Noto Serif TC", serif; font-size: 1.08rem; }
+  .tg-ex small { font-family: inherit; font-size: .8rem; opacity: .8; }
+  .tg-ex .rh { color: #dc2626; }
+  .tg-pass .tg-poem { padding: 0; white-space: normal; }
+  .tg-pass div { white-space: normal; max-height: none; overflow: visible; margin-top: 0; }
+  .tg-pz { font-weight: 900; letter-spacing: 2px; }
   .typo-note { font-size: .86rem; margin: -4px 0 10px; padding: 6px 10px; border-radius: 10px; background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.35); }
   .voice-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 10px; border: 1px solid var(--line); margin: 6px 0; }
   .voice-row.on { border-color: #0ea5e9; background: rgba(14,165,233,.1); }
@@ -1066,6 +1118,7 @@
 
 <script src="demo-bank.js"></script>
 <script src="passage-zh.js"></script>
+<script src="tang-poems.js"></script>
 <script>
 // =========================================================
 // 0. 設定：把 Apps Script 部署後的「網頁應用程式網址」貼在引號裡
@@ -1416,7 +1469,12 @@ const EXTRA_SUBJECTS = [
     land: ["#c4b5fd", "#5b21b6"], sand: "#ede9fe", sea: ["#ddd6fe", "#8b5cf6", "#2e1065"], banner: "#4c1d95",
     shape: { points: 14, wobble: 0.24 }, deco: ["👑", "🔤", "📖", "✨", "🎓", "💬"],
     palette: ["#a78bfa", "#8b5cf6", "#7c3aed", "#c084fc", "#6366f1", "#818cf8", "#e879f9"],
-    unitIcons: ["🔤", "📖", "💬", "🎓", "✏️", "🌟", "📚", "🗝️", "🎧", "🧩"] }
+    unitIcons: ["🔤", "📖", "💬", "🎓", "✏️", "🌟", "📚", "🗝️", "🎧", "🧩"] },
+  { key: "唐詩", name: "唐詩百首島", icon: "🏮", title: "長安詩韻海", pattern: "ink", small: true,
+    land: ["#fca5a5", "#9f1239"], sand: "#fef3c7", sea: ["#fde68a", "#e11d48", "#4c0519"], banner: "#881337",
+    shape: { points: 11, wobble: 0.26 }, deco: ["🏮", "🌙", "🎋", "📜", "⛵", "🏯"],
+    palette: ["#fb7185", "#f43f5e", "#e11d48", "#f59e0b", "#be123c", "#fda4af", "#d97706"],
+    unitIcons: ["📜", "🌱", "🏞️", "🎋", "🌙", "🏡", "⛵", "🍂", "🌊", "🏯", "🌇"] }
 ];
 // 武林大會的五科擂台：圖示與群島主題（GROUP_THEMES 的第幾個）
 const ARENAS = [
@@ -1643,7 +1701,7 @@ function passageSpans(text, ws) {
     return `<b class="pw" data-en="${escapeHtml(w.en || m)}" data-zh="${escapeHtml(w.zh || "")}" onclick="pwTap(this)">${m}</b>`; }) : h;
   const zh = passageZh(text);
   const body = String(text).split(/\n/).map(line => splitLine(line).map(s => { const i = k++;
-    return `<span class="ps" id="ps-${i}">${mark(escapeHtml(s))}</span>${zh ? `<span class="pz">${escapeHtml(zh[i] || "")}</span>` : ""}`; }).join(" ")).join("\n");
+    return `<span class="ps" id="ps-${i}">${mark(escapeHtml(s))}</span>${zh ? `<span class="tg-pz">${escapeHtml(zh[i] || "")}</span>` : ""}`; }).join(" ")).join("\n");
   return `<div class="bi-wrap ${BI_ON ? "bi" : ""}">${body}</div>`;
 }
 /** 文章裡找出本課單字（含 -s、-ed、-ing 等變化） */
@@ -1684,6 +1742,8 @@ function vocabIsleName(u) {
 }
 function readGuide() { if (GUIDE_TEXT) speakList(englishSentences(GUIDE_TEXT), PASSAGE_RATE, markSentence); }
 function passageHtml(q) {
+  if (q.poemN && tangPoem(q.poemN)) return `<details class="passage tg-pass" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📜 詩（點一下收合／展開）</summary>
+    <div class="ps-bar"><button class="btn-ghost" onclick="readPoem(${q.poemN})">🔊 朗讀</button><button class="btn-ghost" onclick="stopSpeak()">⏹</button></div>${tangPoemBlock(tangPoem(q.poemN), { small: true })}</details>`;
   const read = q.subject === "單字王" && isEnglishPassage(q);
   return `<details class="passage" ${quizState.lastPassage === q.passage ? "" : "open"}><summary>📖 ${q.subject === "國語" ? "課文" : "文章"}（點一下收合／展開）</summary>
     ${read ? `<div class="ps-bar"><button class="btn-primary" onclick="readPassage('mid')">🔊 朗讀文章</button>${biBtnHtml(q.passage)}<button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button><button class="btn-ghost" onclick="openVoicePicker()">🗣️ 換聲音</button>
@@ -1699,6 +1759,222 @@ function vocabMiniHtml(q) {
   if (!ws.length) return "";
   return `<details class="vocab-mini" ${VM_OPEN ? "open" : ""} ontoggle="VM_OPEN = this.open"><summary>🔤 這一篇的 ${ws.length} 個單字（點單字聽發音）</summary>
     <div class="vm-grid">${ws.map(w => `<button class="vm" onclick="speakText(${escapeHtml(JSON.stringify(dictSay(w.en)))}, false)"><b>${escapeHtml(w.en)}</b><span>${escapeHtml(w.zh)}</span></button>`).join("")}</div></details>`;
+}
+
+// =========================================================
+// 唐詩島：入門小百科＋100 首唐詩（資料在 tang-poems.js）
+// =========================================================
+const TANG_SUBJ = "唐詩";
+const TANG_INTRO_UNIT = "第0站 唐詩小百科";
+function tangData() { return window.TANG || null; }
+function tangStationUnit(n) { const T = tangData(), s = T && T.stations[Math.ceil(n / 10) - 1]; return s ? `第${s.n}站 ${s.name}` : "第1站"; }
+function tangPoem(n) { const T = tangData(); return T ? T.poems.find(p => p.n === Number(n)) : null; }
+function tangTitle(p) { return `〈${p.t}〉${p.sub ? `（${p.sub}）` : ""}`; }
+/** 題庫：入門測驗＋每首詩的閱讀測驗都放進 BANK，跟其他題目一樣會進錯題本、算星星 */
+function tangQuestions() {
+  const T = tangData(); if (!T) return [];
+  const out = T.quiz.map((x, i) => ({ id: "tang-i" + (i + 1), subject: TANG_SUBJ, unit: TANG_INTRO_UNIT, type: "國學常識", q: x[0], opts: x[1].slice(), ans: x[2], exp: x[3], src: "tang" }));
+  T.poems.forEach(p => p.qs.forEach((x, i) => out.push({
+    id: `tang-${p.n}-${i + 1}`, subject: TANG_SUBJ, unit: tangStationUnit(p.n), type: "唐詩閱讀", q: x[0], opts: x[1].slice(), ans: x[2], exp: x[3], src: "tang",
+    passage: `${tangTitle(p)}　${p.era}・${p.a}\n${p.lines.join("\n")}`, poemN: p.n })));
+  return out;
+}
+function tangUnitPoems(unit) { const T = tangData(); return T ? T.poems.filter(p => tangStationUnit(p.n) === unit.unit) : []; }
+
+// ── 注音：字的右邊直排注音，聲調在旁邊（輕聲在上面） ──
+function zyHtml(ch, z) {
+  if (!z) return `<span class="zy zy-p">${escapeHtml(ch)}</span>`;
+  const m = z.match(/^(˙)?([^ˊˇˋ˙]+)([ˊˇˋ])?$/) || [null, "", z, ""];
+  const syms = [...m[2]];
+  return `<span class="zy"><b>${escapeHtml(ch)}</b><i class="zy-r n${syms.length}">${m[1] ? `<em class="zy-l">˙</em>` : ""}${syms.map(s => `<span>${s}</span>`).join("")}${m[3] ? `<em class="zy-t">${m[3]}</em>` : ""}</i></span>`;
+}
+function zyLine(text, zys) { return [...text].map((c, i) => zyHtml(c, (zys || [])[i])).join(""); }
+function tangPoemBlock(p, opts = {}) {
+  return `<div class="tg-poem ${opts.small ? "small" : ""}">
+    <div class="tg-ptitle">${zyLine(p.t, p.tzy)}${p.sub ? `<small>（${escapeHtml(p.sub)}）</small>` : ""}</div>
+    <div class="tg-pauth">${escapeHtml(p.era)}・${zyLine(p.a, p.azy)}</div>
+    ${p.lines.map((l, i) => `<div class="tg-line" data-l="${i}">${zyLine(l, p.zy[i])}</div>`).join("")}</div>`;
+}
+
+// ── 詩情境簡圖：依照詩裡的景物組合（天色、山、水、船、柳、雁、月……） ──
+const SCENE_ORDER = ["day", "dusk", "night", "dawn", "stars", "sun", "moon", "cloud", "farhills", "snowcap", "mountains", "desert", "sea", "river", "pond", "ground", "field", "road",
+  "city", "fort", "tower", "village", "house", "pines", "trees", "tree", "willow", "bamboo", "flowers", "grass", "boat", "sail", "goose", "geese", "birds", "crane", "cicada", "horse",
+  "person", "people2", "oldman", "child", "sunray", "breeze", "rain", "snowfall", "petals"];
+function sceneSvg(tags, seed) {
+  const has = t => tags.includes(t), R = seeded("scene" + seed);
+  const sky = has("night") ? ["#0f172a", "#1e3a8a"] : has("dusk") ? ["#fb923c", "#fde68a"] : has("dawn") ? ["#fbcfe8", "#fef3c7"] : has("rain") ? ["#94a3b8", "#cbd5e1"] : ["#7dd3fc", "#e0f2fe"];
+  const water = has("river") || has("pond") || has("sea");
+  const groundY = water ? 112 : 124, desert = has("desert");
+  const snow = has("snowfall") || has("snowcap") && !has("day");
+  const P = [];
+  const add = s => P.push(s);
+  const tree = (x, y, s, c) => `<rect x="${x - 2 * s}" y="${y - 12 * s}" width="${4 * s}" height="${12 * s}" fill="#7c4a1e"/><circle cx="${x}" cy="${y - 18 * s}" r="${10 * s}" fill="${c || "#16a34a"}"/><circle cx="${x - 7 * s}" cy="${y - 13 * s}" r="${7 * s}" fill="${c || "#22c55e"}"/><circle cx="${x + 7 * s}" cy="${y - 13 * s}" r="${7 * s}" fill="${c || "#15803d"}"/>`;
+  const person = (x, y, c, s = 1) => `<g fill="none" stroke="${c}" stroke-width="${2 * s}" stroke-linecap="round"><circle cx="${x}" cy="${y - 19 * s}" r="${4 * s}" fill="#fde7c7"/><path d="M${x} ${y - 15 * s}v${9 * s}M${x} ${y - 6 * s}l-${4 * s} ${6 * s}M${x} ${y - 6 * s}l${4 * s} ${6 * s}M${x - 5 * s} ${y - 12 * s}h${10 * s}"/></g>`;
+  const draw = {
+    stars: () => Array.from({ length: 22 }, () => `<circle cx="${(R() * 320) | 0}" cy="${(R() * 70) | 0}" r="${R() < 0.2 ? 1.4 : 0.8}" fill="#fff" opacity="${0.5 + R() * 0.5}"/>`).join(""),
+    sun: () => has("dusk") ? `<circle cx="250" cy="${groundY - 26}" r="20" fill="#f97316" opacity=".95"/>` : has("dawn") ? `<circle cx="70" cy="${groundY - 18}" r="16" fill="#fb7185"/>` : `<circle cx="262" cy="34" r="17" fill="#fde047"/><circle cx="262" cy="34" r="24" fill="#fde047" opacity=".25"/>`,
+    moon: () => `<circle cx="248" cy="34" r="15" fill="#fef9c3"/><circle cx="256" cy="29" r="13" fill="${has("night") ? "#13285f" : sky[0]}" opacity="${has("night") ? 1 : 0}"/>`,
+    cloud: () => [[60, 30], [190, 22]].map(([x, y]) => `<g fill="#fff" opacity=".85"><ellipse cx="${x}" cy="${y}" rx="24" ry="8"/><ellipse cx="${x + 14}" cy="${y - 6}" rx="14" ry="8"/><ellipse cx="${x - 12}" cy="${y - 3}" rx="11" ry="6"/></g>`).join(""),
+    farhills: () => `<path d="M0 ${groundY - 10} Q60 ${groundY - 40} 120 ${groundY - 14} T240 ${groundY - 18} T320 ${groundY - 12} V${groundY} H0Z" fill="#a5b4c8" opacity=".7"/>`,
+    snowcap: () => `<path d="M30 ${groundY} L110 ${groundY - 78} L190 ${groundY}Z" fill="#94a3b8"/><path d="M110 ${groundY - 78} L92 ${groundY - 56} L104 ${groundY - 60} L112 ${groundY - 52} L122 ${groundY - 60} L130 ${groundY - 55}Z" fill="#fff"/><path d="M150 ${groundY} L230 ${groundY - 60} L310 ${groundY}Z" fill="#a8b5c8"/><path d="M230 ${groundY - 60} L214 ${groundY - 42} L226 ${groundY - 45} L236 ${groundY - 38} L246 ${groundY - 45}Z" fill="#fff"/>`,
+    mountains: () => `<path d="M-10 ${groundY} L60 ${groundY - 62} L120 ${groundY - 20} L170 ${groundY - 70} L250 ${groundY - 8} L290 ${groundY - 40} L330 ${groundY}Z" fill="${has("night") ? "#334155" : has("dusk") ? "#7c5a8a" : "#4d7c5a"}"/><path d="M60 ${groundY - 62} L75 ${groundY - 44} L50 ${groundY - 50}Z M170 ${groundY - 70} L188 ${groundY - 48} L160 ${groundY - 54}Z" fill="${has("snowcap") || snow ? "#fff" : "rgba(255,255,255,.18)"}"/>`,
+    desert: () => `<path d="M0 ${groundY - 6} Q80 ${groundY - 26} 160 ${groundY - 8} T320 ${groundY - 10} V160 H0Z" fill="#e9b872"/><path d="M0 ${groundY + 12} Q100 ${groundY - 2} 200 ${groundY + 14} T320 ${groundY + 8} V160 H0Z" fill="#d9a35c"/>`,
+    sea: () => `<rect x="0" y="${groundY}" width="320" height="${160 - groundY}" fill="#3b82f6"/>`,
+    river: () => `<path d="M0 ${groundY} H320 V160 H0Z" fill="${has("night") ? "#1e3a8a" : has("dusk") ? "#f59e0b" : "#38bdf8"}" opacity=".9"/>${[0, 1, 2].map(i => `<path d="M${20 + i * 100} ${groundY + 14 + i * 9} q12 -4 24 0 t24 0" stroke="#fff" stroke-width="1.5" fill="none" opacity=".6"/>`).join("")}`,
+    pond: () => `<ellipse cx="160" cy="${groundY + 26}" rx="170" ry="34" fill="#38bdf8"/><path d="M60 ${groundY + 20} q12 -4 24 0 t24 0 M190 ${groundY + 34} q12 -4 24 0 t24 0" stroke="#fff" stroke-width="1.5" fill="none" opacity=".7"/>`,
+    ground: () => desert ? "" : `<rect x="0" y="${water ? groundY - 6 : groundY}" width="320" height="${water ? 8 : 160 - groundY}" fill="${snow ? "#f1f5f9" : has("night") ? "#14532d" : "#4ade80"}"/>`,
+    field: () => `<g stroke="#a16207" stroke-width="1.5" opacity=".6">${[0, 1, 2, 3].map(i => `<path d="M${180 + i * 10} 160 L${240 + i * 6} ${groundY + 4}"/>`).join("")}</g><rect x="175" y="${groundY + 2}" width="120" height="34" fill="#facc15" opacity=".35"/>`,
+    road: () => `<path d="M120 160 Q150 ${groundY + 14} 200 ${groundY + 2} L210 ${groundY + 2} Q170 ${groundY + 18} 160 160Z" fill="#d6b88a"/>`,
+    city: () => `<g fill="#9a7b5b"><rect x="30" y="${groundY - 30}" width="110" height="30"/>${[0, 1, 2, 3, 4, 5].map(i => `<rect x="${30 + i * 19}" y="${groundY - 36}" width="10" height="7"/>`).join("")}</g><path d="M66 ${groundY - 36} h38 l-6 -12 h-26z" fill="#b91c1c"/><rect x="76" y="${groundY - 16}" width="18" height="16" rx="9" fill="#3f2a17"/>`,
+    fort: () => `<g fill="#a8896a"><rect x="200" y="${groundY - 26}" width="70" height="26"/>${[0, 1, 2, 3].map(i => `<rect x="${200 + i * 20}" y="${groundY - 32}" width="10" height="7"/>`).join("")}<rect x="225" y="${groundY - 46}" width="20" height="20"/></g><path d="M222 ${groundY - 46} h26 l-13 -10z" fill="#7c2d12"/>`,
+    tower: () => `<g transform="translate(${has("river") ? 40 : 200},${groundY})"><rect x="0" y="-22" width="40" height="22" fill="#c2410c"/><path d="M-8 -22 h56 l-10 -9 h-36z" fill="#7c2d12"/><rect x="5" y="-46" width="30" height="16" fill="#c2410c"/><path d="M-4 -46 h48 l-9 -8 h-30z" fill="#7c2d12"/><rect x="10" y="-66" width="20" height="13" fill="#c2410c"/><path d="M2 -66 h36 l-18 -12z" fill="#7c2d12"/><rect x="15" y="-14" width="10" height="14" fill="#3f2a17"/></g>`,
+    village: () => [[40, 1], [92, 0.8], [250, 0.9]].map(([x, s]) => `<g transform="translate(${x},${groundY}) scale(${s})"><rect x="-16" y="-18" width="32" height="18" fill="#fef3c7" stroke="#92400e"/><path d="M-22 -18 L0 -34 L22 -18Z" fill="#92400e"/><rect x="-4" y="-10" width="8" height="10" fill="#92400e"/></g>`).join(""),
+    house: () => `<g transform="translate(60,${groundY})"><rect x="-20" y="-22" width="40" height="22" fill="#fef3c7" stroke="#92400e"/><path d="M-27 -22 L0 -40 L27 -22Z" fill="#92400e"/><rect x="-14" y="-16" width="10" height="8" fill="#7dd3fc"/><rect x="4" y="-12" width="9" height="12" fill="#92400e"/></g>`,
+    pines: () => [[30, 1.1], [62, 0.9], [270, 1.2], [300, 0.8], [110, 0.7]].map(([x, s]) => `<path d="M${x} ${groundY - 46 * s} L${x - 13 * s} ${groundY - 18 * s} L${x - 6 * s} ${groundY - 18 * s} L${x - 15 * s} ${groundY} L${x + 15 * s} ${groundY} L${x + 6 * s} ${groundY - 18 * s} L${x + 13 * s} ${groundY - 18 * s}Z" fill="#166534"/>`).join(""),
+    trees: () => [[28, 1], [70, 0.8], [290, 1.1]].map(([x, s]) => tree(x, groundY, s)).join(""),
+    tree: () => tree(270, groundY, 1.5),
+    willow: () => `<rect x="44" y="${groundY - 60}" width="7" height="60" fill="#7c4a1e"/>${Array.from({ length: 13 }, (_, i) => `<path d="M48 ${groundY - 60} Q${18 + i * 6} ${groundY - 70} ${16 + i * 6} ${groundY - 24 + (i % 3) * 6}" stroke="#65a30d" stroke-width="1.6" fill="none"/>`).join("")}`,
+    bamboo: () => [20, 34, 290, 304].map(x => `<rect x="${x}" y="${groundY - 70}" width="5" height="70" fill="#65a30d"/><path d="M${x + 4} ${groundY - 50} l12 -6 M${x} ${groundY - 30} l-12 -5" stroke="#4d7c0f" stroke-width="3"/>`).join(""),
+    flowers: () => Array.from({ length: 14 }, () => { const x = (R() * 300 + 10) | 0, y = groundY + 6 + ((R() * 24) | 0); return `<circle cx="${x}" cy="${y}" r="3" fill="${["#f472b6", "#fde047", "#fb7185", "#fff"][(R() * 4) | 0]}"/>`; }).join(""),
+    grass: () => Array.from({ length: 20 }, (_, i) => `<path d="M${8 + i * 16} ${groundY + 4} l3 -9 l3 9" stroke="#15803d" stroke-width="1.5" fill="none"/>`).join(""),
+    boat: () => `<g transform="translate(150,${groundY + 22})"><path d="M-30 0 h60 l-10 10 h-40z" fill="#92400e"/><path d="M-12 0 v-10 h22 v10" fill="#fde68a" stroke="#92400e"/>${person(20, 0, "#1e293b", 0.6)}</g>`,
+    sail: () => `<g transform="translate(110,${groundY + 18})"><path d="M-26 0 h52 l-9 9 h-34z" fill="#92400e"/><path d="M0 0 v-40 l24 34z" fill="#fff" stroke="#cbd5e1"/></g>`,
+    goose: () => `<g transform="translate(150,${groundY + 26})"><ellipse cx="0" cy="0" rx="22" ry="10" fill="#fff" stroke="#cbd5e1"/><path d="M14 -4 Q24 -14 18 -30" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/><circle cx="18" cy="-31" r="5" fill="#fff"/><path d="M22 -32 l8 2 l-8 2z" fill="#f97316"/><circle cx="19" cy="-33" r="1" fill="#000"/><path d="M-6 9 l-4 6 h8z M6 9 l-2 6 h8z" fill="#f97316"/></g>`,
+    geese: () => [0, 1, 2, 3, 4].map(i => `<path d="M${200 + i * 12 - (i > 2 ? (i - 2) * 24 : 0)} ${40 + Math.abs(i - 2) * 7} l5 3 l5 -3" stroke="#1e293b" stroke-width="1.5" fill="none"/>`).join(""),
+    birds: () => [[90, 46], [104, 40], [180, 30], [196, 36]].map(([x, y]) => `<path d="M${x} ${y} q4 -4 7 0 q3 -4 7 0" stroke="#1e293b" stroke-width="1.5" fill="none"/>`).join(""),
+    crane: () => `<g transform="translate(120,46)"><path d="M-22 4 Q0 -16 22 2 Q0 -4 -22 4Z" fill="#fff"/><path d="M14 -2 l18 -10" stroke="#fff" stroke-width="3"/><circle cx="32" cy="-12" r="3" fill="#dc2626"/><path d="M-4 4 l-14 10 M0 4 l-12 12" stroke="#1e293b" stroke-width="1.2"/></g>`,
+    cicada: () => `<g transform="translate(272,${groundY - 30})"><ellipse cx="0" cy="0" rx="4" ry="7" fill="#57534e"/><path d="M-3 -2 l-7 9 M3 -2 l7 9" stroke="#e7e5e4" stroke-width="3" opacity=".8"/></g>`,
+    horse: () => `<g transform="translate(90,${groundY + 2})" fill="#7c4a1e"><ellipse cx="0" cy="-18" rx="18" ry="8"/><path d="M14 -22 l10 -14 l5 4 l-8 14z"/><rect x="-14" y="-12" width="3" height="12"/><rect x="-6" y="-12" width="3" height="12"/><rect x="6" y="-12" width="3" height="12"/><rect x="12" y="-12" width="3" height="12"/><path d="M-18 -20 q-8 4 -6 12" stroke="#7c4a1e" stroke-width="3" fill="none"/></g>`,
+    person: () => person(has("tower") ? 150 : 170, groundY, "#1e293b", 1.2),
+    people2: () => person(150, groundY + 2, "#1e293b", 1.1) + person(172, groundY + 2, "#7c2d12", 1.1),
+    oldman: () => person(150, groundY + 2, "#475569", 1.2) + `<path d="M156 ${groundY - 14} l6 16" stroke="#7c4a1e" stroke-width="2"/>`,
+    child: () => person(186, groundY + 2, "#2563eb", 0.8),
+    sunray: () => `<path d="M260 0 L320 0 L150 ${groundY} L110 ${groundY}Z" fill="#fde68a" opacity=".35"/>`,
+    breeze: () => [0, 1, 2].map(i => `<path d="M${120 + i * 40} ${50 + i * 14} q20 -10 40 0 t30 -4" stroke="#fff" stroke-width="2" fill="none" opacity=".8"/>`).join(""),
+    rain: () => Array.from({ length: 40 }, () => { const x = (R() * 330) | 0, y = (R() * 150) | 0; return `<path d="M${x} ${y} l-3 9" stroke="#e2e8f0" stroke-width="1" opacity=".8"/>`; }).join(""),
+    snowfall: () => Array.from({ length: 40 }, () => `<circle cx="${(R() * 320) | 0}" cy="${(R() * 155) | 0}" r="${1 + R() * 1.6}" fill="#fff"/>`).join(""),
+    petals: () => Array.from({ length: 12 }, () => `<ellipse cx="${(R() * 300 + 10) | 0}" cy="${(R() * 110 + 20) | 0}" rx="2.6" ry="1.5" fill="#f9a8d4" transform="rotate(${(R() * 90) | 0})"/>`).join("")
+  };
+  const list = ["ground", ...tags];
+  if (has("night")) list.push("stars");
+  SCENE_ORDER.forEach(k => { if (list.includes(k) && draw[k]) add(draw[k]()); });
+  return `<svg class="tg-scene" viewBox="0 0 320 160" role="img" aria-label="詩的情境圖"><defs><linearGradient id="sky${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
+    <rect width="320" height="160" fill="url(#sky${seed})"/>${P.join("")}</svg>`;
+}
+
+// ── 中文朗讀：挑這台裝置上最自然的國語（臺灣）聲音，一句一句念並標亮 ──
+function zhVoiceScore(v) {
+  let s = 0; const n = v.name;
+  if (/zh[-_]TW/i.test(v.lang)) s += 40; else if (/zh[-_]CN|cmn/i.test(v.lang)) s += 20; else if (/zh[-_]HK|yue/i.test(v.lang)) s -= 30;
+  if (/Natural|Neural|Online|Premium|Enhanced/i.test(n)) s += 100;
+  if (/^Google/i.test(n)) s += 60;
+  if (/HsiaoChen|HsiaoYu|Mei-?Jia|YunJhe|曉臻|美佳/i.test(n)) s += 30;
+  return s;
+}
+function zhVoice() { if (!("speechSynthesis" in window)) return null; return speechSynthesis.getVoices().filter(v => /^(zh|cmn)/i.test(v.lang)).sort((a, b) => zhVoiceScore(b) - zhVoiceScore(a))[0] || null; }
+function readPoem(n, slow) {
+  const p = tangPoem(n); if (!p) return;
+  if (!("speechSynthesis" in window)) return toast("這台裝置不支援朗讀，請換用 Chrome 或 Safari");
+  stopSpeak();
+  const v = zhVoice(), parts = [p.t + "。" + p.a + "。", ...p.lines];
+  parts.forEach((t, i) => {
+    const u = new SpeechSynthesisUtterance(t.replace(/[，。？！]/g, m => m === "，" ? "，" : "。"));
+    u.lang = "zh-TW"; u.rate = slow ? 0.55 : 0.75; if (v) u.voice = v;
+    u.onstart = () => { document.querySelectorAll(".tg-line.on").forEach(e => e.classList.remove("on")); const el = document.querySelector(`.tg-line[data-l="${i - 1}"]`); if (el) el.classList.add("on"); };
+    if (i === parts.length - 1) u.onend = () => document.querySelectorAll(".tg-line.on").forEach(e => e.classList.remove("on"));
+    speechSynthesis.speak(u);
+  });
+}
+
+// ── 單元頁：入門島列出八堂小課；詩站列出這一站的十首詩 ──
+function tangUnitHtml(unit) {
+  const T = tangData(); if (!T) return "";
+  if (unit.unit === TANG_INTRO_UNIT) return `<div class="tg-lessons">${T.lessons.map((l, i) => `<button class="tg-lesson" onclick="openTangLesson(${i})"><span>${l.icon}</span><b>${i + 1}. ${escapeHtml(l.title)}</b></button>`).join("")}</div>
+    <p style="font-size:.84rem; opacity:.8; margin:4px 0 8px">📖 先把八堂小課讀完，再按下面的「開始闖關」做小百科測驗。</p>`;
+  const ps = tangUnitPoems(unit);
+  return `<div class="tg-cards">${ps.map(p => tangCardHtml(p)).join("")}</div>
+    <button class="btn-ghost" style="width:100%; margin:6px 0 4px" onclick="openTangLibrary()">📚 百首唐詩總覽（可依年代、作者、主題、詩風排序）</button>`;
+}
+function tangDone(p) { const by = (stats && stats.byId) || {}; return p.qs.every((_, i) => { const r = by[`tang-${p.n}-${i + 1}`]; return r && r.correct > 0; }); }
+function tangCardHtml(p) {
+  return `<button class="tg-card ${tangDone(p) ? "done" : ""}" onclick="openTangPoem(${p.n})"><span class="tg-no">${p.n}</span><b>${escapeHtml(p.t)}</b><small>${escapeHtml(p.a)}・${escapeHtml(p.form)}</small>${tangDone(p) ? `<i>✅</i>` : ""}</button>`;
+}
+let TANG_VIEW = { sort: "era", from: null };
+function openTangLesson(i) {
+  const T = tangData(), l = T.lessons[i]; stopSpeak();
+  document.getElementById("quiz-content").innerHTML = `<div class="tg-nav"><button class="btn-ghost" onclick="openUnitModal(unitKey('${TANG_SUBJ}', '${TANG_INTRO_UNIT}'))">⬅ 小百科目錄</button><span>${i + 1}／${T.lessons.length}</span></div>
+    <h2 style="margin:6px 0">${l.icon} ${escapeHtml(l.title)}</h2><div class="tg-lesson-body">${l.body}</div>
+    <div class="tg-nav" style="margin-top:12px">${i > 0 ? `<button class="btn-ghost" onclick="openTangLesson(${i - 1})">⬅ 上一課</button>` : "<span></span>"}
+      ${i < T.lessons.length - 1 ? `<button class="btn-primary" onclick="openTangLesson(${i + 1})">下一課 ➡</button>` : `<button class="btn-accent" onclick="startQuiz(unitKey('${TANG_SUBJ}', '${TANG_INTRO_UNIT}'))">⚔️ 讀完了，開始小百科測驗</button>`}</div>`;
+  openModal("quiz-modal");
+  document.getElementById("quiz-content").scrollTop = 0;
+}
+function tangOrder() {
+  const T = tangData(); const ps = T.poems.slice();
+  const k = TANG_VIEW.sort;
+  const ERA = ["初唐", "盛唐", "中唐", "晚唐"], FORM = ["五絕", "七絕", "五律", "七律", "古體", "五古"];
+  const key = p => k === "era" ? p.era : k === "author" ? p.a : k === "theme" ? p.theme : k === "style" ? p.style : p.form;
+  const groups = [];
+  ps.forEach(p => { const g = key(p); let x = groups.find(y => y.k === g); if (!x) groups.push(x = { k: g, list: [] }); x.list.push(p); });
+  if (k === "era") groups.sort((a, b) => ERA.indexOf(a.k) - ERA.indexOf(b.k));
+  else if (k === "form") groups.sort((a, b) => FORM.indexOf(a.k) - FORM.indexOf(b.k));
+  else groups.sort((a, b) => b.list.length - a.list.length || a.list[0].n - b.list[0].n);
+  return groups;
+}
+function openTangLibrary() {
+  stopSpeak();
+  const T = tangData(); if (!T) return;
+  const sorts = [["era", "⏳ 年代"], ["author", "✍️ 作者"], ["theme", "🎨 主題"], ["style", "🖌️ 詩風"], ["form", "📐 體裁"]];
+  const groups = tangOrder();
+  document.getElementById("quiz-content").innerHTML = `<h2 style="margin-top:0">📚 百首唐詩總覽 <small style="font-size:.8rem; opacity:.7">目前 ${T.poems.length} 首</small></h2>
+    <div class="mk-bar">${sorts.map(([k, l]) => `<button class="${TANG_VIEW.sort === k ? "btn-primary" : "btn-ghost"}" style="padding:4px 12px" onclick="TANG_VIEW.sort='${k}'; openTangLibrary()">${l}</button>`).join("")}</div>
+    ${groups.map(g => `<details class="ug" open><summary><span>${escapeHtml(g.k)}${TANG_VIEW.sort === "author" && T.authors[g.k] ? "" : ""}</span><b>${g.list.length} 首</b></summary>
+      ${TANG_VIEW.sort === "author" && T.authors[g.k] ? `<div class="tg-auth-note">${escapeHtml(T.authors[g.k])}</div>` : ""}
+      <div class="tg-cards">${g.list.map(tangCardHtml).join("")}</div></details>`).join("")}`;
+  TANG_VIEW.from = "lib";
+  openModal("quiz-modal");
+}
+function openTangPoem(n) {
+  const p = tangPoem(n); if (!p) return;
+  stopSpeak();
+  const T = tangData(), unit = WORLD.flatMap(s => s.units).find(u => u.subject === TANG_SUBJ && u.unit === tangStationUnit(n));
+  const sib = TANG_VIEW.from === "lib" ? tangOrder().flatMap(g => g.list) : T.poems.filter(x => tangStationUnit(x.n) === tangStationUnit(n));
+  const i = sib.findIndex(x => x.n === p.n), prev = sib[i - 1], next = sib[i + 1];
+  const back = TANG_VIEW.from === "lib" ? `openTangLibrary()` : `openUnitModal(${escapeHtml(JSON.stringify(unit ? unit.key : ""))})`;
+  document.getElementById("quiz-content").innerHTML = `<div class="tg-nav"><button class="btn-ghost" onclick='TANG_VIEW.from=${TANG_VIEW.from === "lib" ? '"lib"' : "null"}; ${back}'>⬅ ${TANG_VIEW.from === "lib" ? "總覽" : "這一站"}</button>
+      <span>${prev ? `<button class="btn-ghost" onclick="openTangPoem(${prev.n})">‹ ${escapeHtml(prev.t)}</button>` : ""} ${next ? `<button class="btn-ghost" onclick="openTangPoem(${next.n})">${escapeHtml(next.t)} ›</button>` : ""}</span></div>
+    <div class="tg-tags"><span>No.${p.n}</span><span>${escapeHtml(p.era)}</span><span>${escapeHtml(p.form)}</span><span>${escapeHtml(p.theme)}</span><span>${escapeHtml(p.style)}</span></div>
+    <div class="tg-top">${sceneSvg(p.scene, p.n)}${tangPoemBlock(p)}</div>
+    <div class="ps-bar"><button class="btn-primary" onclick="readPoem(${p.n})">🔊 朗讀</button><button class="btn-ghost" onclick="readPoem(${p.n}, true)">🐢 慢慢念</button><button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button></div>
+    <details class="tg-sec" open><summary>📝 注釋</summary><dl class="tg-notes">${p.notes.map(([w, d]) => `<dt>${escapeHtml(w)}</dt><dd>${escapeHtml(d)}</dd>`).join("")}</dl></details>
+    <details class="tg-sec"><summary>💬 白話翻譯（先自己想一想再打開）</summary><p>${escapeHtml(p.trans)}</p></details>
+    <details class="tg-sec" open><summary>🌟 欣賞與解析</summary><p>${escapeHtml(p.appr)}</p></details>
+    ${T.authors[p.a] ? `<details class="tg-sec"><summary>✍️ 作者小檔案：${escapeHtml(p.a)}</summary><p>${escapeHtml(T.authors[p.a])}</p></details>` : ""}
+    <button class="btn-accent" style="width:100%; padding:13px; font-size:1.05rem; margin-top:10px" onclick="startPoemQuiz(${p.n})">✍️ 閱讀測驗（${p.qs.length} 題）${tangDone(p) ? "　✅ 已全部答對過" : ""}</button>`;
+  openModal("quiz-modal");
+  document.getElementById("quiz-content").scrollTop = 0;
+}
+function startPoemQuiz(n) {
+  if (guardLocked()) return;
+  const unit = WORLD.flatMap(s => s.units).find(u => u.subject === TANG_SUBJ && u.unit === tangStationUnit(n));
+  if (!unit) return;
+  if (closedForMe(unit)) return toast("🔒 這座島目前關閉中");
+  if (!isTrial() && stats.pending.length >= LOCK_LIMIT) return toast(`⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 ${WRECK_ICON} ${WRECK}訂正！`, 4500);
+  stopSpeak();
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
+  const qs = shuffle(unit.questions.filter(q => q.poemN === Number(n))).map(q => prepareQuestion(q));
+  quizState = newQuizState("練習", unit.subject, unit.unit, qs);
+  quizState.unitKey = unit.key; quizState.flagBefore = flagLevel(unit);
+  renderQuestion();
+}
+
+function tangUnitMeta(u) {
+  const T = tangData(); if (!T) return;
+  if (u.unit === TANG_INTRO_UNIT) { u.icon = "📜"; u.lore = "<b>【唐詩小百科】</b>認識唐詩的由來、四個時期、古體和近體、絕句和律詩、押韻、平仄、對仗，還有詩人的外號。讀完八堂小課再來測驗！"; return; }
+  const st = T.stations.find(x => u.unit === `第${x.n}站 ${x.name}`); if (!st) return;
+  const ps = tangUnitPoems(u);
+  u.icon = st.icon;
+  u.lore = `<b>【${escapeHtml(u.unit)}】</b>第 ${ps[0].n}～${ps[ps.length - 1].n} 首：${ps.map(p => escapeHtml(p.t)).join("、")}<br>點一首詩：看注音、聽朗讀、讀注釋和賞析，再做閱讀測驗。`;
 }
 
 // ── 單字王：聽寫通關考（系統念單字 → 拼出英文＋選出中文，兩個一起送出，都對才算對） ──
@@ -2166,6 +2442,7 @@ async function loadData() {
   // 內建國語題庫：雲端已經有同名單元時就用雲端的，沒有的單元才補上內建題目
   const hasChinese = cloud.some(q => q.subject === "國語");
   BANK = hasChinese || FINAL ? cloud : [...builtinQuestions(), ...cloud];
+  BANK = BANK.concat(tangQuestions());   // 唐詩島：題目內建在 tang-poems.js
   buildWorld();
 
   myRows = []; mySessions = []; coinRows = [];
@@ -2199,7 +2476,7 @@ function buildWorld() {
   let order = [...SUBJECTS.map(s => s.key)];
   EXTRA_SUBJECTS.forEach(s => { if (BANK.some(q => q.subject === s.key)) order.push(s.key); });
   BANK.forEach(q => { if (!order.includes(q.subject)) order.push(q.subject); });
-  WORLD = order.slice(0, 7).map((key, i) => {
+  WORLD = order.slice(0, 8).map((key, i) => {
     const base = SUBJECTS.find(s => s.key === key) || EXTRA_SUBJECTS.find(s => s.key === key) || {
       key, name: key + "島", icon: "⭐", colors: [["#a78bfa", "#5b21b6"], ["#2dd4bf", "#115e59"]][i % 2],
       terrain: ["⭐", "📘", "🌟", "📗", "✨", "📙"], unitIcons: ["⭐", "🌟", "✨", "💫"]
@@ -2217,6 +2494,7 @@ function buildWorld() {
       u.questions.push(q);
     });
     units.forEach(u => { const m = UNIT_META[u.unit]; if (m) { u.icon = m.icon; if (m.lore) u.lore = m.lore; } });
+    if (key === TANG_SUBJ) units.forEach(tangUnitMeta);
     // 兩座小島的單元介紹：單字王寫出這篇閱讀的標題，武林大會寫出這份考卷的大題
     if (key === "單字王" || key === "武林大會") units.forEach(u => {
       if (u.lore) return;
@@ -2849,17 +3127,17 @@ const LAYOUTS = {
     vb: { x: 0, y: 0, w: 1000, h: 700 },
     spots: { "國語": { x: 215, y: 210, r: 112 }, "數學": { x: 650, y: 128, r: 80 }, "英語": { x: 858, y: 372, r: 92 },
       "自然": { x: 572, y: 548, r: 118 }, "社會": { x: 178, y: 530, r: 96 }, BOSS: { x: 428, y: 330, r: 62 },
-      "武林大會": { x: 432, y: 102, r: 70 }, "單字王": { x: 862, y: 598, r: 72 } },
+      "武林大會": { x: 432, y: 102, r: 70 }, "單字王": { x: 862, y: 598, r: 72 }, "唐詩": { x: 72, y: 375, r: 56 } },
     extra: [{ x: 830, y: 610, r: 64 }, { x: 420, y: 92, r: 58 }],
-    reefs: [[330, 600, 26], [930, 160, 22], [60, 330, 20], [760, 250, 16], [300, 80, 16], [700, 360, 14]]
+    reefs: [[330, 600, 26], [930, 160, 22], [760, 250, 16], [300, 80, 16], [700, 360, 14]]
   },
   tall: {
     vb: { x: 0, y: 0, w: 700, h: 1010 },
     spots: { "國語": { x: 200, y: 185, r: 118 }, "數學": { x: 545, y: 160, r: 88 }, "英語": { x: 565, y: 575, r: 100 },
       "自然": { x: 400, y: 845, r: 118 }, "社會": { x: 160, y: 620, r: 102 }, BOSS: { x: 365, y: 410, r: 70 },
-      "武林大會": { x: 595, y: 370, r: 68 }, "單字王": { x: 612, y: 790, r: 66 } },
+      "武林大會": { x: 595, y: 370, r: 68 }, "單字王": { x: 612, y: 790, r: 66 }, "唐詩": { x: 92, y: 405, r: 54 } },
     extra: [{ x: 600, y: 940, r: 60 }, { x: 120, y: 900, r: 56 }],
-    reefs: [[650, 250, 18], [60, 420, 20], [660, 960, 18], [110, 960, 20], [380, 70, 18], [250, 380, 14]]
+    reefs: [[650, 250, 18], [660, 960, 18], [110, 960, 20], [380, 70, 18], [250, 380, 14]]
   }
 };
 function layout() { return isPortrait() ? LAYOUTS.tall : LAYOUTS.wide; }
@@ -2868,7 +3146,7 @@ const WORLD_ROUTES = [
   ["國語", "BOSS", "walk"], ["國語", "社會", "bus"], ["社會", "自然", "walk"], ["自然", "BOSS", "bus"],
   ["自然", "英語", "walk"], ["英語", "數學", "bus"], ["數學", "BOSS", "walk"],
   ["國語", "數學", "plane"], ["社會", "BOSS", "swim"], ["英語", "BOSS", "plane"], ["數學", "自然", "boat"],
-  ["武林大會", "國語", "boat"], ["武林大會", "數學", "boat"], ["單字王", "英語", "boat"]
+  ["武林大會", "國語", "boat"], ["武林大會", "數學", "boat"], ["單字王", "英語", "boat"], ["唐詩", "國語", "boat"]
 ];
 function worldNodes() {
   const nodes = WORLD.map((s, i) => {
@@ -3934,6 +4212,7 @@ function openUnitModal(key) {
     <h2 style="margin-top:0;">${unit.icon} ${escapeHtml(unit.subject)}｜${escapeHtml(unit.unit)}${vocabIsleName(unit) ? `・${escapeHtml(vocabIsleName(unit))}` : ""}</h2>
     ${unit.lore ? `<div class="lore-box">${unit.lore}</div>` : ""}
     ${unit.subject === "單字王" ? vocabCardsHtml(unit) + guideHtml(unit) : ""}
+    ${unit.subject === TANG_SUBJ ? tangUnitHtml(unit) : ""}
     ${readingBoost(unit.subject, unit.unit) ? `<div class="reading-reward">📖 <b>閱讀島：慢慢讀、仔細想！</b><br>${FINAL ? `答對分數 ×${READ.ptsMul}、金幣 ×${READ.coinMul}；一場答對 80% 以上再送 🪙 ${READ.bonusCoins}，還有機會撈到商店買不到的 <b>🐚 珍珠護符</b>；第一次全部答對必得 <b>⛵ 星光船帆</b>！`
       : `答對的分數 ×${READ.ptsMul}；一場答對 80% 以上，結算獎勵也 ×${READ.ptsMul}！`}</div>` : ""}
     ${covBox}
@@ -4509,7 +4788,7 @@ function cnToNum(t) {
 function unitNumOf(unit) {
   const u = String(unit || "");
   const sub = (u.match(/\d+\s*-\s*(\d+)/) || [])[1];   // 第4單元 4-2 → 4.002，同一單元的小節也照順序
-  let m = u.match(/第\s*([0-9０-９零一二兩三四五六七八九十百]+)\s*[課單關回章冊]/);
+  let m = u.match(/第\s*([0-9０-９零一二兩三四五六七八九十百]+)\s*[課單關回章冊站]/);
   if (m) return cnToNum(m[1]) + (sub ? Number(sub) / 1000 : 0);
   if ((m = u.match(/unit\s*(\d+)/i))) return Number(m[1]);
   if ((m = u.match(/^\s*(\d+)/))) return Number(m[1]);
