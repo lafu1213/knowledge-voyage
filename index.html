@@ -1798,7 +1798,7 @@ function tangPoemBlock(p, opts = {}) {
 
 // ── 詩情境簡圖：依照詩裡的景物組合（天色、山、水、船、柳、雁、月……） ──
 const SCENE_ORDER = ["day", "dusk", "night", "dawn", "stars", "sun", "moon", "cloud", "farhills", "snowcap", "mountains", "desert", "sea", "river", "pond", "ground", "field", "road",
-  "city", "fort", "tower", "village", "house", "pines", "trees", "tree", "willow", "bamboo", "flowers", "grass", "boat", "sail", "goose", "geese", "birds", "crane", "cicada", "horse",
+  "waterfall", "bridge", "city", "fort", "temple", "tower", "village", "house", "pines", "trees", "tree", "maple", "willow", "bamboo", "flowers", "grass", "lantern", "boat", "sail", "goose", "geese", "birds", "crane", "cicada", "bee", "horse",
   "person", "people2", "oldman", "child", "sunray", "breeze", "rain", "snowfall", "petals"];
 function sceneSvg(tags, seed) {
   const has = t => tags.includes(t), R = seeded("scene" + seed);
@@ -1843,6 +1843,12 @@ function sceneSvg(tags, seed) {
     geese: () => [0, 1, 2, 3, 4].map(i => `<path d="M${200 + i * 12 - (i > 2 ? (i - 2) * 24 : 0)} ${40 + Math.abs(i - 2) * 7} l5 3 l5 -3" stroke="#1e293b" stroke-width="1.5" fill="none"/>`).join(""),
     birds: () => [[90, 46], [104, 40], [180, 30], [196, 36]].map(([x, y]) => `<path d="M${x} ${y} q4 -4 7 0 q3 -4 7 0" stroke="#1e293b" stroke-width="1.5" fill="none"/>`).join(""),
     crane: () => `<g transform="translate(120,46)"><path d="M-22 4 Q0 -16 22 2 Q0 -4 -22 4Z" fill="#fff"/><path d="M14 -2 l18 -10" stroke="#fff" stroke-width="3"/><circle cx="32" cy="-12" r="3" fill="#dc2626"/><path d="M-4 4 l-14 10 M0 4 l-12 12" stroke="#1e293b" stroke-width="1.2"/></g>`,
+    waterfall: () => `<path d="M150 ${groundY - 92} h22 l6 ${92} h-34z" fill="#e0f2fe" opacity=".95"/>${[0, 1, 2, 3].map(i => `<path d="M${154 + i * 5} ${groundY - 88} v84" stroke="#93c5fd" stroke-width="1.4" opacity=".8"/>`).join("")}<ellipse cx="161" cy="${groundY + 2}" rx="30" ry="6" fill="#fff" opacity=".8"/>`,
+    bridge: () => `<path d="M100 ${groundY + 8} Q160 ${groundY - 26} 220 ${groundY + 8}" stroke="#78350f" stroke-width="6" fill="none"/><path d="M104 ${groundY + 2} Q160 ${groundY - 32} 216 ${groundY + 2}" stroke="#a16207" stroke-width="2" fill="none"/>${[0, 1, 2, 3, 4].map(i => `<path d="M${120 + i * 20} ${groundY - 6 - (i === 2 ? 10 : i % 2 ? 6 : 0)} v8" stroke="#78350f" stroke-width="2"/>`).join("")}`,
+    temple: () => `<g transform="translate(${has("tower") ? 120 : 236},${groundY})"><rect x="-26" y="-22" width="52" height="22" fill="#fef3c7" stroke="#92400e"/><path d="M-36 -22 h72 l-12 -12 h-48z" fill="#78350f"/><rect x="-14" y="-44" width="28" height="12" fill="#fef3c7" stroke="#92400e"/><path d="M-22 -44 h44 l-9 -9 h-26z" fill="#78350f"/><rect x="-6" y="-14" width="12" height="14" fill="#b91c1c"/></g>`,
+    maple: () => [[40, 1.1], [80, 0.9], [262, 1.2], [300, 0.8]].map(([x, s]) => tree(x, groundY, s, ["#dc2626", "#f97316", "#b91c1c", "#ea580c"][(x / 40 | 0) % 4])).join(""),
+    lantern: () => [[60, 30], [185, 24]].map(([x, y]) => `<path d="M${x} 0 v${y - 10}" stroke="#78350f"/><ellipse cx="${x}" cy="${y}" rx="9" ry="11" fill="#ef4444"/><ellipse cx="${x}" cy="${y}" rx="9" ry="11" fill="#fde047" opacity=".25"/><rect x="${x - 4}" y="${y + 10}" width="8" height="3" fill="#78350f"/>`).join(""),
+    bee: () => [[150, groundY - 20], [190, groundY - 34]].map(([x, y]) => `<g transform="translate(${x},${y})"><ellipse cx="0" cy="0" rx="6" ry="4" fill="#facc15" stroke="#1e293b"/><path d="M-2 -4 v8 M2 -4 v8" stroke="#1e293b" stroke-width="1.5"/><ellipse cx="-2" cy="-6" rx="4" ry="3" fill="#e0f2fe" opacity=".9"/><ellipse cx="3" cy="-6" rx="4" ry="3" fill="#e0f2fe" opacity=".9"/></g>`).join(""),
     cicada: () => `<g transform="translate(272,${groundY - 30})"><ellipse cx="0" cy="0" rx="4" ry="7" fill="#57534e"/><path d="M-3 -2 l-7 9 M3 -2 l7 9" stroke="#e7e5e4" stroke-width="3" opacity=".8"/></g>`,
     horse: () => `<g transform="translate(90,${groundY + 2})" fill="#7c4a1e"><ellipse cx="0" cy="-18" rx="18" ry="8"/><path d="M14 -22 l10 -14 l5 4 l-8 14z"/><rect x="-14" y="-12" width="3" height="12"/><rect x="-6" y="-12" width="3" height="12"/><rect x="6" y="-12" width="3" height="12"/><rect x="12" y="-12" width="3" height="12"/><path d="M-18 -20 q-8 4 -6 12" stroke="#7c4a1e" stroke-width="3" fill="none"/></g>`,
     person: () => person(has("tower") ? 150 : 170, groundY, "#1e293b", 1.2),
@@ -1897,7 +1903,7 @@ function tangUnitHtml(unit) {
 }
 function tangDone(p) { const by = (stats && stats.byId) || {}; return p.qs.every((_, i) => { const r = by[`tang-${p.n}-${i + 1}`]; return r && r.correct > 0; }); }
 function tangCardHtml(p) {
-  return `<button class="tg-card ${tangDone(p) ? "done" : ""}" onclick="openTangPoem(${p.n})"><span class="tg-no">${p.n}</span><b>${escapeHtml(p.t)}</b><small>${escapeHtml(p.a)}・${escapeHtml(p.form)}</small>${tangDone(p) ? `<i>✅</i>` : ""}</button>`;
+  return `<button class="tg-card ${tangDone(p) ? "done" : ""}" onclick="openTangPoem(${p.n})"><span class="tg-no">${p.n}</span><b>${escapeHtml(p.t)}</b>${p.sub ? `<small>（${escapeHtml(p.sub)}）</small>` : ""}<small>${escapeHtml(p.a)}・${escapeHtml(p.form)}</small>${tangDone(p) ? `<i>✅</i>` : ""}</button>`;
 }
 let TANG_VIEW = { sort: "era", from: null };
 function openTangLesson(i) {
@@ -1943,7 +1949,7 @@ function openTangPoem(n) {
   const back = TANG_VIEW.from === "lib" ? `openTangLibrary()` : `openUnitModal(${escapeHtml(JSON.stringify(unit ? unit.key : ""))})`;
   document.getElementById("quiz-content").innerHTML = `<div class="tg-nav"><button class="btn-ghost" onclick='TANG_VIEW.from=${TANG_VIEW.from === "lib" ? '"lib"' : "null"}; ${back}'>⬅ ${TANG_VIEW.from === "lib" ? "總覽" : "這一站"}</button>
       <span>${prev ? `<button class="btn-ghost" onclick="openTangPoem(${prev.n})">‹ ${escapeHtml(prev.t)}</button>` : ""} ${next ? `<button class="btn-ghost" onclick="openTangPoem(${next.n})">${escapeHtml(next.t)} ›</button>` : ""}</span></div>
-    <div class="tg-tags"><span>No.${p.n}</span><span>${escapeHtml(p.era)}</span><span>${escapeHtml(p.form)}</span><span>${escapeHtml(p.theme)}</span><span>${escapeHtml(p.style)}</span></div>
+    <div class="tg-tags"><span>No.${p.n}</span><span>${escapeHtml(p.era)}</span><span>${escapeHtml(p.form)}</span><span>${escapeHtml(p.theme)}${p.tag && p.tag !== p.theme && !p.theme.includes(p.tag) ? "・" + escapeHtml(p.tag) : ""}</span><span>${escapeHtml(p.style)}</span></div>
     <div class="tg-top">${sceneSvg(p.scene, p.n)}${tangPoemBlock(p)}</div>
     <div class="ps-bar"><button class="btn-primary" onclick="readPoem(${p.n})">🔊 朗讀</button><button class="btn-ghost" onclick="readPoem(${p.n}, true)">🐢 慢慢念</button><button class="btn-ghost" onclick="stopSpeak()">⏹ 停止</button></div>
     <details class="tg-sec" open><summary>📝 注釋</summary><dl class="tg-notes">${p.notes.map(([w, d]) => `<dt>${escapeHtml(w)}</dt><dd>${escapeHtml(d)}</dd>`).join("")}</dl></details>
