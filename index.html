@@ -3014,7 +3014,7 @@ function w3Chest(i) {
 
 function w3Reset() { if (w3) { try { w3.running = false; w3.renderer.dispose(); w3.renderer.forceContextLoss(); } catch (e) {} } w3 = null; }
 function dwSyncMine() {
-  if (!dw.home || session.user.role !== "student" || !dw.village) return;
+  if (!dw.home || !dwCanEdit() || !dw.village) return;
   const v = dw.village.find(x => x.name === session.user.name); if (!v) return;
   const changed = v.lv !== dw.home.lv || v.rf !== dw.home.rf || v.open !== dw.home.open || v.nm !== dw.home.nm;
   Object.assign(v, { lv: dw.home.lv, rf: dw.home.rf, open: dw.home.open, nm: dw.home.nm });
