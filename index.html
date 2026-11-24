@@ -762,6 +762,9 @@
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
+  .dw3d-card { position: absolute; right: 12px; bottom: 16px; width: min(340px, calc(100% - 24px)); background: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-height: 60%; overflow-y: auto; }
+  .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
+  @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   .dw-help-btn { border: 2px solid #f59e0b; background: #fffbeb; color: #b45309; border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 900; cursor: pointer; }
   .dw-guide { position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; padding: 14px; }
   .dw-guide-box { position: relative; background: #fff; border-radius: 22px; padding: 18px 22px; max-width: 640px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
@@ -2168,8 +2171,17 @@ const DW_ROOFS = ["#dc2626", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#db277
 const DW_STICKERS = ["👍", "🌟", "😍", "🏆", "🎉"];
 const DW_KINDS = { item: "家具", floor: "地板", wall: "壁紙" };
 
+// 老師的示範家（10×10 夢幻城堡），老師可以自己改；全部家具免費
+const DW_TEACHER_HOME = { nm: "船長老師的示範家", lv: 4, fl: "marble", wl: "palace", rf: "#9333ea", open: true, it: [
+  ["bed", 1, 0], ["teddy", 2, 0], ["lamp", 0, 0], ["mirror", 3, 0], ["frame", 5, 0], ["clock", 6, 0], ["piano", 8, 0], ["violin", 9, 1], ["couch", 4, 3], ["tv", 4, 1],
+  ["plant", 0, 3], ["globe", 0, 5], ["books", 0, 6], ["pc", 1, 6], ["scope", 0, 8], ["planet", 1, 9], ["fountain", 5, 5], ["sakura", 3, 5], ["sakura", 7, 5], ["tulip", 5, 3],
+  ["tulip", 5, 7], ["fish", 8, 3], ["dolphin", 9, 3], ["whale", 9, 5], ["octopus", 8, 5], ["dragon", 3, 8], ["crown", 5, 9], ["trophy", 4, 9], ["gem", 6, 9], ["medal", 7, 9],
+  ["cat", 6, 3], ["dog", 2, 4], ["panda", 7, 7], ["unicorn", 9, 8], ["rainbow", 8, 9], ["peacock", 9, 9], ["cake", 2, 7], ["boba", 3, 7], ["xmas", 0, 9], ["ufo", 8, 7], ["rocket", 9, 7]
+].map(t => [t[0], t[1], t[2], 0]), spent: {}, gift: { mats: {}, items: {} }, daily: {} };
 let dw = { tab: "village", home: null, view: null, viewHome: null, hand: null, village: null, saving: null, timer: null, shopCat: "全部" };
 function dwMe() { return session.user.role === "parent" ? session.user.child : session.user.name; }
+function dwIsT() { return session && session.user.role === "teacher"; }
+function dwCanEdit() { return session && (session.user.role === "student" || session.user.role === "teacher"); }
 function dwRules() { const r = rulesNow(); r.worldOn = r.worldOn === true; const num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); return { on: r.worldOn, n: num(r.worldSessions, 5), acc: num(r.worldAcc, 70), min: num(r.worldMin, 20) || 20 }; }
 
 // ── 學習換材料：答對 +1、訂正答對再 +1、整局全對（至少 5 題）+3 ──
@@ -2187,6 +2199,7 @@ function dwMats(home = dw.home) {
 function dwMatText(cost) { return Object.entries(cost).map(([k, v]) => `${DW_MATS.find(x => x.k === k).icon}${v}`).join(" "); }
 // 擁有的東西＝商店買的（金幣紀錄）＋扭蛋抽到的
 function dwOwned(kind, id, home = dw.home) {
+  if (dwIsT()) return 99;
   const bought = coinRows.filter(r => r.op === "spend" && r.note === `${DW_KINDS[kind]}:${id}`).length;
   const ex = (home && home.gift && home.gift.items && home.gift.items[id]) || 0;
   return bought + (kind === "item" ? ex : 0);
@@ -2218,7 +2231,7 @@ async function openDream() {
   if (!el) { el = document.createElement("div"); el.id = "dream"; el.className = "dream"; document.body.appendChild(el); }
   el.hidden = false; document.body.classList.add("dream-open");
   el.innerHTML = `<div class="dw-loading">🌈 正在打開異想世界的大門…</div>`;
-  try { dw.home = dwFix((await bridgeCall("homeGet", { who: dwMe() })).home); } catch (e) { dw.home = dwFix(null); toast("⚠️ " + e.message); }
+  try { dw.home = dwFix((await bridgeCall("homeGet", { who: dwMe() })).home || (dwIsT() ? JSON.parse(JSON.stringify(DW_TEACHER_HOME)) : null)); } catch (e) { dw.home = dwFix(dwIsT() ? JSON.parse(JSON.stringify(DW_TEACHER_HOME)) : null); }
   dw.tab = "world"; dw.view = null; dw.hand = null;
   await dwLoadVillage(); w3Reset();
   renderDream();
@@ -2251,7 +2264,7 @@ function dwFix(h) {
 async function dwLoadVillage() { try { dw.village = (await bridgeCall("homeVillage")).homes || []; } catch (e) { dw.village = []; } }
 function dwSave() { clearTimeout(dw.saving); dw.saving = setTimeout(dwFlush, 1200); }
 async function dwFlush() {
-  if (!dw.saving || !dw.home || session.user.role !== "student") return;
+  if (!dw.saving || !dw.home || !dwCanEdit()) return;
   clearTimeout(dw.saving); dw.saving = null;
   try { await bridgeCall("homeSave", { home: dw.home }); } catch (e) { toast("⚠️ 家園沒有存到：" + e.message); }
 }
@@ -2260,7 +2273,7 @@ async function dwFlush() {
 function renderDream() {
   const el = document.getElementById("dream"); if (!el) return;
   const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
-  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : []), ["list", "🏘️ 村莊名冊"]];
+  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["list", "🏘️ 村莊名冊"]];
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
@@ -2335,17 +2348,21 @@ function dwIso(home, o = {}) {
 // ── 我的家（編輯） ──
 function dwHomeHtml() {
   const h = dw.home, L = DW_LEVELS[h.lv], inv = DW_ITEMS.filter(x => dwFree(x.id) > 0);
+  const invAll = dwIsT() ? DW_ITEMS : inv;
   return `<div class="dw-home-wrap"><div class="dw-room">${dwIso(h, { click: "dwTile" })}
       <div class="dw-hint">${dw.hand ? `✋ 手上拿著 <b>${DW_ITEM[dw.hand.id].emoji} ${DW_ITEM[dw.hand.id].name}</b>：點空的地板放下 <button class="btn-ghost" onclick="dwFlip()">↔️ 翻面</button> <button class="btn-ghost" onclick="dwStash()">🎒 收回背包</button>` : "點背包裡的家具，再點地板放上去；點房間裡的家具可以拿起來移動。"}</div></div>
     <div class="dw-side">
       <div class="dw-card"><b>${L.icon} ${escapeHtml(h.nm || dwMe() + "的家")}</b><small>${L.name}・${L.n}×${L.n} 格</small>
         <div class="dw-row"><input id="dw-name" maxlength="12" placeholder="幫家取個名字" value="${escapeHtml(h.nm || "")}"><button class="btn-ghost" onclick="dwRename()">✏️</button></div>
-        <label class="dw-row" style="cursor:pointer"><input type="checkbox" ${h.open ? "checked" : ""} onchange="dw.home.open=this.checked; dwSave(); toast(this.checked ? '🚪 已開放：同學可以來參觀你的家' : '🔒 已關門：同學看不到你家裡')"> 🚪 開放同學參觀</label>
+        ${dwIsT() ? `<div class="dw-row">房子等級 <select onchange="dw.home.lv=Number(this.value); dwSave(); renderDream()">${DW_LEVELS.map((L, i) => `<option value="${i}" ${h.lv === i ? "selected" : ""}>${L.icon} ${L.name}</option>`).join("")}</select></div>
+          <div class="dw-row"><button class="btn-ghost" onclick="if(confirm('要恢復成預設的豪華布置嗎？')){ dw.home = dwFix(JSON.parse(JSON.stringify(DW_TEACHER_HOME))); dwSave(); renderDream(); }">↩️ 恢復預設布置</button></div>
+          <p class="dw-note">老師的示範家所有家具、地板、壁紙都免費，而且一定開放參觀，全班都可以走進來看看家能布置成什麼樣子。</p>` : ""}
+        <label class="dw-row" style="cursor:pointer;${dwIsT() ? "display:none" : ""}"><input type="checkbox" ${h.open ? "checked" : ""} onchange="dw.home.open=this.checked; dwSave(); toast(this.checked ? '🚪 已開放：同學可以來參觀你的家' : '🔒 已關門：同學看不到你家裡')"> 🚪 開放同學參觀</label>
         <div class="dw-row">屋頂顏色 ${DW_ROOFS.map(c => `<button class="dw-swatch ${h.rf === c ? "on" : ""}" style="background:${c}" onclick="dw.home.rf='${c}'; dwSave(); renderDream()"></button>`).join("")}</div>
         <div class="dw-row">地板 <select onchange="dw.home.fl=this.value; dwSave(); renderDream()">${DW_FLOORS.filter(f => !f.price || dwOwned("floor", f.id)).map(f => `<option value="${f.id}" ${h.fl === f.id ? "selected" : ""}>${f.name}</option>`).join("")}</select>
           壁紙 <select onchange="dw.home.wl=this.value; dwSave(); renderDream()">${DW_WALLS.filter(w => !w.price || dwOwned("wall", w.id)).map(w => `<option value="${w.id}" ${h.wl === w.id ? "selected" : ""}>${w.name}</option>`).join("")}</select></div>
         <div class="dw-stickers">收到的貼圖：${dwStickerSum(dwMe())}</div></div>
-      <div class="dw-card"><b>🎒 背包</b>${inv.length ? `<div class="dw-inv">${inv.map(x => `<button title="${escapeHtml(x.name)}" class="${dw.hand && dw.hand.id === x.id ? "on" : ""}" onclick="dwPick('${x.id}')">${x.emoji}<small>×${dwFree(x.id)}</small></button>`).join("")}</div>` : `<p class="dw-empty">背包是空的，到 🛒 家具店買家具，或去 🏰 老師城堡轉扭蛋！</p>`}</div>
+      <div class="dw-card"><b>🎒 ${dwIsT() ? "所有家具（老師免費）" : "背包"}</b>${invAll.length ? `<div class="dw-inv">${invAll.map(x => `<button title="${escapeHtml(x.name)}" class="${dw.hand && dw.hand.id === x.id ? "on" : ""}" onclick="dwPick('${x.id}')">${x.emoji}${dwIsT() ? "" : `<small>×${dwFree(x.id)}</small>`}</button>`).join("")}</div>` : `<p class="dw-empty">背包是空的，到 🛒 家具店買家具，或去 🏰 老師城堡轉扭蛋！</p>`}</div>
     </div></div>`;
 }
 function dwStickerSum(name) { const v = (dw.village || []).find(x => x.name === name); return v && v.st ? DW_STICKERS.map(s => v.st[s] ? `${s}${v.st[s]}` : "").join(" ") || "還沒有" : "還沒有"; }
@@ -2428,26 +2445,27 @@ function dwHouseSvg(lv, roof, big) {
   return `<svg viewBox="0 0 100 76" class="dw-hs ${big ? "big" : ""}">${shapes[Math.max(0, Math.min(4, lv || 0))]}</svg>`;
 }
 function dwVillageHtml() {
-  const v = (dw.village || []).filter(x => x.name.indexOf("__") !== 0).slice().sort((a, b) => (a.seat || "").localeCompare(b.seat || "") || a.name.localeCompare(b.name));
+  const v = (dw.village || []).filter(x => x.name.indexOf("__") !== 0).slice().sort((a, b) => (b.teacher ? 1 : 0) - (a.teacher ? 1 : 0) || (a.seat || "").localeCompare(b.seat || "") || a.name.localeCompare(b.name));
   const me = dwMe();
   return `<div class="dw-village">
     <div class="dw-sky"><span class="cloud c1">☁️</span><span class="cloud c2">☁️</span><span class="cloud c3">☁️</span><span class="bal">🎈</span></div>
     <button class="dw-castle-gate" onclick="dwTab('castle')">${dwCastleOutside()}<b>🏰 老師的天空城堡</b><small>所有人都可以進來玩！許願池、扭蛋機、音樂廳、水族館…</small></button>
     <div class="dw-plots">${v.map(x => {
-      const mine = x.name === me, can = mine || x.open || session.user.role === "teacher";
+      const mine = x.name === me, can = mine || x.open || x.teacher || session.user.role === "teacher";
       return `<button class="dw-plot ${mine ? "mine" : ""} ${can ? "" : "locked"}" onclick="${can ? `dwVisit(${escapeHtml(JSON.stringify(x.name))})` : `toast('🔒 ${escapeHtml(shortName(x.name))}還沒開放參觀')`}">
-        ${dwHouseSvg(x.lv, x.rf)}<b>${escapeHtml(x.nm || shortName(x.name) + "的家")}</b><small>${escapeHtml(shortName(x.name))}・${DW_LEVELS[x.lv || 0].name}${can ? "" : " 🔒"}</small>
+        ${dwHouseSvg(x.lv, x.rf)}<b>${x.teacher ? "🌟 " : ""}${escapeHtml(x.nm || (x.teacher ? "船長老師的示範家" : shortName(x.name) + "的家"))}</b><small>${x.teacher ? "老師的家・人人可參觀" : escapeHtml(shortName(x.name)) + "・" + DW_LEVELS[x.lv || 0].name}${can ? "" : " 🔒"}</small>
         ${x.st ? `<span class="dw-st">${DW_STICKERS.map(s => x.st[s] ? `${s}${x.st[s]}` : "").join("")}</span>` : ""}</button>`;
     }).join("") || `<p class="dw-empty">村莊還沒有房子，快到 🏠 我的家開始布置吧！</p>`}</div>
     <p class="dw-note">🚪 只有主人開放參觀的家才能進去；在「我的家」可以開關。參觀時每天可以送每一家一張貼圖。</p></div>`;
 }
 async function dwVisit(name) {
-  if (name === dwMe() && session.user.role === "student") return dwTab("home");
+  if (name === dwMe() && dwCanEdit()) return dwTab("home");
   try { const r = await bridgeCall("homeGet", { who: name }); dw.view = name; dw.viewHome = dwFix(r.home); renderDream(); }
   catch (e) { toast("⚠️ " + e.message); }
 }
 function dwVisitHtml() {
   const h = dw.viewHome, name = dw.view, v = (dw.village || []).find(x => x.name === name) || {};
+  if (v.teacher && !h.it.length && !h.nm) Object.assign(h, dwFix(JSON.parse(JSON.stringify(DW_TEACHER_HOME))));
   return `<div class="dw-home-wrap"><div class="dw-room">${dwIso(h, {})}</div>
     <div class="dw-side"><div class="dw-card"><b>${DW_LEVELS[h.lv].icon} ${escapeHtml(h.nm || shortName(name) + "的家")}</b><small>主人：${escapeHtml(shortName(name))}・${DW_LEVELS[h.lv].name}</small>
       <div class="dw-stickers">收到的貼圖：${dwStickerSum(name)}</div>
@@ -2663,15 +2681,16 @@ function w3World(homes) {
   for (let x = -3; x <= 3; x++) for (let z = -17; z <= -11; z++) { const d = Math.hypot(x, z + 14); if (d <= 3.2) { put(x, 5, z, d > 2.3 ? "cobble" : "water"); if (d > 2.3) put(x, 6, z, "cobble"); } }
   for (let y = 6; y <= 8; y++) put(0, y, -14, "quartz"); put(0, 9, -14, "water");
   // 學生的家：兩圈圍著廣場，門朝向中央
-  const list = homes.filter(h => h.name.indexOf("__") !== 0);
-  const plots = list.map((h, i) => { const ring = i < 14 ? 0 : 1, n = ring ? Math.max(1, list.length - 14) : Math.min(14, list.length), k = ring ? i - 14 : i;
-    const a = Math.PI * 1.84 + (k + .5) / n * Math.PI * 1.32, r = ring ? 37 : 27; return { h, x: Math.round(Math.cos(a) * r), z: Math.round(Math.sin(a) * r), a }; });
+  const list = homes.filter(h => h.name.indexOf("__") !== 0 && !h.teacher), th = homes.find(h => h.teacher);
+  const plots = list.map((h, i) => { const ring = i < 12 ? 0 : 1, n = ring ? Math.max(1, list.length - 12) : Math.min(12, list.length), k = ring ? i - 12 : i;
+    const a = Math.PI * 1.92 + (k + .5) / n * Math.PI * 1.16, r = ring ? 37 : 27; return { h, x: Math.round(Math.cos(a) * r), z: Math.round(Math.sin(a) * r), a }; });
+  if (th) plots.push({ h: Object.assign({}, th, { lv: th.lv === undefined || (!th.lv && !th.nm) ? 4 : th.lv, rf: th.rf || "#9333ea" }), x: -15, z: -21, a: Math.atan2(-21, -15) });
   const doors = [{ kind: "castle", x: 0, z: C.z1 + 1, y: C.y + 1, label: "🏰 老師的天空城堡" }];
   plots.forEach(p => {
     const lv = p.h.lv || 0, roof = "w" + (p.h.rf || "#dc2626"), w = lv >= 3 ? 3 : 2, base = ground(p.x, p.z), hh = [2, 3, 4, 6, 6][lv];
     const dx = -Math.cos(p.a), dz = -Math.sin(p.a), face = Math.abs(dx) > Math.abs(dz) ? [Math.sign(dx), 0] : [0, Math.sign(dz)];
     for (let x = p.x - w - 1; x <= p.x + w + 1; x++) for (let z = p.z - w - 1; z <= p.z + w + 1; z++) { for (let y = base + 1; y <= base + 14; y++) del(x, y, z); put(x, base, z, "path"); hmap[x + "," + z] = base; }
-    const wallT = ["", "log", "brick", "quartz", "cobble"][lv];
+    const wallT = p.h.teacher ? "quartz" : ["", "log", "brick", "quartz", "cobble"][lv];
     if (lv === 0) {
       for (let k = 0; k <= w; k++) for (let a = -w + k; a <= w - k; a++) for (let b = -w; b <= w; b++) { const x = face[1] ? p.x + a : p.x + b, z = face[1] ? p.z + b : p.z + a; put(x, base + 1 + k, z, roof); }
       for (let a = -w + 1; a <= w - 1; a++) for (let b = -w + 1; b <= w - 1; b++) for (let k = 0; k < w; k++) { const x = face[1] ? p.x + a : p.x + b, z = face[1] ? p.z + b : p.z + a; if (Math.abs(a) < w - k) del(x, base + 1 + k, z); }
@@ -2682,11 +2701,11 @@ function w3World(homes) {
         if (edge) for (let y = base + 1; y <= base + hh; y++) put(x, y, z, y === base + 2 && (x + z) % 2 && lv >= 2 ? "glass" : lv === 3 && y === base + 4 ? "plank" : wallT);
       }
       for (let k = 0; k <= w; k++) for (let x = p.x - w + k; x <= p.x + w - k; x++) for (let z = p.z - w + k; z <= p.z + w - k; z++) put(x, base + hh + 1 + k, z, roof);
-      if (lv === 4) [[-w, -w], [w, -w], [-w, w], [w, w]].forEach(([ox, oz]) => { for (let y = base + 1; y <= base + hh + 3; y++) put(p.x + ox, y, p.z + oz, "cobble"); put(p.x + ox, base + hh + 4, p.z + oz, roof); });
+      if (lv === 4) [[-w, -w], [w, -w], [-w, w], [w, w]].forEach(([ox, oz]) => { for (let y = base + 1; y <= base + hh + 3; y++) put(p.x + ox, y, p.z + oz, p.h.teacher ? "gold" : "cobble"); put(p.x + ox, base + hh + 4, p.z + oz, roof); });
     }
     const doorX = p.x + face[0] * w, doorZ = p.z + face[1] * w;
     del(doorX, base + 1, doorZ); if (lv > 0) del(doorX, base + 2, doorZ);
-    doors.push({ kind: "home", name: p.h.name, x: doorX + face[0], z: doorZ + face[1], y: base + 1, top: base + hh + w + 2, cx: p.x, cz: p.z, open: p.h.open, label: (p.h.nm || shortName(p.h.name) + "的家") });
+    doors.push({ kind: "home", name: p.h.name, teacher: !!p.h.teacher, x: doorX + face[0], z: doorZ + face[1], y: base + 1, top: base + hh + w + 2, cx: p.x, cz: p.z, open: p.h.open || !!p.h.teacher, label: (p.h.teacher ? "🌟 " : "") + (p.h.nm || (p.h.teacher ? "船長老師的示範家" : shortName(p.h.name) + "的家")) });
   });
   // 樹和花（避開路、房子、湖、城堡）
   const flowers = [];
@@ -2715,7 +2734,54 @@ function w3World(homes) {
     for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) { const d = Math.hypot(x, z); if (d <= 3.2) put(mx + x, b + st + 1, mz + z, (x * 7 + z * 3) % 4 === 0 ? "w#ffffff" : "w#dc2626"); if (d <= 2) put(mx + x, b + st + 2, mz + z, (x + z) % 3 === 0 ? "w#ffffff" : "w#dc2626"); }
   }
   [[10, -9], [-10, -9], [11, 8], [-11, 8]].forEach(([cx, cz], i) => { const c = ["w#a78bfa", "w#60a5fa", "w#f472b6", "w#22c55e"][i]; for (let y = 1; y <= 5 - (i % 2); y++) put(cx, 5 + y, cz, c); put(cx, 11 - (i % 2), cz, "gold"); });
-  return { G, hmap, doors, flowers, S, C };
+  const IN = w3Interior(put, hmap, doors, flowers);
+  return { G, hmap, doors, flowers, S, C, IN };
+}
+const W3_IN = { x: 130, z: 0, y: 30, hw: 13, hd: 10 };
+function w3Interior(put, hmap, doors, flowers) {
+  const { x: X, z: Z, y: Y, hw, hd } = W3_IN;
+  for (let x = X - hw; x <= X + hw; x++) for (let z = Z - hd; z <= Z + hd; z++) {
+    const edge = Math.abs(x - X) === hw || Math.abs(z - Z) === hd;
+    put(x, Y, z, Math.abs(x - X) <= 1 && z > Z - 8 ? "w#dc2626" : (x + z) % 2 ? "quartz" : "gold"); hmap[x + "," + z] = Y;
+    for (let y = Y - 1; y >= Y - 3; y--) if (Math.abs(x - X) + Math.abs(z - Z) < hw + hd - 4 + (Y - y) * 0) put(x, y, z, y === Y - 3 ? "w#ffffff" : "quartz");
+    if (edge) { for (let y = Y + 1; y <= Y + 7; y++) put(x, y, z, (y === Y + 3 || y === Y + 5) && (x + z) % 3 === 0 ? "glass" : "gold"); put(x, Y + 8, z, (x + z) % 2 ? "purple" : "gold"); }
+  }
+  [[-hw, -hd], [hw, -hd], [-hw, hd], [hw, hd]].forEach(([a, b]) => { for (let y = Y + 1; y <= Y + 11; y++) for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) put(X + a + i, y, Z + b + j, "gold"); for (let k = 0; k < 3; k++) put(X + a, Y + 12 + k, Z + b, "purple"); put(X + a, Y + 15, Z + b, "w#dc2626"); });
+  // 出口（南邊牆中央的紫色傳送門）
+  for (let y = Y + 1; y <= Y + 4; y++) for (let x = X - 1; x <= X + 1; x++) put(x, y, Z + hd, Math.abs(x - X) === 1 || y === Y + 4 ? "purple" : "glass");
+  doors.push({ kind: "exit", x: X, z: Z + hd - 1, y: Y + 1, label: "🚪 回到外面" });
+  const hot = (k, dx, dz, label) => doors.push({ kind: "hot", k, x: X + dx, z: Z + dz, y: Y + 1, label });
+  // 👑 船長寶座
+  for (let x = -1; x <= 1; x++) { put(X + x, Y + 1, Z - 8, "gold"); for (let y = 2; y <= 4; y++) put(X + x, Y + y, Z - 9, "gold"); put(X + x, Y + 2, Z - 8, "w#dc2626"); }
+  put(X - 1, Y + 5, Z - 9, "gold"); put(X + 1, Y + 5, Z - 9, "gold"); put(X, Y + 5, Z - 9, "w#facc15"); hot("hThrone", 0, -6, "👑 船長寶座");
+  // ⛲ 許願池
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) { const e = Math.abs(x) === 2 || Math.abs(z) === 2; put(X + x, Y + 1, Z - 1 + z, e ? "quartz" : "water"); }
+  for (let y = 1; y <= 3; y++) put(X, Y + y, Z - 1, "quartz"); put(X, Y + 4, Z - 1, "water"); hot("hFountain", 0, 2, "⛲ 許願池");
+  // 🎰 扭蛋機
+  for (let y = 1; y <= 2; y++) for (let x = 0; x <= 1; x++) for (let z = 0; z <= 1; z++) put(X + 8 + x, Y + y, Z - 7 + z, y === 1 ? "gold" : "w#dc2626");
+  for (let x = 0; x <= 1; x++) for (let z = 0; z <= 1; z++) put(X + 8 + x, Y + 3, Z - 7 + z, "glass"); put(X + 8, Y + 4, Z - 7, "w#facc15"); hot("hGacha", 8, -5, "🎰 幸運扭蛋機");
+  // 🎹 星光鋼琴
+  for (let x = 0; x <= 3; x++) { put(X + 7 + x, Y + 1, Z + 1, "w#475569"); put(X + 7 + x, Y + 2, Z + 1, x % 2 ? "w#ffffff" : "quartz"); put(X + 7 + x, Y + 2, Z + 2, "w#475569"); put(X + 7 + x, Y + 3, Z + 2, "w#475569"); }
+  hot("hPiano", 8, 3, "🎹 星光鋼琴");
+  // 📚 魔法書櫃（靠西牆）
+  for (let z = -8; z <= -4; z++) for (let y = 1; y <= 4; y++) put(X - hw + 1, Y + y, Z + z, y % 2 ? "plank" : ["w#dc2626", "w#2563eb", "w#16a34a", "w#facc15", "w#9333ea"][(z + 8 + y) % 5]);
+  hot("hBooks", -hw + 3, -6, "📚 魔法書櫃");
+  // 🔭 天文台
+  put(X - 9, Y + 1, Z + 2, "log"); put(X - 9, Y + 2, Z + 2, "log"); put(X - 9, Y + 3, Z + 2, "cobble"); put(X - 9, Y + 4, Z + 1, "cobble"); put(X - 9, Y + 5, Z, "glass"); hot("hScope", -8, 3, "🔭 天文台");
+  // 🐠 海底水族館
+  for (let x = -12; x <= -8; x++) for (let z = 5; z <= 8; z++) for (let y = 1; y <= 3; y++) { const e = x === -12 || x === -8 || z === 5 || z === 8 || y === 3; put(X + x, Y + y, Z + z, e ? "glass" : "water"); }
+  hot("hAqua", -7, 6, "🐠 海底水族館");
+  // 🏆 榮譽殿堂
+  [[5, -8], [6, -8], [4, -8]].forEach(([dx, dz], i) => { for (let y = 1; y <= 1 + (i === 1 ? 2 : 1); y++) put(X + dx, Y + y, Z + dz, "quartz"); put(X + dx, Y + 2 + (i === 1 ? 2 : 1), Z + dz, "gold"); }); hot("hTrophy", 5, -6, "🏆 榮譽殿堂");
+  // 🎂 甜點吧
+  for (let x = 8; x <= 11; x++) { put(X + x, Y + 1, Z + 7, "plank"); put(X + x, Y + 2, Z + 7, x % 2 ? "w#f472b6" : "w#ffffff"); } put(X + 9, Y + 3, Z + 7, "w#dc2626"); hot("hCake", 9, 5, "🎂 甜點吧");
+  // 📖 訪客簽名簿
+  put(X - 4, Y + 1, Z + 7, "log"); put(X - 4, Y + 2, Z + 7, "plank"); hot("hGuest", -4, 5, "📖 訪客簽名簿");
+  // 水晶吊燈
+  [[-6, -4], [6, -4], [-6, 4], [6, 4], [0, -4]].forEach(([dx, dz]) => { put(X + dx, Y + 7, Z + dz, "gold"); put(X + dx, Y + 6, Z + dz, "glass"); put(X + dx, Y + 5, Z + dz, "w#facc15"); });
+  // 花盆
+  [[-3, -8], [3, -8], [-11, 0], [11, -2], [-6, 9], [6, 9]].forEach(([dx, dz]) => { put(X + dx, Y + 1, Z + dz, "plank"); flowers.push([X + dx, Y + 2, Z + dz, "#f472b6"]); });
+  return { X, Z, Y, spawn: [X, Y + 1.5, Z + hd - 5] };
 }
 function w3Build(world, M) {
   const geo = new THREE.BoxGeometry(1, 1, 1), groups = {}, G = world.G;
@@ -2800,10 +2866,15 @@ function w3Create() {
   // 名牌
   const labels = [];
   world.doors.forEach(d => {
-    const s = d.kind === "castle" ? w3Label("🏰 老師的天空城堡", "人人都可以進來玩！", "#7c3aed") : w3Label(d.label, `${shortName(d.name)}${d.open ? "・🚪 歡迎參觀" : "・🔒"}`, d.open ? "#16a34a" : "#64748b");
+    if (d.kind === "hot" || d.kind === "exit") return;
+    const s = d.kind === "castle" ? w3Label("🏰 老師的天空城堡", "人人都可以進來玩！", "#7c3aed") : d.teacher ? w3Label(d.label, "老師的家・歡迎參觀", "#f59e0b") : w3Label(d.label, `${shortName(d.name)}${d.open ? "・🚪 歡迎參觀" : "・🔒"}`, d.open ? "#16a34a" : "#64748b");
     if (d.kind === "castle") { s.position.set(0, world.C.y + 10.5, world.C.z1 + 3); s.scale.multiplyScalar(1.4); } else s.position.set(d.cx, d.top + 1.6, d.cz);
     scene.add(s); labels.push(s);
   });
+  world.doors.filter(d => d.kind === "hot" || d.kind === "exit").forEach(d => { const s = w3Label(d.label, "", d.kind === "exit" ? "#7c3aed" : "#f59e0b"); s.scale.multiplyScalar(0.62); s.position.set(d.x, d.y + 3.6, d.z - (d.kind === "hot" ? 1.5 : 0)); scene.add(s); });
+  // 水族館的魚
+  const fish = [];
+  ["#f97316", "#facc15", "#60a5fa", "#f472b6"].forEach((c, i) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.3, 0.2), new THREE.MeshLambertMaterial({ color: c })); f.position.set(W3_IN.x - 10, W3_IN.y + 1.5 + (i % 2) * 0.6, W3_IN.z + 6.5); scene.add(f); fish.push({ f, t: i * 1.7 }); });
   // 每日寶箱（學生限定）：世界裡藏 5 個發光的問號方塊
   const chests = [];
   if (session.user.role === "student") {
@@ -2819,14 +2890,15 @@ function w3Create() {
   const animals = []; const AR = seeded("animals");
   ["sheep", "sheep", "sheep", "chick", "chick", "chick", "fox", "sheep", "chick"].forEach(k => { const a = w3Animal(k); let x, z; do { x = AR() * 70 - 35; z = AR() * 70 - 35; } while (Math.hypot(x, z) < 16); a.position.set(x, 0, z); scene.add(a); animals.push({ a, dir: AR() * 6.28, t: 0 }); });
   const player = w3Avatar(); player.position.set(0, 6, -3); player.rotation.y = Math.PI; scene.add(player);
-  const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.5); scene.add(myTag);
+  const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.34); scene.add(myTag);
   // 操作介面
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
   hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
+    <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡</button>${session.user.role === "student" ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
-  w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
+    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+  w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
 }
 function w3Solid(x, y, z) { const t = w3.world.G[Math.round(x) + "," + Math.round(y) + "," + Math.round(z)]; return t && t !== "water" && t !== "flower"; }
@@ -2854,14 +2926,18 @@ function w3Controls() {
 function w3Resize() { const host = document.getElementById("dw3d"); if (!host || !w3) return; const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
   if (!w3) return;
-  if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = 0; }
-  else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === session.user.name); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
+  const card = document.getElementById("dw3d-card"); if (card) card.hidden = true;
+  if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
+  else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
+  else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === dwMe()); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
   w3.vel.set(0, 0, 0);
 }
 function w3Enter() {
   if (!w3 || !w3.near) return;
   const d = w3.near;
-  if (d.kind === "castle") return dwTab("castle");
+  if (d.kind === "castle") return w3Warp("inside");
+  if (d.kind === "exit") return w3Warp("castle");
+  if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
   if (d.name === session.user.name) return dwTab("home");
   if (!d.open && session.user.role !== "teacher") return toast(`🔒 ${shortName(d.name)}還沒開放參觀`);
   dwVisit(d.name);
@@ -2891,8 +2967,9 @@ function w3Loop(now) {
     if (w3.vel.y <= 0 && w3Floor(P)) { P.y = Math.round(P.y - 0.02) + 0.5; w3.vel.y = 0; w3.onGround = true; }
     let guard = 0; while (w3Hit(P) && guard++ < 4) P.y += 1;   // 卡進方塊裡就往上推出來
   }
-  const S = w3.world.S - 1; P.x = Math.max(-S, Math.min(S, P.x)); P.z = Math.max(-S, Math.min(S, P.z));
+  const S = w3.world.S - 1; if (Math.abs(P.x) < S + 20) { P.x = Math.max(-S, Math.min(S, P.x)); P.z = Math.max(-S, Math.min(S, P.z)); }
   if (P.y < -5) { w3Warp("castle"); }
+  w3.fish.forEach(o => { o.t += dt; o.f.position.x = W3_IN.x - 10 + Math.sin(o.t * 0.8) * 1.2; o.f.position.z = W3_IN.z + 6.5 + Math.cos(o.t * 1.1) * 0.8; o.f.rotation.y = Math.atan2(Math.cos(o.t * 0.8), -Math.sin(o.t * 1.1)); });
   // 走路擺手
   const u = w3.player.userData, sw = moving ? Math.sin(now / 110) * 0.7 : 0;
   u.la.rotation.x = sw; u.ra.rotation.x = -sw; u.ll.rotation.x = -sw; u.rl.rotation.x = sw;
@@ -2908,10 +2985,10 @@ function w3Loop(now) {
   w3.camera.position.lerp(cp, Math.min(1, dt * 12)); w3.camera.lookAt(w3.look);
   // 門口提示
   let near = null, best = 9;
-  w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
+  w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" ? 5 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">🚪 ${near.kind === "castle" ? "進入老師的天空城堡" : near.name === session.user.name ? "回到我的家（布置）" : near.open || session.user.role === "teacher" ? `參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 回到我的家（布置）" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -7418,9 +7495,9 @@ function demoBridge(op, d) {
   db.homes = db.homes || { "508示範同學二": { nm: "海豚小屋", lv: 2, fl: "blue", wl: "ocean", rf: "#2563eb", open: true, it: [["dolphin", 1, 1, 0], ["fish", 3, 1, 0], ["bed", 6, 1, 0], ["plant", 1, 5, 0], ["couch", 4, 4, 0], ["tv", 4, 2, 0], ["shell", 6, 6, 0]] } };
   db.stk = db.stk || [];
   const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st }; };
-  if (op === "homeGet") { const who = d.who, h = db.homes[who] || null; if (who !== session.user.name && session.user.role === "student" && h && !h.open) throw new Error("主人還沒開放參觀"); return { home: h }; }
+  if (op === "homeGet") { const who = d.who, h = db.homes[who] || null; if (who !== session.user.name && session.user.role === "student" && h && !h.open && !/老師$/.test(who)) throw new Error("主人還沒開放參觀"); return { home: h }; }
   if (op === "homeSave") { db.homes[session.user.name] = d.home; save(); return { ok: true }; }
-  if (op === "homeVillage") return { homes: [...DEMO_ROSTER.filter(a => a.role === "student").map(a => Object.assign(homeSum(a.name), { seat: a.seat })), homeSum("__teacher")] };
+  if (op === "homeVillage") return { homes: [...DEMO_ROSTER.filter(a => a.role === "student").map(a => Object.assign(homeSum(a.name), { seat: a.seat })), Object.assign(homeSum("508老師"), { teacher: true, open: true }), homeSum("__teacher")] };
   if (op === "homeSticker") {
     const day = nowStr().slice(0, 10);
     if (db.stk.some(x => x.from === session.user.name && x.to === d.to && x.t.slice(0, 10) === day)) throw new Error("今天已經送過這一家貼圖了");
