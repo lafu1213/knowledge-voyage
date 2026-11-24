@@ -1967,6 +1967,7 @@ function startPoemQuiz(n) {
   if (closedForMe(unit)) return toast("🔒 這座島目前關閉中");
   if (!isTrial() && stats.pending.length >= LOCK_LIMIT) return toast(`⚠️ 待訂正錯題已達 10 題，請先回世界地圖的 ${WRECK_ICON} ${WRECK}訂正！`, 4500);
   stopSpeak();
+  if (balanceGuard(unit.subject, unit.unit)) return;
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   const qs = shuffle(unit.questions.filter(q => q.poemN === Number(n))).map(q => prepareQuestion(q));
   quizState = newQuizState("練習", unit.subject, unit.unit, qs);
@@ -3272,6 +3273,7 @@ function startChallenge(key) {
   if (cs.done) return toast("👑 這座島已經征服了！");
   if (cs.need) return toast(`📘 還有 ${cs.need} ${cs.needKind}沒練習，先把島上的題目都練習過再來挑戰！`);
   if (cs.wait) return toast(`⏳ 挑戰失敗後要休息一下，${cs.wait} 分鐘後才能再挑戰。先去訂正錯題吧！`);
+  if (balanceGuard(unit.subject, unit.unit)) return;
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box challenge";
   quizState = newQuizState("挑戰", unit.subject, unit.unit, buildChallenge(unit));
   quizState.unitKey = key; quizState.flagBefore = flagLevel(unit);
@@ -4240,12 +4242,57 @@ function newQuizState(mode, subject, unit, questions) {
   return { mode, subject, unit, questions, idx: 0, correctCount: 0, combo: 0, maxCombo: 0, startTime: Date.now(), sid: (FINAL ? FINAL_SID : "") + uid(), pts: 0, recent: [] };
 }
 
+// ── ⚖️ 均衡航行：同一科今天連續跑滿 N 局，下一局要先去最弱的科目跑一局（老師在航海規則設定；訂正、老師考卷不受限） ──
+const BALANCE_SUBJ = ["國語", "數學", "英語", "自然", "社會"];
+function balanceSubjOf(subject, unit) {
+  if (BALANCE_SUBJ.includes(subject)) return subject;
+  if (subject === TANG_SUBJ) return "國語";
+  if (subject === "單字王") return "英語";
+  if (subject === "武林大會") return BALANCE_SUBJ.find(k => String(unit || "").indexOf(k) === 0) || "";
+  return "";
+}
+function balanceStreak() {
+  const today = nowStr().slice(0, 10);
+  const list = mySessions.filter(x => String(x.t || "").slice(0, 10) === today && x.total > 0 && x.unit !== "錯題本" && x.unit !== "歷史錯題複習" && String(x.unit || "").indexOf("📝") !== 0)
+    .map(x => ({ t: String(x.t), k: balanceSubjOf(x.subject, String(x.unit || "").replace(CHALLENGE_TAG, "")) })).filter(x => x.k).sort((a, b) => (a.t < b.t ? -1 : 1));
+  if (!list.length) return { k: "", n: 0 };
+  const k = list[list.length - 1].k; let n = 0;
+  for (let i = list.length - 1; i >= 0 && list[i].k === k; i--) n++;
+  return { k, n };
+}
+function weakestSubject(except) {
+  const acc = {};
+  stats.units.forEach(u => { const k = balanceSubjOf(u.subject, u.unit); if (!k) return; const a = acc[k] || (acc[k] = { t: 0, c: 0 }); a.t += u.total; a.c += u.correct; });
+  return BALANCE_SUBJ.filter(k => k !== except).map(k => WORLD.find(s => s.key === k)).filter(s => s && openUnitsOf(s).length)
+    .map(s => { const a = acc[s.key] || { t: 0, c: 0 }; return { key: s.key, icon: s.icon, rate: a.t ? a.c / a.t : 0, t: a.t }; })
+    .sort((a, b) => a.rate - b.rate || a.t - b.t)[0] || null;
+}
+/** 回傳 true 表示被擋下（已顯示提醒） */
+function balanceGuard(subject, unit) {
+  if (!session || session.user.role !== "student" || !paceOn()) return false;
+  const r = rulesNow(); if (r.balanceOn === false) return false;
+  const N = Math.max(2, Math.min(10, Number(r.balanceN) || 3)), k = balanceSubjOf(subject, unit);
+  if (!k) return false;
+  const st = balanceStreak();
+  if (st.k !== k || st.n < N) return false;
+  const w = weakestSubject(k); if (!w) return false;
+  document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
+  document.getElementById("quiz-content").innerHTML = `<div style="text-align:center">
+    <div style="font-size:3rem">⚖️</div><h2 style="margin:6px 0">均衡航行：換個科目吧！</h2>
+    <p style="font-size:1.02rem; line-height:1.8">你今天已經連續在 <b>${escapeHtml(k)}</b> 跑了 <b>${st.n} 局</b>，很認真！<br>
+    先去你最需要加強的 <b>${w.icon} ${escapeHtml(w.key)}</b>${w.t ? `（目前正確率 ${Math.round(w.rate * 100)}%）` : "（還沒練習過）"} 跑一局，<br>回來就可以繼續 ${escapeHtml(k)} 了！</p>
+    <button class="btn-accent" style="width:100%; padding:13px; font-size:1.05rem" onclick="closeModal('quiz-modal'); enterSubject('${w.key}')">⛵ 出發去 ${w.icon} ${escapeHtml(w.key)}</button>
+    <p style="font-size:.8rem; opacity:.7; margin-top:10px">錯題島訂正、老師出的考卷不受這個規則限制。</p></div>`;
+  openModal("quiz-modal");
+  return true;
+}
 function startQuiz(key) {
   if (guardLocked()) return;
   stopSpeak();
   if (closedForMe(WORLD.flatMap(s => s.units).find(u => u.key === key))) return toast("🔒 這座島目前關閉中");
   document.getElementById("quiz-content").closest(".modal-box").className = "modal-box";
   const unit = WORLD.flatMap(s => s.units).find(u => u.key === key);
+  if (balanceGuard(unit.subject, unit.unit)) return;
   quizState = newQuizState("練習", unit.subject, unit.unit, buildSession(unit));
   quizState.unitKey = key; quizState.flagBefore = flagLevel(unit);
   renderQuestion();
@@ -4305,9 +4352,9 @@ function applyPace(q, choice, ok, pts) {
   if (!lock && streakOn && st.wrongStreak >= PACE.lockStreak) { lock = true; kind = "streak"; reason = `連續答錯 ${st.wrongStreak} 題`; st.lastAt = Date.now(); }
   else if (!lock && streakOn && st.wrongStreak === PACE.warnStreak) {
     note = (note ? note + "\n" : "") + `⚠️ 你已經連續答錯 ${PACE.warnStreak} 題了！請慢慢看清楚題目再作答。再連錯 ${PACE.lockStreak - PACE.warnStreak} 題就會被判定亂答：扣分、退一級、強迫結束冒險，${PACE.lockMinutes} 分鐘不能出航！`;
-    reportPace("streakWarn", st.count, "警告：再連錯 2 題就扣押");
+    reportPace("streakWarn", st.count, "警告：再連錯 2 題就扣押"); st.fastOff = true;
   }
-  if (lock) { st.lockUntil = Date.now() + PACE.lockMinutes * 60000; st.wrongStreak = 0; }
+  if (lock) { st.lockUntil = Date.now() + PACE.lockMinutes * 60000; st.wrongStreak = 0; st.fastOff = true; }
   store(paceKey(), st);
   return { pts, note, lock, reason, why: kind };
 }
@@ -4347,16 +4394,29 @@ function pacePunish(pace) {
   tick(); pacePunish.t = setInterval(tick, 1000);
   renderPills();
 }
-// 「下一題」按鈕要等題目出現滿 12 秒才能按
+// ── ⚡ 快答特權：等級愈高，每題最少停留秒數愈短（最低 8 秒）。有文章的題目不縮短；掉級自動恢復；當天有亂答警告就收回；老師可在航海規則關閉 ──
+const FAST_LANE = [[80, 8], [60, 9], [40, 10], [20, 11]];
+function fastLaneInfo() {
+  const base = { sec: PACE.minSeconds, lv: 0, why: "" };
+  if (!session || session.user.role !== "student" || !stats) return base;
+  if (rulesNow().fastOn === false) return Object.assign(base, { why: "off" });
+  const lv = getLevelInfo(stats.score).lv, hit = FAST_LANE.find(([l]) => lv >= l);
+  if (!hit) return Object.assign(base, { lv });
+  const st = paceOn() ? paceState() : {};
+  if (st.count > 0 || st.fastOff) return Object.assign(base, { lv, why: "revoked", would: hit[1] });
+  return { sec: hit[1], lv, why: "" };
+}
+function minSecFor(q) { return q && q.passage ? PACE.minSeconds : fastLaneInfo().sec; }
+// 「下一題」按鈕要等題目出現滿 12 秒（快答特權可縮短）才能按
 function startPaceTimer() {
   if (!paceOn()) return;
   const btn = document.getElementById("next-btn"), noteEl = document.getElementById("pace-note");
   if (!btn) return;
-  const label = btn.textContent;
+  const label = btn.textContent, q = quizState.questions[quizState.idx], fl = fastLaneInfo(), need = minSecFor(q);
   const tick = () => {
-    const left = Math.ceil(PACE.minSeconds - (Date.now() - quizState.shownAt) / 1000);
+    const left = Math.ceil(need - (Date.now() - quizState.shownAt) / 1000);
     if (!document.body.contains(btn)) return clearInterval(timer);
-    if (left > 0) { btn.disabled = true; btn.textContent = `⏳ ${left} 秒後可以下一題`; if (noteEl) noteEl.textContent = `每題至少停留 ${PACE.minSeconds} 秒，先把詳解看完吧！`; }
+    if (left > 0) { btn.disabled = true; btn.textContent = `⏳ ${left} 秒後可以下一題`; if (noteEl) noteEl.textContent = `每題至少停留 ${need} 秒，先把詳解看完吧！${need < PACE.minSeconds ? `（⚡ Lv.${fl.lv} 快答特權）` : fl.why === "revoked" ? "（⚡ 今天有亂答警告，快答特權暫停）" : ""}`; }
     else { btn.disabled = false; btn.textContent = label; if (noteEl) noteEl.textContent = ""; clearInterval(timer); }
   };
   const timer = setInterval(tick, 250);
@@ -5114,7 +5174,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10 };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3 };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -5692,6 +5752,9 @@ async function renderBridge() {
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">每天 <input type="time" id="rule-open-start" value="${r.openStart || "06:30"}"> 到 <input type="time" id="rule-open-end" value="${r.openEnd || "22:00"}"></div></span></div>
         <div class="bridge-switch" style="cursor:default"><span style="font-size:1.2rem">⏱️</span> <span><b>使用時間上限</b><br><small>時間到自動登出；連續使用到上限後，要休息一段時間才能再登入（老師、家長不受限制）。</small>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">連續最多 <input type="number" id="rule-session" min="10" max="240" style="width:70px" value="${r.sessionMin || 60}"> 分鐘，休息 <input type="number" id="rule-rest" min="1" max="120" style="width:60px" value="${r.restMin || 10}"> 分鐘；每天最多 <input type="number" id="rule-daily" min="10" max="600" style="width:70px" value="${r.dailyMin || 120}"> 分鐘</div></span></div>
+        <label class="bridge-switch"><input type="checkbox" id="rule-fast" ${r.fastOn !== false ? "checked" : ""}> <span><b>⚡ 快答特權</b><br><small>等級愈高，每題最少停留秒數愈短：Lv.20 → 11 秒、Lv.40 → 10 秒、Lv.60 → 9 秒、Lv.80 → 8 秒（最低 8 秒）。閱讀測驗、唐詩等有文章的題目一律 ${PACE.minSeconds} 秒；掉級自動恢復；當天有亂答警告就暫停到隔天。</small></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-balance" ${r.balanceOn !== false ? "checked" : ""}> <span><b>⚖️ 均衡航行</b><br><small>同一科今天連續跑滿幾局後，下一局要先去他正確率最低的科目跑一局，才能再回來（唐詩算國語、單字王算英語；錯題島訂正、老師考卷不受限）。</small>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
     } else if (t === "conduct") {
@@ -5754,7 +5817,8 @@ async function saveRules() {
   const rules = { pirateOn: document.getElementById("rule-pirate").checked, afterSchoolOnly: document.getElementById("rule-after").checked, eventsOn: document.getElementById("rule-events").checked,
     schoolStart: document.getElementById("rule-start").value || "07:40", schoolEnd: document.getElementById("rule-end").value || "16:00",
     openStart: document.getElementById("rule-open-start").value || "06:30", openEnd: document.getElementById("rule-open-end").value || "22:00",
-    sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120 };
+    sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
+    fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)) };
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
   if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
@@ -6579,6 +6643,7 @@ function guideSections() {
     L.push(["pace", "⏱️ 作答節奏", `
       <ul class="guide-list">
         <li>每題至少停留 <b>${PACE.minSeconds} 秒</b>才能按下一題，先把詳解看完。</li>
+        <li>⚡ <b>快答特權</b>${rulesNow().fastOn === false ? "（老師目前關閉）" : ""}：等級愈高，停留時間愈短：<b>Lv.20 → 11 秒、Lv.40 → 10 秒、Lv.60 → 9 秒、Lv.80 → 8 秒</b>（最低 8 秒）。閱讀測驗、唐詩這類有文章的題目一律 ${PACE.minSeconds} 秒；等級掉下來會自動恢復；當天被亂答警告，特權就暫停到隔天。${(() => { const f = fastLaneInfo(); return f.lv ? `<br>👉 你現在 Lv.${f.lv}：${f.sec < PACE.minSeconds ? `每題 <b>${f.sec} 秒</b>` : f.why === "revoked" ? "今天特權暫停中" : `再升到 Lv.${FAST_LANE[FAST_LANE.length - 1][0]} 就有特權`}` : ""; })()}</li>
         <li>系統用兩種方式判斷<b>亂答</b>：<br>① <b>看時間</b>：題目出現 ${PACE.fastSeconds} 秒內就作答（題目長會多給幾秒），或連續 5 題都點同一個位置而且幾乎都錯。<br>② <b>看連錯</b>：闖關、挑戰考<b>連續答錯 ${PACE.warnStreak} 題會警告</b>，<b>連續答錯 ${PACE.lockStreak} 題就判定亂答</b>。</li>
         <li>太快作答當天第 1 次：那題<b>不加分，答錯扣分加倍</b>；第 2 次：接下來 <b>${PACE.doubleCount} 題</b>答錯都加倍扣分；第 3 次就判定亂答。</li>
         <li>⛓️ <b>判定亂答的處罰</b>：扣分（至少 ${PACE.penaltyMin} 分）而且<b>退一級</b>、<b>強迫結束這一局冒險</b>、<b>${PACE.lockMinutes} 分鐘不能出航</b>（不能闖關、挑戰、比賽），但可以到 <b>📚 錯題島</b>練習錯題。</li>
