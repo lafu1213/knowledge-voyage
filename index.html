@@ -762,6 +762,16 @@
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
+  .dw3d-chat { position: absolute; left: 12px; top: 48px; width: min(300px, calc(100% - 150px)); background: rgba(255,255,255,.9); border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.2); overflow: hidden; font-size: .82rem; }
+  .dw3d-chat-head { padding: 6px 10px; font-weight: 900; background: #8b5cf6; color: #fff; cursor: pointer; display: flex; justify-content: space-between; }
+  .dw3d-chat.min .dw3d-chat-list, .dw3d-chat.min .dw3d-chat-quick, .dw3d-chat.min .dw3d-chat-form { display: none; }
+  .dw3d-chat-list { max-height: 150px; overflow-y: auto; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; }
+  .dw3d-chat-list b { color: #6d28d9; margin-right: 6px; } .dw3d-chat-list .me b { color: #d97706; } .dw3d-chat-list .t b { color: #dc2626; } .dw3d-chat-list .empty { opacity: .6; }
+  .dw3d-chat-quick { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px 6px; }
+  .dw3d-chat-quick button { border: 0; background: #ede9fe; border-radius: 999px; padding: 2px 8px; font: inherit; font-size: .74rem; cursor: pointer; }
+  .dw3d-chat-form { display: flex; gap: 4px; padding: 0 8px 8px; } .dw3d-chat-form input { flex: 1; min-width: 0; border: 1px solid #c4b5fd; border-radius: 10px; padding: 5px 8px; font: inherit; }
+  .dw3d-chat-form button { border: 0; background: #8b5cf6; color: #fff; border-radius: 10px; padding: 0 10px; font: inherit; font-weight: 800; cursor: pointer; }
+  @media (max-width: 640px) { .dw3d-chat { top: 40px; width: calc(100% - 140px); } .dw3d-chat-list { max-height: 90px; } }
   .dw3d-card { position: absolute; right: 12px; bottom: 16px; width: min(340px, calc(100% - 24px)); background: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-height: 60%; overflow-y: auto; }
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
@@ -2895,11 +2905,77 @@ function w3Create() {
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
   hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
+    ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 聊天（同學在線上就看得到）<span>▾</span></div>
+      <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
+      <div class="dw3d-chat-quick">${["嗨！👋", "來我家玩！🏠", "寶箱在這裡！❓", "好漂亮！😍", "一起去城堡！🏰", "加油！💪"].map(t => `<button onclick="w3Say('${t}')">${t}</button>`).join("")}</div>
+      <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><input name="t" maxlength="40" placeholder="說點什麼…（按 Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
     <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
     <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
+  w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
+  w3ChatSync(true);
+  net.heartbeat();
+}
+async function w3Say(text) {
+  const t = String(text || "").trim().slice(0, 40); if (!t) return;
+  try { await net.chat(t); } catch (e) { toast("⚠️ 訊息沒送出：" + e.message, 4500); }
+}
+// 對話泡泡：畫在角色頭上，6 秒後消失
+function w3Bubble(text) {
+  const c = document.createElement("canvas"), g = c.getContext("2d"); c.width = 512;
+  g.font = "bold 40px 'Noto Sans TC', sans-serif";
+  const words = [...text], lines = []; let cur = "";
+  words.forEach(ch => { if (g.measureText(cur + ch).width > 440) { lines.push(cur); cur = ch; } else cur += ch; }); if (cur) lines.push(cur);
+  c.height = 40 + lines.length * 50; g.font = "bold 40px 'Noto Sans TC', sans-serif";
+  g.fillStyle = "#fff"; g.strokeStyle = "#1e293b"; g.lineWidth = 5;
+  const r = 26, h = c.height - 16; g.beginPath(); g.moveTo(r, 4); g.arcTo(508, 4, 508, h, r); g.arcTo(508, h, 4, h, r); g.lineTo(240, h); g.lineTo(256, c.height - 2); g.lineTo(272, h); g.arcTo(4, h, 4, 4, r); g.arcTo(4, 4, 508, 4, r); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = "#1e293b"; g.textAlign = "center"; lines.forEach((l, i) => g.fillText(l, 256, 52 + i * 50));
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); s.renderOrder = 10;
+  s.scale.set(3.4, 3.4 * c.height / 512, 1); return s;
+}
+function w3ChatSync(first) {
+  if (!w3) return;
+  const list = document.getElementById("dw3d-chat-list");
+  if (list) {
+    list.innerHTML = net.messages.slice(-30).map(m => `<div class="${m.name === session.user.name ? "me" : ""} ${m.role === "teacher" ? "t" : ""}"><b>${escapeHtml(shortName(m.name))}</b>${escapeHtml(m.text)}</div>`).join("") || `<div class="empty">還沒有人說話，打個招呼吧！</div>`;
+    list.scrollTop = list.scrollHeight;
+  }
+  if (first) return;
+  net.messages.filter(m => m.id > w3.lastMsg).forEach(m => {
+    w3.lastMsg = Math.max(w3.lastMsg, m.id);
+    const who = m.name === session.user.name ? w3.player : w3.peers[m.name] && w3.peers[m.name].g;
+    if (!who) return;
+    const b = w3Bubble(m.text); w3.scene.add(b); w3.bubbles.push({ b, who, until: performance.now() + 6500 });
+  });
+}
+// 同學的小船長：從線上狀態拿到位置，平滑移動過去
+function w3PeerSync(dt, now) {
+  const seen = {};
+  (net.others || []).forEach(o => {
+    if (!/^D:/.test(o.place || "")) return;
+    const [x, y, z, ry] = o.place.slice(2).split(",").map(Number); if (![x, y, z].every(isFinite)) return;
+    seen[o.name] = 1;
+    let p = w3.peers[o.name];
+    if (!p) {
+      const g = w3Avatar(); const shirt = new THREE.MeshLambertMaterial({ color: o.color || ["#16a34a", "#db2777", "#f59e0b", "#0d9488", "#9333ea", "#dc2626"][(Number(o.seat) || 0) % 6] });
+      g.children.forEach(m => { if (m.material && m.material.color && m.material.color.getHexString && m.material.color.getHexString() === "2563eb") m.material = shirt; });
+      g.position.set(x, y, z); w3.scene.add(g);
+      const tag = w3Label(shortName(o.name), "", "#16a34a"); tag.scale.multiplyScalar(0.34); w3.scene.add(tag);
+      p = w3.peers[o.name] = { g, tag, tx: x, ty: y, tz: z, ry };
+    }
+    p.tx = x; p.ty = y; p.tz = z; p.ry = ry;
+  });
+  Object.keys(w3.peers).forEach(n => { if (!seen[n]) { w3.scene.remove(w3.peers[n].g); w3.scene.remove(w3.peers[n].tag); delete w3.peers[n]; } });
+  Object.values(w3.peers).forEach(p => {
+    const P = p.g.position, d = Math.hypot(p.tx - P.x, p.tz - P.z);
+    if (d > 25) P.set(p.tx, p.ty, p.tz); else { const k = Math.min(1, dt * 1.6); P.x += (p.tx - P.x) * k; P.y += (p.ty - P.y) * k; P.z += (p.tz - P.z) * k; }
+    p.g.rotation.y = d > 0.05 ? Math.atan2(p.tx - P.x, p.tz - P.z) : p.ry;
+    const u = p.g.userData, sw = d > 0.15 ? Math.sin(now / 110) * 0.7 : 0; u.la.rotation.x = sw; u.ra.rotation.x = -sw; u.ll.rotation.x = -sw; u.rl.rotation.x = sw;
+    p.tag.position.set(P.x, P.y + 2.7, P.z);
+  });
+  w3.bubbles = w3.bubbles.filter(o => { if (now > o.until) { w3.scene.remove(o.b); return false; } const P = o.who.position; o.b.position.set(P.x, P.y + 3.6 + o.b.scale.y / 2, P.z); return true; });
 }
 function w3Solid(x, y, z) { const t = w3.world.G[Math.round(x) + "," + Math.round(y) + "," + Math.round(z)]; return t && t !== "water" && t !== "flower"; }
 const W3_CORNERS = [[-0.28, -0.28], [0.28, -0.28], [-0.28, 0.28], [0.28, 0.28]];
@@ -2913,7 +2989,8 @@ function w3Controls() {
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
   el.addEventListener("pointerup", () => { drag = null; });
   el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
-  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
+  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter();
+    if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
   window.addEventListener("keyup", e => { if (w3) w3.keys[e.code] = false; });
   window.addEventListener("resize", () => w3 && w3.running && w3Resize());
   const joy = w3.hud.querySelector("#dw3d-joy"), knob = joy.querySelector("i"); let jid = null, jc = null;
@@ -2998,6 +3075,7 @@ function w3Loop(now) {
     if (!o.stop) { const nx = o.a.position.x + Math.sin(o.dir) * dt * 1.2, nz = o.a.position.z + Math.cos(o.dir) * dt * 1.2, h = w3.world.hmap[Math.round(nx) + "," + Math.round(nz)];
       if (h && h >= 4 && Math.abs(nx) < S - 2 && Math.abs(nz) < S - 2 && !w3Solid(nx, h + 1, nz)) { o.a.position.x = nx; o.a.position.z = nz; o.a.rotation.y = o.dir; } else o.dir += Math.PI; }
     const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
+  w3PeerSync(dt, now);
   w3.clouds.position.x = (now / 1000 * 0.6) % 60;
   w3.renderer.render(w3.scene, w3.camera);
   requestAnimationFrame(w3Loop);
@@ -4527,7 +4605,10 @@ function currentNodes() {
 function posKey() { return view.group ? view.subject + "@" + view.group : view.subject; }
 function dockIdNow() { return view.group ? "UP@" + view.subject + "@" + view.group : "DOCK@" + view.subject; }
 function myPlaceId() { return view.level === "world" ? pos.world : (pos.unit[posKey()] || dockIdNow()); }
-function myPlace() { return (view.level === "world" ? "W:" : "U:") + myPlaceId(); }
+function myPlace() {
+  if (typeof w3 !== "undefined" && w3 && w3.running && document.body.classList.contains("dream-open")) { const p = w3.player.position; return `D:${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)},${w3.player.rotation.y.toFixed(2)}`; }
+  return (view.level === "world" ? "W:" : "U:") + myPlaceId();
+}
 function spotOf(n, k = -1) {
   if (k < 0) return { x: n.x - n.r * 0.72, y: n.y - n.r * 0.3 };   // 自己站在島的左上角，不擋住圖示和招牌
   const a = -Math.PI * 0.42 + k * 0.55;   // 同學沿著島的右上方排開
@@ -6203,6 +6284,7 @@ const net = {
     if (sig !== this.sig) { this.sig = sig; renderSide(); }
     if (!walking) renderAvatars();
     renderChat();
+    if (typeof w3ChatSync === "function") w3ChatSync();
     renderBattle();
   },
   async chat(text) { this.apply(await this.call("chat", { text, place: myPlace(), since: this.lastId() })); },
