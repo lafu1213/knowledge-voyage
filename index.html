@@ -810,7 +810,7 @@
   @keyframes dwPulse { from { transform: scale(1); } to { transform: scale(1.06); } }
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
-  @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
+
   .dw3d-chat { position: absolute; left: 12px; top: 48px; width: min(300px, calc(100% - 150px)); background: rgba(255,255,255,.9); border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.2); overflow: hidden; font-size: .82rem; }
   .dw3d-chat-head { padding: 6px 10px; font-weight: 900; background: #8b5cf6; color: #fff; cursor: pointer; display: flex; justify-content: space-between; }
   .dw3d-chat.min .dw3d-chat-list, .dw3d-chat.min .dw3d-chat-quick, .dw3d-chat.min .dw3d-chat-form { display: none; }
@@ -825,6 +825,29 @@
   .dw3d-card { position: absolute; right: 12px; bottom: 16px; width: min(340px, calc(100% - 24px)); background: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.3); max-height: 60%; overflow-y: auto; }
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
+  /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .dw3d-fold { display: none; }
+  @media (max-width: 900px), (max-height: 560px) {
+    .dw-top { position: sticky; flex-wrap: nowrap; overflow-x: auto; padding: 6px 8px; gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .dw-top::-webkit-scrollbar { display: none; }
+    .dw-title { display: none; }
+    .dw-tabs { flex-wrap: nowrap; } .dw-tabs button { white-space: nowrap; padding: 4px 10px; font-size: .8rem; }
+    .dw-stat { flex-wrap: nowrap; white-space: nowrap; margin-left: 0; font-size: .76rem; }
+    .dw-help-btn, .dw-close { white-space: nowrap; padding: 4px 10px; font-size: .8rem; flex-shrink: 0; }
+    .dw3d { height: calc(100vh - 48px); height: calc(100dvh - 48px); min-height: 260px; }
+    .dw3d-help { top: auto; bottom: 6px; font-size: .68rem; }
+    .dw3d-chat { top: 8px; left: 8px; width: min(260px, calc(100% - 130px)); } .dw3d-chat-list { max-height: 80px; } .dw3d-chat-quick { display: none; }
+    .dw3d-mini { top: 8px; right: 8px; gap: 4px; } .dw3d-mini button { padding: 5px 9px; font-size: .78rem; }
+    .dw3d-fold { display: block; background: #8b5cf6 !important; color: #fff !important; }
+    .dw3d-mini.fold > button:not(.dw3d-fold) { display: none; }
+    .dw3d-hp { top: 46px; font-size: .8rem; padding: 2px 8px; }
+    .dw3d-prompt { bottom: 140px; } .dw3d-prompt button { font-size: .95rem; padding: 8px 18px; }
+    .dw3d-joy { left: 16px; bottom: 16px; } .dw3d-jump { right: 16px; bottom: 22px; } .dw3d-act { right: 88px; bottom: 18px; }
+    .dw3d-act button { width: 50px; height: 50px; }
+    .dw3d-build { bottom: 92px; right: 8px; width: min(280px, calc(100% - 16px)); max-height: 50vh; overflow-y: auto; }
+  }
+  @media (pointer: coarse) { .dw3d-help-pc { display: none; } }
+  @media (hover: hover) and (pointer: fine) { .dw3d-help-pc { display: inline; } }
   .dw-help-btn { border: 2px solid #f59e0b; background: #fffbeb; color: #b45309; border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 900; cursor: pointer; }
   .dw-guide { position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; padding: 14px; }
   .dw-guide-box { position: relative; background: #fff; border-radius: 22px; padding: 18px 22px; max-width: 640px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
@@ -2930,6 +2953,9 @@ async function w3Mount() {
   if (w3.room && w3.room.name === dwMe() && dwCanEdit()) w3RoomBuild(dwMe(), dw.home);
   w3Resize(); w3.running = true; w3.last = performance.now(); requestAnimationFrame(w3Loop);
 }
+// 手機、小平板：畫面小就把聊天室、選單先收起來，3D 畫面留大一點
+function w3Small() { return window.matchMedia("(max-width: 900px), (max-height: 560px)").matches; }
+function w3Touch() { return window.matchMedia("(pointer: coarse)").matches; }
 function w3Create() {
   const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fdcff); scene.fog = new THREE.Fog(0xbfe6ff, 40, 95);
@@ -2976,9 +3002,9 @@ function w3Create() {
   const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.34); scene.add(myTag);
   // 操作介面
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
-  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋　✨ 找找看天上的黃色光柱，底下就是今天的 ❓寶箱！</div>
+  hud.innerHTML = `<div class="dw3d-help">${w3Touch() ? "👈 左下搖桿走路・👆 滑畫面轉視角・右下 ⤒ 跳" : ""}<span class="dw3d-help-pc">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋　✨ 找找看天上的黃色光柱，底下就是今天的 ❓寶箱！</span></div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
-    ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 異想世界聊天室<span>▾</span></div>
+    ${session.user.role !== "parent" ? `<div class="dw3d-chat ${w3Small() ? "min" : ""}" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 異想世界聊天室<span>▾</span></div>
       <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
       <div class="dw3d-chat-quick">${["嗨！👋", "來我家玩！🏠", "寶箱在這裡！❓", "好漂亮！😍", "一起去城堡！🏰", "加油！💪"].map(t => `<button onclick="w3Say('${t}')">${t}</button>`).join("")}</div>
       <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><select id="dw3d-to" title="要對誰說" onchange="w3.chatTo=this.value"><option value="">📢 大家</option></select><input name="t" maxlength="40" placeholder="說點什麼…（Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
@@ -2987,12 +3013,13 @@ function w3Create() {
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
   w3ChatSync(true);
   w3.hemi = hemi; w3.sunL = sun;
+  if (w3Touch() && window.innerHeight > window.innerWidth) setTimeout(() => toast("📱 把手機轉成橫的，畫面更大更好玩！", 4500), 800);
   w3OutBuild();
   w3ZombieInit();
   net.heartbeat();
