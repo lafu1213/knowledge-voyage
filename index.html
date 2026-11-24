@@ -769,6 +769,13 @@
   .dw3d-build-pal i { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,.2); } .dw3d-build-pal small { font-size: .62rem; color: #475569; }
   .dw3d-build-tip { font-size: .7rem; color: #64748b; margin-top: 6px; line-height: 1.5; }
   @media (max-width: 640px) { .dw3d-build { bottom: 150px; } }
+  .dw3d-hp { position: absolute; left: 50%; top: 48px; transform: translateX(-50%); background: rgba(255,255,255,.85); border-radius: 14px; padding: 3px 12px; display: flex; gap: 8px; align-items: center; font-size: .95rem; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  .dw3d-hp small { font-weight: 800; color: #334155; font-size: .78rem; }
+  .dw3d-hurt { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 120px rgba(220,38,38,.75); opacity: 0; }
+  .dw3d-hurt.on { animation: dwHurt .6s ease-out; } @keyframes dwHurt { 0% { opacity: 1; } 100% { opacity: 0; } }
+  .dw3d-act { position: absolute; right: 96px; bottom: 26px; display: flex; gap: 8px; }
+  .dw3d-act button { width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,.8); background: rgba(255,255,255,.55); font-size: 1.5rem; cursor: pointer; touch-action: none; }
+  @media (max-width: 640px) { .dw3d-hp { top: 92px; } }
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
@@ -2293,7 +2300,7 @@ async function dwFlush() {
 function renderDream() {
   const el = document.getElementById("dream"); if (!el) return;
   const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
-  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["list", "🏘️ 村莊名冊"]];
+  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["gear", "⚔️ 裝備店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["list", "🏘️ 村莊名冊"]];
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
@@ -2329,6 +2336,7 @@ function dwBody() {
   if (dw.tab === "castle") return dwCastleHtml();
   if (dw.tab === "home") return dwHomeHtml();
   if (dw.tab === "shop") return dwShopHtml();
+  if (dw.tab === "gear") return dwGearHtml();
   if (dw.tab === "bag") return dwBagHtml();
   return "";
 }
@@ -2928,7 +2936,7 @@ function w3Create() {
   const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.34); scene.add(myTag);
   // 操作介面
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
-  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
+  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
     ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 聊天（同學在線上就看得到）<span>▾</span></div>
       <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
@@ -2936,6 +2944,8 @@ function w3Create() {
       <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><input name="t" maxlength="40" placeholder="說點什麼…（按 Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
     <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
     <div class="dw3d-build" id="dw3d-build" hidden></div>
+    <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
+    <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
     <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
@@ -2943,6 +2953,7 @@ function w3Create() {
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
   w3ChatSync(true);
   w3OutBuild();
+  w3ZombieInit();
   net.heartbeat();
 }
 async function w3Say(text) {
@@ -3016,9 +3027,9 @@ function w3Controls() {
   el.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sx: e.clientX, sy: e.clientY, btn: e.button }; el.setPointerCapture(e.pointerId); });
   el.addEventListener("contextmenu", e => { if (w3 && w3.build && w3.build.on) e.preventDefault(); });
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
-  el.addEventListener("pointerup", e => { if (drag && w3.build && w3.build.on && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) w3BuildClick(e, drag.btn === 2); drag = null; });
+  el.addEventListener("pointerup", e => { if (drag && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) { if (w3.build && w3.build.on) w3BuildClick(e, drag.btn === 2); else w3Attack(); } drag = null; });
   el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
-  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (e.code === "Space" && !e.repeat && !w3.onGround) w3Jump();
+  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (e.code === "Space" && !e.repeat && !w3.onGround) w3Jump(); if (e.code === "KeyF" && !e.repeat) w3Attack(); if (e.code === "KeyH" && !e.repeat) w3Potion();
     if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
   window.addEventListener("keyup", e => { if (w3) w3.keys[e.code] = false; });
   window.addEventListener("resize", () => w3 && w3.running && w3Resize());
@@ -3028,6 +3039,8 @@ function w3Controls() {
   const jend = () => { jid = null; knob.style.transform = ""; w3.joy = { x: 0, y: 0 }; };
   joy.addEventListener("pointerup", jend); joy.addEventListener("pointercancel", jend);
   w3.hud.querySelector("#dw3d-jump").addEventListener("pointerdown", e => { e.stopPropagation(); w3Jump(); });
+  w3.hud.querySelector("#dw3d-hit").addEventListener("pointerdown", e => { e.stopPropagation(); w3Attack(); });
+  w3.hud.querySelector("#dw3d-pot").addEventListener("pointerdown", e => { e.stopPropagation(); w3Potion(); });
 }
 // 跳：地上跳約 2.5 格高，空中再按一次可以二段跳
 function w3Jump() {
@@ -3067,7 +3080,7 @@ function w3Loop(now) {
   const k = w3.keys, P = w3.player.position;
   let fx = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0) - w3.joy.y, sx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0) + w3.joy.x;
   const len = Math.hypot(fx, sx); if (len > 1) { fx /= len; sx /= len; }
-  const speed = 5.2, fwd = new THREE.Vector3(-Math.sin(w3.yaw), 0, -Math.cos(w3.yaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  const speed = 5.2 * w3Gear().spd, fwd = new THREE.Vector3(-Math.sin(w3.yaw), 0, -Math.cos(w3.yaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
   const move = fwd.multiplyScalar(fx * speed * dt).add(right.multiplyScalar(sx * speed * dt));
   const moving = len > 0.05;
   if (moving) w3.player.rotation.y = Math.atan2(move.x, move.z);
@@ -3117,6 +3130,7 @@ function w3Loop(now) {
     if (!o.stop) { const nx = o.a.position.x + Math.sin(o.dir) * dt * 1.2, nz = o.a.position.z + Math.cos(o.dir) * dt * 1.2, h = w3.world.hmap[Math.round(nx) + "," + Math.round(nz)];
       if (h && h >= 4 && Math.abs(nx) < S - 2 && Math.abs(nz) < S - 2 && !w3Solid(nx, h + 1, nz)) { o.a.position.x = nx; o.a.position.z = nz; o.a.rotation.y = o.dir; } else o.dir += Math.PI; }
     const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
+  w3ZombieTick(dt, now);
   w3PeerSync(dt, now);
   w3.clouds.position.x = (now / 1000 * 0.6) % 60;
   w3.renderer.render(w3.scene, w3.camera);
@@ -3341,6 +3355,146 @@ function w3OutClick(e, rightBtn) {
     }
   }
   dwSave(); w3OutBuild(); w3BuildPanel(); renderDreamStat();
+}
+
+// ── 🧟 殭屍＋⚔️ 裝備 ──
+// 裝備用金幣買（記在金幣紀錄「裝備:代號」）；藥水喝掉的數量記在 spent["eq:potion"]
+const DW_GEAR = [
+  { id: "wsword", k: "sword", name: "木劍", emoji: "🗡️", price: 40, v: 2, tip: "打殭屍一下 2 點傷害" },
+  { id: "isword", k: "sword", name: "鐵劍", emoji: "⚔️", price: 120, v: 3, tip: "打殭屍一下 3 點傷害" },
+  { id: "dsword", k: "sword", name: "鑽石劍", emoji: "💎", price: 300, v: 5, tip: "一劍就能打倒殭屍！" },
+  { id: "larmor", k: "armor", name: "皮甲", emoji: "🦺", price: 50, v: 2, tip: "多 2 顆愛心" },
+  { id: "iarmor", k: "armor", name: "鐵甲", emoji: "🛡️", price: 150, v: 4, tip: "多 4 顆愛心" },
+  { id: "garmor", k: "armor", name: "黃金甲", emoji: "🏅", price: 350, v: 6, tip: "多 6 顆愛心" },
+  { id: "boots", k: "boots", name: "飛毛腿跑鞋", emoji: "👟", price: 80, v: 1.3, tip: "跑得快 30%，殭屍追不上" },
+  { id: "potion", k: "potion", name: "補血藥水", emoji: "🧪", price: 15, v: 0, tip: "按 H 喝，愛心全部補滿（用完要再買）" }];
+const W3_ZOMBIES = 10, W3_ZHP = 4, W3_SAFE_R = 22;
+function dwGearHave(id) {
+  if (dwIsT()) return id === "potion" ? 99 : 1;
+  const n = coinRows.filter(r => r.op === "spend" && r.note === "裝備:" + id).length;
+  return id === "potion" ? Math.max(0, n - ((dw.home && dw.home.spent["eq:potion"]) || 0)) : n;
+}
+let w3GearMemo = null;
+function w3Gear() {
+  const key = coinRows.length + "|" + ((dw.home && dw.home.spent["eq:potion"]) || 0) + "|" + dwIsT();
+  if (w3GearMemo && w3GearMemo.key === key) return w3GearMemo.v;
+  const v = w3GearCalc(); w3GearMemo = { key, v }; return v;
+}
+function w3GearCalc() {
+  const best = k => DW_GEAR.filter(g => g.k === k && dwGearHave(g.id) > 0).sort((a, b) => b.v - a.v)[0] || null;
+  const sw = best("sword"), ar = best("armor"), bo = best("boots");
+  return { sw, ar, dmg: sw ? sw.v : 1, max: 5 + (ar ? ar.v : 0), spd: bo ? bo.v : 1, pot: dwGearHave("potion") };
+}
+function dwGearHtml() {
+  const c = coinState(), g = w3Gear();
+  const card = x => { const have = dwGearHave(x.id), poor = c.wallet < x.price, once = x.k !== "potion" && have;
+    return `<div class="dw-shop-card"><div class="e">${x.emoji}</div><b>${x.name}</b><small>🪙${x.price}</small><small style="color:#64748b">${x.tip}</small>${have ? `<i>${x.k === "potion" ? "還有 " + have + " 瓶" : "已擁有"}</i>` : ""}
+      ${once ? `<button disabled>已擁有</button>` : `<button ${poor ? "disabled" : ""} onclick="dwGearBuy('${x.id}')">${poor ? "金幣不夠" : "購買"}</button>`}</div>`; };
+  return `<div class="dw-shop"><p class="dw-note">🧟 異想世界的荒野裡有殭屍出沒！被碰到會少一顆 ❤️，愛心用完會昏倒，掉 1～2 個材料，然後被送回城堡門口。
+    村莊廣場、每一家的房子和院子都是 🛡️ 安全區，殭屍進不來。買把劍（按 F 或點畫面攻擊）、穿上盔甲（愛心變多）、帶幾瓶藥水，再去冒險吧！打倒殭屍有機會撿到材料喔（每天最多 6 個）。</p>
+    <p class="dw-note">目前裝備：${g.sw ? g.sw.emoji + g.sw.name : "👊 空手"}・${g.ar ? g.ar.emoji + g.ar.name : "沒穿盔甲"}・❤️×${g.max}${g.spd > 1 ? "・👟 跑鞋" : ""}・🧪×${g.pot}</p>
+    <div class="dw-shop-grid">${DW_GEAR.map(card).join("")}</div></div>`;
+}
+async function dwGearBuy(id) {
+  const x = DW_GEAR.find(g => g.id === id); if (!x) return;
+  if (coinState().wallet < x.price) return toast("🪙 錢袋裡的金幣不夠，先去寶庫領出來，或多答題賺金幣！");
+  try { await coinOp("spend", x.price, "裝備:" + id); toast(`⚔️ 買到了 ${x.emoji} ${x.name}！`); if (w3) w3.hp = Math.min(w3Gear().max, (w3.hp || 0) + (x.k === "armor" ? x.v : 0)); renderDream(); }
+  catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+function w3Safe(x, z) { return Math.hypot(x, z) < W3_SAFE_R || !!(w3.world.claim && w3.world.claim[Math.round(x) + "," + Math.round(z)]) || (Math.abs(x) <= 12 && z <= -20 && z >= -38); }
+function w3ZombieModel() {
+  const g = new THREE.Group(), box = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), Array.isArray(c) ? c : new THREE.MeshLambertMaterial({ color: c })); m.position.set(x, y, z); g.add(m); return m; };
+  const face = document.createElement("canvas"); face.width = face.height = 16; const f = face.getContext("2d");
+  f.fillStyle = "#6fae5a"; f.fillRect(0, 0, 16, 16); f.fillStyle = "#14532d"; f.fillRect(3, 6, 3, 3); f.fillRect(10, 6, 3, 3); f.fillStyle = "#fef08a"; f.fillRect(4, 7, 1, 1); f.fillRect(11, 7, 1, 1); f.fillStyle = "#3f6212"; f.fillRect(5, 11, 6, 2); f.fillStyle = "#f8fafc"; f.fillRect(6, 11, 1, 1); f.fillRect(9, 11, 1, 1);
+  const ft = new THREE.CanvasTexture(face); ft.magFilter = THREE.NearestFilter; const skin = new THREE.MeshLambertMaterial({ color: "#6fae5a" });
+  box(0.6, 0.6, 0.6, [skin, skin, skin, skin, new THREE.MeshLambertMaterial({ map: ft }), skin], 0, 1.55, 0);
+  const body = box(0.6, 0.7, 0.32, "#7c3aed", 0, 0.9, 0);
+  const la = box(0.2, 0.2, 0.65, "#6fae5a", -0.41, 1.12, 0.3), ra = box(0.2, 0.2, 0.65, "#6fae5a", 0.41, 1.12, 0.3);
+  const ll = box(0.26, 0.55, 0.28, "#475569", -0.15, 0.28, 0), rl = box(0.26, 0.55, 0.28, "#475569", 0.15, 0.28, 0);
+  [ll, rl].forEach(p => { p.geometry.translate(0, -p.geometry.parameters.height / 2 + 0.05, 0); p.position.y += p.geometry.parameters.height / 2 - 0.05; });
+  g.userData = { ll, rl, la, ra, body }; return g;
+}
+function w3ZombieSpot() {
+  const S = w3.world.S - 4;
+  for (let i = 0; i < 60; i++) { const x = (Math.random() * 2 - 1) * S, z = (Math.random() * 2 - 1) * S, h = w3.world.hmap[Math.round(x) + "," + Math.round(z)];
+    if (h && h >= 4 && !w3Safe(x, z) && !w3Solid(x, h + 1, z) && Math.hypot(x - w3.player.position.x, z - w3.player.position.z) > 18) return [x, z]; }
+  return [w3.world.S - 6, w3.world.S - 6];
+}
+function w3ZombieInit() {
+  w3.zombies = []; w3.hp = w3Gear().max; w3.inv = 0; w3.lastHit = 0; w3.atkCd = 0;
+  for (let i = 0; i < W3_ZOMBIES; i++) { const g = w3ZombieModel(), [x, z] = w3ZombieSpot(); g.position.set(x, 6, z); w3.scene.add(g); w3.zombies.push({ g, hp: W3_ZHP, dir: Math.random() * 6.28, t: 0, dead: 0, flash: 0, kb: null }); }
+  w3HpRender();
+}
+function w3HpRender() {
+  if (!w3) return; const el = w3.hud.querySelector("#dw3d-hp"); if (!el) return;
+  const g = w3Gear(), hp = Math.max(0, Math.ceil(w3.hp));
+  el.innerHTML = `<span>${"❤️".repeat(Math.min(hp, g.max))}${"🤍".repeat(Math.max(0, g.max - hp))}</span><small>${g.sw ? g.sw.emoji : "👊"}${g.ar ? g.ar.emoji : ""}${g.spd > 1 ? "👟" : ""} 🧪${g.pot}${session.user.role !== "student" ? "・無敵" : ""}</small>`;
+}
+function w3Attack() {
+  if (!w3 || !w3.zombies || w3.room || w3.atkCd > 0) return;
+  w3.atkCd = 0.4; w3.swing = 0.25;
+  const P = w3.player.position, ry = w3.player.rotation.y, fx = Math.sin(ry), fz = Math.cos(ry), dmg = w3Gear().dmg;
+  let hit = 0;
+  w3.zombies.forEach(z => { if (z.dead) return; const dx = z.g.position.x - P.x, dz = z.g.position.z - P.z, d = Math.hypot(dx, dz);
+    if (d < 2.6 && Math.abs(z.g.position.y - P.y) < 2 && (d < 0.8 || (dx * fx + dz * fz) / d > 0.2)) {
+      z.hp -= dmg; z.flash = 0.25; z.kb = [dx / (d || 1) * 7, dz / (d || 1) * 7, 0.18]; hit++;
+      if (z.hp <= 0) w3ZombieDown(z);
+    } });
+  if (!hit) toast("👊 揮空了！靠近殭屍、面向牠再打", 1500);
+}
+function w3ZombieDown(z) {
+  z.dead = 25; z.g.visible = false;
+  const key = "508_ZK_" + session.user.name, d = nowStr().slice(0, 10), t = load(key, null), n = t && t.d === d ? t.n : 0;
+  if (session.user.role === "student" && n < 6 && Math.random() < 0.5) {
+    const m = DW_MATS[Math.floor(Math.random() * DW_MATS.length)]; dw.home.gift.mats[m.k] = (dw.home.gift.mats[m.k] || 0) + 1; store(key, { d, n: n + 1 }); dwSave(); renderDreamStat();
+    toast(`🧟💥 打倒殭屍！撿到 ${m.icon} ${m.name}×1（今天還能撿 ${5 - n} 個）`, 3000);
+  } else toast("🧟💥 打倒一隻殭屍！", 1800);
+}
+function w3Potion() {
+  if (!w3) return; const g = w3Gear();
+  if (g.pot < 1) return toast("🧪 沒有藥水了，去 ⚔️ 裝備店買吧！");
+  if (w3.hp >= g.max) return toast("❤️ 愛心已經是滿的");
+  if (!dwIsT()) { dw.home.spent["eq:potion"] = (dw.home.spent["eq:potion"] || 0) + 1; dwSave(); }
+  w3.hp = g.max; w3HpRender(); toast("🧪 咕嚕咕嚕～愛心補滿了！", 2000);
+}
+function w3Hurt(z, now) {
+  if (session.user.role !== "student" || now < w3.inv) return;
+  const g = w3Gear(); w3.hp -= 1; w3.inv = now + 1200; w3.lastHit = now;
+  const P = w3.player.position, dx = P.x - z.g.position.x, dz = P.z - z.g.position.z, d = Math.hypot(dx, dz) || 1;
+  w3.vel.y = 6; w3.onGround = false; w3.push = [dx / d * 9, dz / d * 9, 0.2];
+  const el = w3.hud.querySelector("#dw3d-hurt"); if (el) { el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
+  if (w3.hp <= 0) {
+    const m = dwMats(), have = DW_MATS.filter(x => (m[x.k] || 0) > 0);
+    let lost = "";
+    if (have.length) { const x = have[Math.floor(Math.random() * have.length)], n = Math.min(m[x.k], 1 + Math.floor(Math.random() * 2)); dw.home.spent[x.k] = (dw.home.spent[x.k] || 0) + n; dwSave(); renderDreamStat(); lost = `掉了 ${x.icon} ${x.name}×${n}，`; }
+    w3.hp = g.max; w3Warp("castle"); w3.inv = now + 3000;
+    toast(`😵 被殭屍打倒了！${lost}被送回城堡門口。去 ⚔️ 裝備店買劍和盔甲吧！`, 5000);
+  }
+  w3HpRender();
+}
+function w3ZombieTick(dt, now) {
+  if (!w3.zombies) return;
+  const P = w3.player.position, out = !w3.room && Math.abs(P.x) < w3.world.S + 5, safe = !out || w3Safe(P.x, P.z);
+  w3.atkCd = Math.max(0, w3.atkCd - dt);
+  if (w3.swing > 0) { w3.swing -= dt; w3.player.userData.ra.rotation.x = -1.6 * Math.sin((0.25 - w3.swing) / 0.25 * Math.PI); }
+  if (w3.push) { P.x += w3.push[0] * dt; P.z += w3.push[1] * dt; if (w3Hit(P)) { P.x -= w3.push[0] * dt; P.z -= w3.push[1] * dt; } w3.push[2] -= dt; if (w3.push[2] <= 0) w3.push = null; }
+  const g = w3Gear(); if (w3.hp > g.max) w3.hp = g.max;
+  if (w3.hp < g.max && now - w3.lastHit > 8000 && now - (w3.lastRegen || 0) > 10000) { w3.hp = Math.min(g.max, Math.floor(w3.hp) + 1); w3.lastRegen = now; w3HpRender(); }   // 沒被打 8 秒後，每 10 秒回 1 顆心
+  w3.zombies.forEach(z => {
+    const Z = z.g.position;
+    if (z.dead) { z.dead -= dt; if (z.dead <= 0) { const [x, zz] = w3ZombieSpot(); Z.set(x, 6, zz); z.hp = W3_ZHP; z.dead = 0; z.g.visible = true; } return; }
+    const dx = P.x - Z.x, dz = P.z - Z.z, d = Math.hypot(dx, dz);
+    let vx = 0, vz = 0;
+    if (z.kb) { vx = z.kb[0]; vz = z.kb[1]; z.kb[2] -= dt; if (z.kb[2] <= 0) z.kb = null; }
+    else if (out && !safe && d < 15) { vx = dx / d * 2.7; vz = dz / d * 2.7; z.g.rotation.y = Math.atan2(dx, dz); }
+    else { z.t -= dt; if (z.t <= 0) { z.dir += (Math.random() - 0.5) * 2.4; z.t = 1 + Math.random() * 3; z.stop = Math.random() < 0.4; } if (!z.stop) { vx = Math.sin(z.dir) * 0.9; vz = Math.cos(z.dir) * 0.9; z.g.rotation.y = z.dir; } }
+    const nx = Z.x + vx * dt, nz = Z.z + vz * dt, h = w3.world.hmap[Math.round(nx) + "," + Math.round(nz)], S = w3.world.S - 2;
+    if (h && h >= 4 && Math.abs(nx) < S && Math.abs(nz) < S && !w3Safe(nx, nz) && !w3Solid(nx, h + 1, nz) && !w3Solid(nx, h + 2, nz)) { Z.x = nx; Z.z = nz; } else if (!z.kb) z.dir += Math.PI;
+    Z.y = (w3.world.hmap[Math.round(Z.x) + "," + Math.round(Z.z)] || 5) + 0.5;
+    const u = z.g.userData, sw = (vx || vz) ? Math.sin(now / 160) * 0.5 : 0; u.ll.rotation.x = sw; u.rl.rotation.x = -sw;
+    z.flash = Math.max(0, z.flash - dt); u.body.material.emissive && u.body.material.emissive.setHex(z.flash > 0 ? 0xff0000 : 0x000000);
+    if (out && !safe && d < 0.95 && Math.abs(Z.y - P.y) < 1.6) w3Hurt(z, now);
+  });
 }
 function w3Reset() { if (w3) { try { w3.running = false; w3.renderer.dispose(); w3.renderer.forceContextLoss(); } catch (e) {} } w3 = null; }
 function dwSyncMine() {
