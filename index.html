@@ -2209,7 +2209,7 @@ let dw = { tab: "village", home: null, view: null, viewHome: null, hand: null, v
 function dwMe() { return session.user.role === "parent" ? session.user.child : session.user.name; }
 function dwIsT() { return session && session.user.role === "teacher"; }
 function dwCanEdit() { return session && (session.user.role === "student" || session.user.role === "teacher"); }
-function dwRules() { const r = rulesNow(); r.worldOn = r.worldOn === true; const num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); return { on: r.worldOn, n: num(r.worldSessions, 5), acc: num(r.worldAcc, 70), min: num(r.worldMin, 20) || 20 }; }
+function dwRules() { const r = rulesNow(); r.worldOn = r.worldOn === true; const num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); const n = num(r.worldSessions, 5), acc = num(r.worldAcc, 70); return { on: r.worldOn, n, acc, min: num(r.worldMin, 20) || 20, free: n === 0 && acc === 0 }; }   // 局數、正確率都填 0 ＝ 試玩：不檢查條件、不限時間
 
 // ── 學習換材料：答對 +1、訂正答對再 +1、整局全對（至少 5 題）+3 ──
 function dwEarned() {
@@ -2235,7 +2235,7 @@ function dwFree(id, home = dw.home) { return dwOwned("item", id, home) - (home.i
 
 // ── 進島條件 ──
 function dwGate() {
-  if (!session || session.user.role !== "student" || !FINAL) return { ok: true, list: [] };
+  if (!session || session.user.role !== "student" || !FINAL || dwRules().free) return { ok: true, list: [] };
   const R = dwRules(), done = mySessions.filter(x => x.total > 0 && x.subject !== "航行").length;
   const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0, pend = stats.pending.length;
   const list = [
@@ -2253,7 +2253,7 @@ async function openDream() {
   if (!R.on && session.user.role !== "teacher") return toast("🌈 異想世界還沒開放，請等老師宣布喔！");
   const g = dwGate();
   if (!g.ok) return dwGateModal(g);
-  if (session.user.role === "student" && dwTimeUsed() >= R.min * 60) return toast(`🌙 今天在異想世界已經玩滿 ${R.min} 分鐘了，明天再來吧！`, 4500);
+  if (session.user.role === "student" && !R.free && dwTimeUsed() >= R.min * 60) return toast(`🌙 今天在異想世界已經玩滿 ${R.min} 分鐘了，明天再來吧！`, 4500);
   let el = document.getElementById("dream");
   if (!el) { el = document.createElement("div"); el.id = "dream"; el.className = "dream"; document.body.appendChild(el); }
   el.hidden = false; document.body.classList.add("dream-open");
@@ -2267,6 +2267,7 @@ async function openDream() {
     const t = load(dwTimeKey(), null), d = nowStr().slice(0, 10), s = (t && t.d === d ? t.s : 0) + 5;
     store(dwTimeKey(), { d, s });
     const left = dwRules().min * 60 - s, el2 = document.getElementById("dw-time");
+    if (dwRules().free) { if (el2) el2.textContent = "🎈 試玩中・不限時間"; return; }
     if (el2) el2.textContent = `⏳ 今天還能玩 ${Math.max(0, Math.ceil(left / 60))} 分鐘`;
     if (left <= 0) { closeDream(); toast(`🌙 今天的異想世界時間（${dwRules().min} 分鐘）用完了，回去學習換更多材料吧！`, 5000); }
   }, 5000);
@@ -2304,7 +2305,7 @@ function renderDream() {
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
-      <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
+      <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">${dwRules().free ? "🎈 試玩中・不限時間" : `⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘`}</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
       <button class="dw-help-btn" onclick="dwGuide()">❓ 怎麼玩</button><button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
     <div class="dw-body ${dw.tab === "world" && !dw.view ? "world" : ""}" id="dw-body">${dwBody()}</div>`;
   if (dw.tab === "world" && !dw.view) { dwSyncMine(); w3Mount(); }
@@ -7304,7 +7305,8 @@ async function renderBridge() {
         <label class="bridge-switch"><input type="checkbox" id="rule-balance" ${r.balanceOn !== false ? "checked" : ""}> <span><b>⚖️ 均衡航行</b><br><small>同一科今天連續跑滿幾局後，下一局要先去他正確率最低的科目跑一局，才能再回來（唐詩算國語、單字王算英語；錯題島訂正、老師考卷不受限）。</small>
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions || 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc || 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div></span></label>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions ?? 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc ?? 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div>
+          <small>🎈 <b>試玩模式</b>：局數和正確率都填 <b>0</b>，就不檢查任何條件（錯題也不用先訂正）、也不限每天時間。<button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.getElementById('rule-world').checked=true; document.getElementById('rule-world-n').value=0; document.getElementById('rule-world-acc').value=0; toast('🎈 已填好試玩設定，記得按下面的「💾 儲存航海規則」')">一鍵填好試玩設定</button></small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-zombie" ${r.zombieOn !== false ? "checked" : ""}> <span><b>🧟 異想世界的殭屍</b><br><small>打開：荒野會有殭屍追人，被碰到會少愛心，愛心用完掉 1～2 個材料。關掉：殭屍全部消失，可以安心逛。在 3D 世界裡也可以直接按右邊的「🧟 殭屍」按鈕切換。</small></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
