@@ -2928,7 +2928,7 @@ function w3Create() {
   const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.34); scene.add(myTag);
   // 操作介面
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
-  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
+  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
     ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 聊天（同學在線上就看得到）<span>▾</span></div>
       <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
@@ -3018,7 +3018,7 @@ function w3Controls() {
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
   el.addEventListener("pointerup", e => { if (drag && w3.build && w3.build.on && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) w3BuildClick(e, drag.btn === 2); drag = null; });
   el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
-  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter();
+  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (e.code === "Space" && !e.repeat && !w3.onGround) w3Jump();
     if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
   window.addEventListener("keyup", e => { if (w3) w3.keys[e.code] = false; });
   window.addEventListener("resize", () => w3 && w3.running && w3Resize());
@@ -3027,7 +3027,13 @@ function w3Controls() {
   joy.addEventListener("pointermove", e => { if (e.pointerId !== jid) return; let dx = e.clientX - jc.x, dy = e.clientY - jc.y; const d = Math.hypot(dx, dy), mx = 40; if (d > mx) { dx *= mx / d; dy *= mx / d; } knob.style.transform = `translate(${dx}px,${dy}px)`; w3.joy = { x: dx / mx, y: dy / mx }; });
   const jend = () => { jid = null; knob.style.transform = ""; w3.joy = { x: 0, y: 0 }; };
   joy.addEventListener("pointerup", jend); joy.addEventListener("pointercancel", jend);
-  w3.hud.querySelector("#dw3d-jump").addEventListener("pointerdown", e => { e.stopPropagation(); if (w3.onGround) { w3.vel.y = 8.2; w3.onGround = false; } });
+  w3.hud.querySelector("#dw3d-jump").addEventListener("pointerdown", e => { e.stopPropagation(); w3Jump(); });
+}
+// 跳：地上跳約 2.5 格高，空中再按一次可以二段跳
+function w3Jump() {
+  if (!w3) return;
+  if (w3.onGround) { w3.vel.y = 10.5; w3.onGround = false; w3.air = 1; }
+  else if (w3.air > 0) { w3.vel.y = 9.5; w3.air--; }
 }
 function w3Resize() { const host = document.getElementById("dw3d"); if (!host || !w3) return; const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
@@ -3070,7 +3076,7 @@ function w3Loop(now) {
     if (!move[ax]) return; const old = P[ax]; P[ax] += move[ax];
     if (w3Hit(P)) { P.y += 1; if (w3Hit(P) || !w3.onGround) { P.y -= 1; P[ax] = old; } }
   });
-  if ((k.Space) && w3.onGround) { w3.vel.y = 8.2; w3.onGround = false; }
+  if ((k.Space) && w3.onGround) w3Jump();
   // 站在地上就不套重力，避免每一格畫面往下掉再彈回（畫面抖動的原因）
   if (w3.onGround && w3.vel.y <= 0) { if (!w3Floor(P)) w3.onGround = false; else { w3.vel.y = 0; P.y = Math.round(P.y - 0.02) + 0.5; } }
   if (!w3.onGround || w3.vel.y > 0) {
