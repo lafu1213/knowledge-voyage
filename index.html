@@ -2760,7 +2760,7 @@ async function w3Mount() {
   w3Resize(); w3.running = true; w3.last = performance.now(); requestAnimationFrame(w3Loop);
 }
 function w3Create() {
-  const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fdcff); scene.fog = new THREE.Fog(0xbfe6ff, 40, 95);
   const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 300);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.75));
@@ -2806,7 +2806,10 @@ function w3Create() {
   w3Controls();
 }
 function w3Solid(x, y, z) { const t = w3.world.G[Math.round(x) + "," + Math.round(y) + "," + Math.round(z)]; return t && t !== "water" && t !== "flower"; }
-function w3Hit(p) { for (const dx of [-0.3, 0.3]) for (const dz of [-0.3, 0.3]) for (const dy of [0.1, 1.0, 1.7]) if (w3Solid(p.x + dx, p.y + dy, p.z + dz)) return true; return false; }
+const W3_CORNERS = [[-0.28, -0.28], [0.28, -0.28], [-0.28, 0.28], [0.28, 0.28]];
+function w3Hit(p) { for (const [dx, dz] of W3_CORNERS) for (const dy of [0.25, 1.0, 1.7]) if (w3Solid(p.x + dx, p.y + dy, p.z + dz)) return true; return false; }
+function w3Floor(p) { return W3_CORNERS.some(([dx, dz]) => w3Solid(p.x + dx, p.y - 0.02, p.z + dz)); }
+function w3Ceil(p) { return W3_CORNERS.some(([dx, dz]) => w3Solid(p.x + dx, p.y + 1.85, p.z + dz)); }
 function w3Controls() {
   const el = w3.renderer.domElement;
   let drag = null;
@@ -2853,11 +2856,17 @@ function w3Loop(now) {
   // 水平移動：撞到就試著爬上一格
   ["x", "z"].forEach(ax => {
     if (!move[ax]) return; const old = P[ax]; P[ax] += move[ax];
-    if (w3Hit(P)) { P.y += 1.05; if (w3Hit(P) || !w3.onGround) { P.y -= 1.05; P[ax] = old; } }
+    if (w3Hit(P)) { P.y += 1; if (w3Hit(P) || !w3.onGround) { P.y -= 1; P[ax] = old; } }
   });
   if ((k.Space) && w3.onGround) { w3.vel.y = 8.2; w3.onGround = false; }
-  w3.vel.y -= 22 * dt; P.y += w3.vel.y * dt;
-  if (w3Hit(P)) { if (w3.vel.y < 0) { P.y = Math.floor(P.y + 0.1) + 0.5; while (w3Hit(P)) P.y += 1; w3.onGround = true; } else P.y -= w3.vel.y * dt; w3.vel.y = 0; } else w3.onGround = false;
+  // 站在地上就不套重力，避免每一格畫面往下掉再彈回（畫面抖動的原因）
+  if (w3.onGround && w3.vel.y <= 0) { if (!w3Floor(P)) w3.onGround = false; else { w3.vel.y = 0; P.y = Math.round(P.y - 0.02) + 0.5; } }
+  if (!w3.onGround || w3.vel.y > 0) {
+    w3.vel.y = Math.max(-30, w3.vel.y - 22 * dt); P.y += w3.vel.y * dt;
+    if (w3.vel.y > 0 && w3Ceil(P)) { P.y -= w3.vel.y * dt; w3.vel.y = 0; }
+    if (w3.vel.y <= 0 && w3Floor(P)) { P.y = Math.round(P.y - 0.02) + 0.5; w3.vel.y = 0; w3.onGround = true; }
+    let guard = 0; while (w3Hit(P) && guard++ < 4) P.y += 1;   // 卡進方塊裡就往上推出來
+  }
   const S = w3.world.S - 1; P.x = Math.max(-S, Math.min(S, P.x)); P.z = Math.max(-S, Math.min(S, P.z));
   if (P.y < -5) { w3Warp("castle"); }
   // 走路擺手
@@ -2868,8 +2877,11 @@ function w3Loop(now) {
   const cd = w3.dist, cp = new THREE.Vector3(P.x + Math.sin(w3.yaw) * Math.cos(w3.pitch) * cd, P.y + 1.6 + Math.sin(w3.pitch) * cd, P.z + Math.cos(w3.yaw) * Math.cos(w3.pitch) * cd);
   const head = new THREE.Vector3(P.x, P.y + 1.5, P.z), dir = cp.clone().sub(head), full = dir.length(); dir.normalize();
   let ok = full; for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
-  cp.copy(head.addScaledVector(dir, ok));
-  w3.camera.position.lerp(cp, 0.25); w3.camera.lookAt(P.x, P.y + 1.4, P.z);
+  w3.camD = w3.camD === undefined ? ok : ok < w3.camD ? ok : w3.camD + (ok - w3.camD) * Math.min(1, dt * 3);
+  cp.copy(head.addScaledVector(dir, w3.camD));
+  w3.look = w3.look || new THREE.Vector3(P.x, P.y + 1.4, P.z);
+  w3.look.lerp(new THREE.Vector3(P.x, P.y + 1.4, P.z), Math.min(1, dt * 14));
+  w3.camera.position.lerp(cp, Math.min(1, dt * 12)); w3.camera.lookAt(w3.look);
   // 門口提示
   let near = null, best = 9;
   w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
