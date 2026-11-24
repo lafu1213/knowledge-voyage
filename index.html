@@ -2919,15 +2919,17 @@ function w3Create() {
   // 水族館的魚
   const fish = [];
   ["#f97316", "#facc15", "#60a5fa", "#f472b6"].forEach((c, i) => { const f = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.3, 0.2), new THREE.MeshLambertMaterial({ color: c })); f.position.set(W3_IN.x - 10, W3_IN.y + 1.5 + (i % 2) * 0.6, W3_IN.z + 6.5); scene.add(f); fish.push({ f, t: i * 1.7 }); });
-  // 每日寶箱（學生限定）：世界裡藏 5 個發光的問號方塊
+  // 每日寶箱：世界裡藏 5 個發光的問號方塊，上面有一道光柱，遠遠就看得到（老師、家長看得到但不能拿）
   const chests = [];
-  if (session.user.role === "student") {
+  {
     const d = nowStr().slice(0, 10), CRr = seeded("chest" + d + session.user.name), done = (dw.home && dw.home.daily && dw.home.daily.d === d && dw.home.daily.done) || [];
     const qm = M.q;
     for (let i = 0; i < 5; i++) {
       let x, z, tries = 0; do { x = Math.round((CRr() * 2 - 1) * (world.S - 6)); z = Math.round((CRr() * 2 - 1) * (world.S - 6)); tries++; } while (tries < 40 && (Math.hypot(x, z) < 12 || !world.hmap[x + "," + z] || world.G[x + "," + (world.hmap[x + "," + z] + 1) + "," + z] || world.G[x + "," + world.hmap[x + "," + z] + "," + z] === "sand"));
       if (done.includes("t" + i)) continue;
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), qm); m.position.set(x, world.hmap[x + "," + z] + 1.3, z); scene.add(m); chests.push({ i, m });
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), qm); m.position.set(x, world.hmap[x + "," + z] + 1.4, z); scene.add(m);
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 30, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide }));
+      beam.position.set(x, world.hmap[x + "," + z] + 16, z); scene.add(beam); chests.push({ i, m, beam });
     }
   }
   // 小動物
@@ -2937,7 +2939,7 @@ function w3Create() {
   const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.34); scene.add(myTag);
   // 操作介面
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
-  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
+  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋　✨ 找找看天上的黃色光柱，底下就是今天的 ❓寶箱！</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
     ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 聊天（同學在線上就看得到）<span>▾</span></div>
       <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
@@ -3125,7 +3127,10 @@ function w3Loop(now) {
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
-    if ((c.m.position.x - P.x) ** 2 + (c.m.position.z - P.z) ** 2 < 1.4 && Math.abs(c.m.position.y - P.y - 0.8) < 1.6) { c.m.visible = false; w3Chest(c.i); } });
+    c.beam.material.opacity = 0.22 + Math.sin(now / 400 + c.i) * 0.12;
+    if ((c.m.position.x - P.x) ** 2 + (c.m.position.z - P.z) ** 2 < 1.6 && Math.abs(c.m.position.y - P.y - 0.8) < 1.8) {
+      if (session.user.role !== "student") { if (!c.told) { c.told = 1; toast("❓ 這是學生的每日寶箱（老師預覽，不能拿）", 2500); } return; }
+      c.m.visible = false; c.beam.visible = false; w3Chest(c.i); } });
   // 小動物閒逛
   w3.animals.forEach(o => { o.t -= dt; if (o.t <= 0) { o.dir += (Math.random() - 0.5) * 2.4; o.t = 1 + Math.random() * 3; o.stop = Math.random() < 0.35; }
     if (!o.stop) { const nx = o.a.position.x + Math.sin(o.dir) * dt * 1.2, nz = o.a.position.z + Math.cos(o.dir) * dt * 1.2, h = w3.world.hmap[Math.round(nx) + "," + Math.round(nz)];
