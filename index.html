@@ -776,6 +776,38 @@
   .dw3d-act { position: absolute; right: 96px; bottom: 26px; display: flex; gap: 8px; }
   .dw3d-act button { width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,.8); background: rgba(255,255,255,.55); font-size: 1.5rem; cursor: pointer; touch-action: none; }
   @media (max-width: 640px) { .dw3d-hp { top: 92px; } }
+  .dwc { max-width: 980px; margin: 0 auto; }
+  .dwc-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 10px 0 16px; }
+  .dwc-game { background: #fff; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,.08); color: #1e293b; }
+  .dwc-game small { color: #64748b; line-height: 1.5; flex: 1; }
+  .dwc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border-radius: 12px; padding: 8px 12px; margin-bottom: 6px; color: #1e293b; }
+  .dwc-row span { flex: 1; } .dwc-row i { font-style: normal; color: #7c3aed; font-weight: 800; font-size: .85rem; }
+  .dwc-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 1.05rem; } .dwc-head span { flex: 1; }
+  .dwc-msg { margin: 8px 0; background: rgba(255,255,255,.8); border-radius: 12px; padding: 6px 12px; font-weight: 800; color: #4c1d95; }
+  .dwc-seats { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .dwc-seat { background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; flex-direction: column; border: 3px solid transparent; color: #1e293b; position: relative; }
+  .dwc-seat.turn { border-color: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.25); } .dwc-seat.me b { color: #7c3aed; }
+  .dwc-seat button { position: absolute; top: -6px; right: -6px; border: 0; border-radius: 50%; width: 20px; height: 20px; background: #ef4444; color: #fff; cursor: pointer; font-size: .7rem; }
+  .dwc-mid { display: flex; gap: 22px; align-items: center; justify-content: center; margin: 12px 0; flex-wrap: wrap; text-align: center; } .dwc-mid > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .dwc-hand { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+  .dwc-mine { background: rgba(255,255,255,.7); border-radius: 16px; padding: 8px; margin: 10px 0; text-align: center; }
+  .dwc-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; margin: 8px 0; }
+  .dwc-say { font-size: 1.1rem; } .dwc-slapnow { text-align: center; font-size: 1.3rem; font-weight: 900; color: #dc2626; animation: dwPulse .5s infinite alternate; }
+  .dwc-end { background: #fff; border-radius: 14px; padding: 8px 12px; margin: 8px 0; display: flex; flex-direction: column; gap: 4px; color: #1e293b; }
+  .dwc .dw-btn { background: #7c3aed; color: #fff; border: 0; border-radius: 12px; padding: 8px 16px; font: inherit; font-weight: 900; cursor: pointer; }
+  .dwc .dw-btn.ghost { background: #e2e8f0; color: #334155; }
+  .dw-btn.slap { background: #dc2626; font-size: 1.3rem; padding: 10px 26px; } .dw-btn.ghost { background: #e2e8f0; color: #334155; }
+  .cd { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 44px; height: 62px; border-radius: 8px; background: #fff; border: 2px solid #cbd5e1; color: #0f172a; font-size: 1.05rem; line-height: 1; box-shadow: 0 2px 4px rgba(0,0,0,.12); user-select: none; vertical-align: middle; }
+  .cd b { font-size: 1rem; } .cd.red { color: #dc2626; } .cd small { font-size: .55rem; }
+  .cd.back { background: repeating-linear-gradient(45deg, #7c3aed 0 6px, #a78bfa 6px 12px); color: #fff; font-size: 1.6rem; }
+  .cd.big { width: 70px; height: 98px; font-size: 1.5rem; } .cd.sm { width: 30px; height: 42px; font-size: .75rem; } .cd.sm b { font-size: .75rem; }
+  .cd[onclick] { cursor: pointer; } .cd.ok { border-color: #22c55e; transform: translateY(-6px); } .cd.sel { border-color: #7c3aed; transform: translateY(-12px); background: #ede9fe; }
+  .cd.uno { color: #fff; font-weight: 900; border-color: #fff; font-size: 1.2rem; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  .u-r { background: #ef4444 !important; } .u-y { background: #eab308 !important; } .u-g { background: #22c55e !important; } .u-b { background: #3b82f6 !important; }
+  .cd.u-w { background: conic-gradient(#ef4444 0 25%, #eab308 0 50%, #22c55e 0 75%, #3b82f6 0) !important; }
+  .cd.jk { background: #1e1b4b; color: #fff; }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; }
+  @keyframes dwPulse { from { transform: scale(1); } to { transform: scale(1.06); } }
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
@@ -783,7 +815,8 @@
   .dw3d-chat-head { padding: 6px 10px; font-weight: 900; background: #8b5cf6; color: #fff; cursor: pointer; display: flex; justify-content: space-between; }
   .dw3d-chat.min .dw3d-chat-list, .dw3d-chat.min .dw3d-chat-quick, .dw3d-chat.min .dw3d-chat-form { display: none; }
   .dw3d-chat-list { max-height: 150px; overflow-y: auto; padding: 6px 10px; display: flex; flex-direction: column; gap: 3px; }
-  .dw3d-chat-list b { color: #6d28d9; margin-right: 6px; } .dw3d-chat-list .me b { color: #d97706; } .dw3d-chat-list .t b { color: #dc2626; } .dw3d-chat-list .empty { opacity: .6; }
+  .dw3d-chat-list b { color: #6d28d9; margin-right: 6px; } .dw3d-chat-list .me b { color: #d97706; } .dw3d-chat-list .t b { color: #dc2626; } .dw3d-chat-list .empty { opacity: .6; } .dw3d-chat-list b { cursor: pointer; } .dw3d-chat-list .wh { background: #fef3c7; border-radius: 8px; padding: 1px 4px; }
+  .dw3d-chat-form select { max-width: 86px; border: 1px solid #c4b5fd; border-radius: 10px; font: inherit; font-size: .74rem; background: #faf5ff; }
   .dw3d-chat-quick { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px 6px; }
   .dw3d-chat-quick button { border: 0; background: #ede9fe; border-radius: 999px; padding: 2px 8px; font: inherit; font-size: .74rem; cursor: pointer; }
   .dw3d-chat-form { display: flex; gap: 4px; padding: 0 8px 8px; } .dw3d-chat-form input { flex: 1; min-width: 0; border: 1px solid #c4b5fd; border-radius: 10px; padding: 5px 8px; font: inherit; }
@@ -2301,7 +2334,7 @@ async function dwFlush() {
 function renderDream() {
   const el = document.getElementById("dream"); if (!el) return;
   const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
-  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["gear", "⚔️ 裝備店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["list", "🏘️ 村莊名冊"]];
+  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["gear", "⚔️ 裝備店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["cards", "🃏 遊戲桌"], ["list", "🏘️ 村莊名冊"]];
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
@@ -2326,6 +2359,9 @@ function dwGuide() {
       <li><b>🛒 買家具：</b>用錢袋裡的金幣在家具店買，有 130 多種，有些要搭配材料或房子升級後才能買。</li>
       <li><b>🏠 布置我的家：</b>點背包裡的家具，再點地板放上去；點擺好的家具可以拿起來移動、翻面。還能取家名、換屋頂顏色、地板和壁紙。</li>
       <li><b>🏗️ 升級房子：</b>帳篷 → 小木屋 → 紅磚屋 → 洋房 → 城堡。升級要五科的材料，只練擅長的科目蓋不起來喔！升級後，3D 世界裡你的房子也會跟著變大變漂亮。</li>
+      <li><b>💬 聊天：</b>3D 世界左上角是異想世界自己的聊天室（和寶藏海分開）。點同學的名字，或在「📢 大家」那裡選同學，就能講 🤫 悄悄話。不友善的字和聯絡方式一樣會被擋下，老師看得到紀錄。</li>
+      <li><b>🃏 遊戲桌：</b>開一桌找同學玩牌：顏色數字接龍、抽鬼牌、大老二、心臟病，2～4 人，人不夠可以加 🤖 電腦玩家。</li>
+      <li><b>🌗 日夜和音樂：</b>異想世界的白天、晚霞、星空跟真實時間一樣；背景音樂由老師挑選，按右邊的 🎵 可以自己關掉聲音。</li>
       <li><b>🚪 開放參觀：</b>在「我的家」勾選「開放同學參觀」，同學就能走進你家；參觀別人家時，每天可以送每一家一張貼圖（👍🌟😍🏆🎉）。收到最多貼圖的家會上城堡的榮譽殿堂！</li>
     </ol></div>`;
 }
@@ -2338,6 +2374,7 @@ function dwBody() {
   if (dw.tab === "home") return dwHomeHtml();
   if (dw.tab === "shop") return dwShopHtml();
   if (dw.tab === "gear") return dwGearHtml();
+  if (dw.tab === "cards") return dwCardsHtml();
   if (dw.tab === "bag") return dwBagHtml();
   return "";
 }
@@ -2897,7 +2934,7 @@ function w3Create() {
   const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fdcff); scene.fog = new THREE.Fog(0xbfe6ff, 40, 95);
   const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 300);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.75));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.75); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xfff4d6, 0.75); sun.position.set(30, 60, 20); scene.add(sun);
   const world = w3World(dw.village || []);
   const M = w3Materials();
@@ -2941,27 +2978,36 @@ function w3Create() {
   const hud = document.createElement("div"); hud.className = "dw3d-hud";
   hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳（空中再按一次二段跳）　F 打殭屍　H 喝藥水　走到門口按 E 進屋　✨ 找找看天上的黃色光柱，底下就是今天的 ❓寶箱！</div>
     <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
-    ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 聊天（同學在線上就看得到）<span>▾</span></div>
+    ${session.user.role !== "parent" ? `<div class="dw3d-chat" id="dw3d-chat"><div class="dw3d-chat-head" onclick="this.parentNode.classList.toggle('min')">💬 異想世界聊天室<span>▾</span></div>
       <div class="dw3d-chat-list" id="dw3d-chat-list"></div>
       <div class="dw3d-chat-quick">${["嗨！👋", "來我家玩！🏠", "寶箱在這裡！❓", "好漂亮！😍", "一起去城堡！🏰", "加油！💪"].map(t => `<button onclick="w3Say('${t}')">${t}</button>`).join("")}</div>
-      <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><input name="t" maxlength="40" placeholder="說點什麼…（按 Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
+      <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><select id="dw3d-to" title="要對誰說" onchange="w3.chatTo=this.value"><option value="">📢 大家</option></select><input name="t" maxlength="40" placeholder="說點什麼…（Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
     <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
     <div class="dw3d-build" id="dw3d-build" hidden></div>
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
   w3ChatSync(true);
+  w3.hemi = hemi; w3.sunL = sun;
   w3OutBuild();
   w3ZombieInit();
   net.heartbeat();
 }
 async function w3Say(text) {
   const t = String(text || "").trim().slice(0, 40); if (!t) return;
-  try { await net.chat(t); } catch (e) { toast("⚠️ 訊息沒送出：" + e.message, 4500); }
+  try { await net.chat(t, { ch: "dream", to: (w3 && w3.chatTo) || "" }); } catch (e) { toast("⚠️ 訊息沒送出：" + e.message, 4500); }
+}
+function w3WhisperTo(name) { if (!w3 || name === session.user.name) return; w3.chatTo = name; const s = document.getElementById("dw3d-to"); if (s) { w3ToOptions(); s.value = name; } const i = document.querySelector("#dw3d-chat input"); if (i) i.focus(); }
+function w3ToOptions() {
+  const s = document.getElementById("dw3d-to"); if (!s) return;
+  const names = [...new Set([...(net.others || []).map(o => o.name), ...net.dream.map(m => m.name), w3.chatTo || ""])].filter(n => n && n !== session.user.name);
+  const sig = names.join("|"); if (s.dataset.sig === sig) return; s.dataset.sig = sig;
+  s.innerHTML = `<option value="">📢 大家</option>` + names.map(n => `<option value="${escapeHtml(n)}">🤫 ${escapeHtml(shortName(n))}</option>`).join("");
+  s.value = w3.chatTo || "";
 }
 // 對話泡泡：畫在角色頭上，6 秒後消失
 function w3Bubble(text) {
@@ -2980,12 +3026,15 @@ function w3ChatSync(first) {
   if (!w3) return;
   const list = document.getElementById("dw3d-chat-list");
   if (list) {
-    list.innerHTML = net.messages.slice(-30).map(m => `<div class="${m.name === session.user.name ? "me" : ""} ${m.role === "teacher" ? "t" : ""}"><b>${escapeHtml(shortName(m.name))}</b>${escapeHtml(m.text)}</div>`).join("") || `<div class="empty">還沒有人說話，打個招呼吧！</div>`;
+    const me = session.user.name;
+    list.innerHTML = net.dream.slice(-40).map(m => `<div class="${m.name === me ? "me" : ""} ${m.role === "teacher" ? "t" : ""} ${m.to ? "wh" : ""}"><b onclick='w3WhisperTo(${JSON.stringify(m.name)})' title="點名字可以講悄悄話">${escapeHtml(shortName(m.name))}${m.to ? (m.name === me ? ` 🤫→${escapeHtml(shortName(m.to))}` : " 🤫悄悄話") : ""}</b>${escapeHtml(m.text)}</div>`).join("") || `<div class="empty">還沒有人說話，打個招呼吧！點同學的名字可以講悄悄話 🤫</div>`;
     list.scrollTop = list.scrollHeight;
   }
-  if (first) return;
-  net.messages.filter(m => m.id > w3.lastMsg).forEach(m => {
+  w3ToOptions();
+  if (first) { w3.lastMsg = net.dLast(); return; }
+  net.dream.filter(m => m.id > w3.lastMsg).forEach(m => {
     w3.lastMsg = Math.max(w3.lastMsg, m.id);
+    if (m.to) { if (m.name !== session.user.name) toast(`🤫 ${shortName(m.name)} 跟你說悄悄話：${m.text}`, 4000); return; }
     const who = m.name === session.user.name ? w3.player : w3.peers[m.name] && w3.peers[m.name].g;
     if (!who) return;
     const b = w3Bubble(m.text); w3.scene.add(b); w3.bubbles.push({ b, who, until: performance.now() + 6500 });
@@ -3027,7 +3076,7 @@ function w3Ceil(p) { return W3_CORNERS.some(([dx, dz]) => w3Solid(p.x + dx, p.y 
 function w3Controls() {
   const el = w3.renderer.domElement;
   let drag = null;
-  el.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sx: e.clientX, sy: e.clientY, btn: e.button }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointerdown", e => { if (w3Mus && w3Mus.ctx.state !== "running") w3Mus.ctx.resume(); drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sx: e.clientX, sy: e.clientY, btn: e.button }; el.setPointerCapture(e.pointerId); });
   el.addEventListener("contextmenu", e => { if (w3 && w3.build && w3.build.on) e.preventDefault(); });
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
   el.addEventListener("pointerup", e => { if (drag && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) { if (w3.build && w3.build.on) w3BuildClick(e, drag.btn === 2); else w3Attack(); } drag = null; });
@@ -3138,6 +3187,7 @@ function w3Loop(now) {
     const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
   w3ZombieTick(dt, now);
   w3PeerSync(dt, now);
+  w3Env(now);
   w3.clouds.position.x = (now / 1000 * 0.6) % 60;
   w3.renderer.render(w3.scene, w3.camera);
   requestAnimationFrame(w3Loop);
@@ -3363,6 +3413,404 @@ function w3OutClick(e, rightBtn) {
   dwSave(); w3OutBuild(); w3BuildPanel(); renderDreamStat();
 }
 
+
+// ── 🌗 日夜（跟著真實時間）＋🎵 背景音樂 ──
+const W3_MUSIC = { auto: "🌗 自動（白天村莊、晚上星空）", village: "🌼 村莊小調", star: "🌙 星空搖籃曲", adventure: "⚔️ 冒險進行曲", party: "🎉 節慶派對", piano: "🎹 安靜鋼琴", off: "🔇 不放音樂" };
+function w3Clock() { const t = nowStr().slice(11, 16).split(":").map(Number); return t[0] + t[1] / 60; }
+function w3Env(now) {
+  if (now - (w3.envT || 0) < 2000) return; w3.envT = now;
+  const h = w3Clock(), alt = Math.sin((h - 6) / 12 * Math.PI), day = Math.max(0, Math.min(1, (alt + 0.12) / 0.4));
+  const dusk = Math.max(0, 1 - Math.abs(alt - 0.03) / 0.22);
+  const C = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+  const sky = C(0x0b1433, 0x9fdcff, day).lerp(new THREE.Color(0xff9a62), dusk * 0.55), fog = C(0x101a3a, 0xbfe6ff, day).lerp(new THREE.Color(0xffb37a), dusk * 0.45);
+  w3.scene.background = sky; w3.scene.fog.color = fog;
+  w3.hemi.intensity = 0.28 + 0.5 * day; w3.sunL.intensity = 0.12 + 0.65 * day; w3.sunL.color = C(0x8fa8ff, 0xfff4d6, day).lerp(new THREE.Color(0xffb37a), dusk * 0.6);
+  const ang = (h - 6) / 12 * Math.PI, P = w3.player.position;
+  w3.sunL.position.set(P.x + Math.cos(ang) * 60, Math.max(8, Math.sin(ang) * 70), P.z + 20);
+  if (!w3.stars) {
+    const g = new THREE.BufferGeometry(), pts = []; for (let i = 0; i < 500; i++) { const a = Math.random() * Math.PI * 2, b = Math.random() * 0.45 * Math.PI + 0.08; pts.push(Math.cos(a) * Math.cos(b) * 160, Math.sin(b) * 160, Math.sin(a) * Math.cos(b) * 160); }
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    w3.stars = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true, fog: false, depthWrite: false })); w3.scene.add(w3.stars);
+    const disc = (col, glow) => { const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d"); const gr = x.createRadialGradient(64, 64, 10, 64, 64, 64); gr.addColorStop(0, col); gr.addColorStop(0.45, col); gr.addColorStop(1, glow); x.fillStyle = gr; x.fillRect(0, 0, 128, 128); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, fog: false, depthWrite: false })); s.scale.set(22, 22, 1); w3.scene.add(s); return s; };
+    w3.sunS = disc("#fff7c2", "rgba(255,220,120,0)"); w3.moonS = disc("#f1f5f9", "rgba(200,210,255,0)"); w3.moonS.scale.set(14, 14, 1);
+  }
+  w3.stars.position.set(P.x, 0, P.z); w3.stars.material.opacity = Math.max(0, 1 - day * 1.6);
+  w3.sunS.position.set(P.x + Math.cos(ang) * 140, Math.sin(ang) * 110, P.z - 40); w3.sunS.visible = alt > -0.1;
+  w3.moonS.position.set(P.x - Math.cos(ang) * 140, -Math.sin(ang) * 110, P.z - 40); w3.moonS.visible = alt < 0.1;
+  const b = w3.hud.querySelector("#dw3d-env"); if (b) b.textContent = `${day > 0.6 ? "☀️" : dusk > 0.3 ? "🌇" : "🌙"} ${nowStr().slice(11, 16)}　${w3MusicMuted() ? "🔇" : "🎵"}`;
+  w3MusicTick(day > 0.35);
+}
+function w3MusicMuted() { try { return localStorage.getItem("508_MUSIC_MUTE") === "1"; } catch (e) { return false; } }
+function w3MusicMenu() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const cur = rulesNow().worldMusic || "auto", muted = w3MusicMuted();
+  p.innerHTML = `<b>🎵 音樂和時間</b><p style="margin:6px 0;font-size:.85rem">現在是 ${nowStr().slice(11, 16)}，異想世界的白天和夜晚跟真實時間一樣：早上 6 點天亮、傍晚有晚霞、晚上 6 點以後是滿天星星 🌙。</p>
+    <p style="margin:6px 0;font-size:.85rem">正在播放：<b>${W3_MUSIC[cur]}</b>${dwIsT() ? "" : "（老師選的）"}</p>
+    <button class="dw-btn" onclick="w3MusicMute(${!muted})">${muted ? "🔊 打開音樂" : "🔇 我先不要聽音樂"}</button>
+    ${dwIsT() ? `<div style="margin-top:10px"><b>老師選全班的音樂：</b><div class="dw-row" style="margin-top:6px; flex-wrap:wrap">${Object.entries(W3_MUSIC).map(([k, v]) => `<button class="dw-btn ${k === cur ? "on" : ""}" onclick="w3MusicSet('${k}')">${v}</button>`).join("")}</div><small>學生的畫面約 5 秒內換歌；每個人也可以自己關掉聲音。</small></div>` : ""}`;
+  c.hidden = false;
+}
+function w3MusicMute(m) { try { localStorage.setItem("508_MUSIC_MUTE", m ? "1" : "0"); } catch (e) {} w3.envT = 0; w3MusicMenu(); }
+async function w3MusicSet(k) {
+  try { bridgeState.rules = (await bridgeCall("setRules", { rules: { worldMusic: k } })).rules; toast("🎵 換成 " + W3_MUSIC[k]); w3.envT = 0; w3MusicMenu(); } catch (e) { toast("⚠️ " + e.message); }
+}
+// 自己寫的小樂曲：和弦進行＋旋律＋低音，用 Web Audio 即時合成（沒有用任何現成歌曲）
+const W3_TRACKS = {
+  village: { bpm: 100, root: 60, scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 4, 5, 3], wave: "triangle", dens: 0.7, vol: 1 },
+  star: { bpm: 66, root: 65, scale: [0, 2, 4, 7, 9], prog: [0, 3, 4, 0], wave: "sine", dens: 0.45, vol: 1.2 },
+  adventure: { bpm: 124, root: 62, scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 2, 6], wave: "square", dens: 0.8, vol: 0.45 },
+  party: { bpm: 132, root: 67, scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 3, 4, 4], wave: "sawtooth", dens: 0.85, vol: 0.35 },
+  piano: { bpm: 80, root: 60, scale: [0, 2, 4, 5, 7, 9, 11], prog: [0, 5, 3, 4], wave: "triangle", dens: 0.55, vol: 1, arp: true }
+};
+let w3Mus = null;
+function w3MusicTick(isDay) {
+  const want = w3MusicMuted() ? "off" : (() => { const k = rulesNow().worldMusic || "auto"; return k === "auto" ? (isDay ? "village" : "star") : k; })();
+  if (!w3Mus) { try { w3Mus = { ctx: new (window.AudioContext || window.webkitAudioContext)(), track: "", next: 0, bar: 0 }; w3Mus.gain = w3Mus.ctx.createGain(); w3Mus.gain.gain.value = 0.07; w3Mus.gain.connect(w3Mus.ctx.destination); } catch (e) { return; } }
+  if (want !== w3Mus.track) { w3Mus.track = want; w3Mus.bar = 0; w3Mus.next = 0; w3Mus.motif = null; }
+}
+function w3MusicPump() {
+  if (!w3Mus) return;
+  const on = w3 && w3.running && document.body.classList.contains("dream-open") && w3Mus.track !== "off" && w3Mus.track;
+  if (!on) { if (w3Mus.ctx.state === "running") w3Mus.ctx.suspend(); return; }
+  if (w3Mus.ctx.state !== "running") { w3Mus.ctx.resume(); return; }
+  const T = W3_TRACKS[w3Mus.track], ctx = w3Mus.ctx, beat = 60 / T.bpm / 2;
+  if (!w3Mus.motif) { const R = seeded("music-" + w3Mus.track); w3Mus.motif = [0, 1, 2, 3].map(() => Array.from({ length: 8 }, () => R() < T.dens ? Math.floor(R() * 7) : -1)); }
+  if (w3Mus.next < ctx.currentTime) w3Mus.next = ctx.currentTime + 0.1;
+  while (w3Mus.next < ctx.currentTime + 1.2) {
+    const b = w3Mus.bar++, chord = T.prog[b % 4], t0 = w3Mus.next, sc = T.scale, deg = i => { const n = sc.length; return T.root + sc[((i % n) + n) % n] + 12 * Math.floor(i / n); };
+    const note = (midi, t, dur, type, vol) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = 440 * Math.pow(2, (midi - 69) / 12); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(w3Mus.gain); o.start(t); o.stop(t + dur + 0.05); };
+    note(deg(chord) - 24, t0, beat * 7.5, "sine", 0.5 * T.vol);   // 低音
+    [0, 2, 4].forEach(k => note(deg(chord + k) - 12, t0, beat * 8, "sine", 0.12 * T.vol));   // 和弦墊底
+    const m = w3Mus.motif[b % 4], vary = Math.floor(b / 8) % 2;
+    for (let i = 0; i < 8; i++) {
+      const t = t0 + i * beat;
+      if (T.arp) note(deg(chord + [0, 2, 4, 7][i % 4]), t, beat * 2.5, T.wave, 0.22 * T.vol);
+      else if (m[i] >= 0) note(deg(chord + m[i] + (vary && i % 4 === 3 ? 1 : 0)), t, beat * 1.6, T.wave, 0.3 * T.vol);
+    }
+    w3Mus.next += beat * 8;
+  }
+}
+setInterval(() => { try { w3MusicPump(); } catch (e) {} }, 300);
+
+// ── 🃏 遊戲桌 ──
+// ── 🃏 遊戲桌（網頁示範模式和 Apps Script 共用同一份規則） ──
+// 牌：撲克 "S13"（花色 S♠ H♥ D♦ C♣＋點數 1～13）、鬼牌 "JK"；接龍 "r5" "gs" "yr" "bd" "w" "w4"
+const CARD_GAMES = {
+  uno: { name: "🌈 顏色數字接龍", min: 2, max: 4, turnMs: 30000, tip: "出同顏色或同數字的牌；⛔跳過、🔁迴轉、+2、🌈變色、+4。先出完的人贏！" },
+  maid: { name: "👻 抽鬼牌", min: 2, max: 4, turnMs: 25000, tip: "輪流抽下一家的一張牌，湊成一對就丟掉。牌先出完的人安全，最後拿著鬼牌的人輸！" },
+  big2: { name: "🂡 大老二", min: 2, max: 4, turnMs: 45000, tip: "單張、對子、三條、五張牌型（順子＜同花＜葫蘆＜鐵支＜同花順）。2 最大、♠＞♥＞♦＞♣。拿到最小牌的人先出，先出完的人贏！" },
+  heart: { name: "💓 心臟病", min: 2, max: 4, turnMs: 9000, tip: "輪流翻牌並喊 A、2、3…K。翻出的牌和喊的數字一樣就快拍！最慢拍（或沒拍）的人把整疊牌收回去。亂拍也要收牌！先把牌出完的人贏！" }
+};
+const CARD_BOTS = ["🤖小幫手一號", "🤖小幫手二號", "🤖小幫手三號"];
+function cardIsBot(n) { return CARD_BOTS.indexOf(n) >= 0; }
+function cardShuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function cardDeck52() { const d = []; "SHDC".split("").forEach(s => { for (let r = 1; r <= 13; r++) d.push(s + r); }); return d; }
+function cardRank(c) { return Number(c.slice(1)); }
+function cardSay(n) { return ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"][n]; }
+// ── 大老二的大小：3 最小、2 最大；同點數 ♣<♦<♥<♠ ──
+function b2Val(c) { const r = cardRank(c); return ((r + 10) % 13) * 4 + "CDHS".indexOf(c[0]); }
+function b2Ord(c) { return (cardRank(c) + 10) % 13; }
+function b2Combo(cards) {
+  const n = cards.length, v = cards.map(b2Val).sort((a, b) => a - b), o = cards.map(b2Ord).sort((a, b) => a - b), hi = v[v.length - 1];
+  const cnt = {}; o.forEach(x => cnt[x] = (cnt[x] || 0) + 1); const groups = Object.keys(cnt).map(k => [Number(k), cnt[k]]).sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+  if (n === 1) return { t: 1, k: 0, key: hi, name: "單張" };
+  if (n === 2 && groups.length === 1) return { t: 2, k: 0, key: hi, name: "對子" };
+  if (n === 3 && groups.length === 1) return { t: 3, k: 0, key: o[0], name: "三條" };
+  if (n !== 5) return null;
+  const flush = cards.every(c => c[0] === cards[0][0]), straight = groups.length === 5 && o[4] - o[0] === 4;
+  if (straight && flush) return { t: 5, k: 5, key: hi, name: "同花順" };
+  if (groups[0][1] === 4) return { t: 5, k: 4, key: groups[0][0], name: "鐵支" };
+  if (groups[0][1] === 3 && groups[1][1] === 2) return { t: 5, k: 3, key: groups[0][0], name: "葫蘆" };
+  if (flush) return { t: 5, k: 2, key: hi, name: "同花" };
+  if (straight) return { t: 5, k: 1, key: hi, name: "順子" };
+  return null;
+}
+function b2Beats(a, b) { if (!b) return true; if (a.t !== b.t) return false; if (a.t === 5 && a.k !== b.k) return a.k > b.k; return a.key > b.key; }
+// ── 接龍 ──
+function unoDeck() { const d = []; "rygb".split("").forEach(c => { for (let i = 0; i <= 9; i++) { d.push(c + i); if (i) d.push(c + i); } ["s", "r", "d"].forEach(x => { d.push(c + x); d.push(c + x); }); }); for (let i = 0; i < 4; i++) { d.push("w"); d.push("w4"); } return cardShuffle(d); }
+function unoOk(c, s) { if (c[0] === "w") return true; return c[0] === s.color || c.slice(1) === s.top.slice(1); }
+function unoDraw(s, who, n) { for (let i = 0; i < n; i++) { if (!s.draw.length) { s.draw = cardShuffle(s.used); s.used = []; } if (!s.draw.length) break; s.hands[who].push(s.draw.pop()); } }
+
+function cardNew(game, host, now) {
+  if (!CARD_GAMES[game]) throw new Error("沒有這種遊戲");
+  return { id: Date.now().toString(36) + Math.floor(Math.random() * 1000), game, host, seats: [host], phase: "wait", ver: 1, t: now || Date.now(), msg: "等大家坐好，桌長按「開始」", s: null };
+}
+function cardNext(tb, i, alive) { const n = tb.seats.length; for (let k = 1; k <= n; k++) { const j = ((i + k * (tb.s.dir || 1)) % n + n) % n; if (!alive || alive(tb.seats[j])) return j; } return i; }
+function cardStart(tb, now) {
+  now = now || Date.now();
+  const G = CARD_GAMES[tb.game], n = tb.seats.length;
+  if (n < G.min) throw new Error(`至少要 ${G.min} 個人（可以按「加入電腦玩家」）`);
+  const s = { hands: {}, turn: 0, dir: 1, until: now + G.turnMs, done: [], log: [] };
+  tb.seats.forEach(p => s.hands[p] = []); tb.s = s;
+  if (tb.game === "uno") {
+    s.draw = unoDeck(); s.used = []; tb.seats.forEach(p => unoDraw(s, p, 7));
+    let top; do { top = s.draw.pop(); if (/^w|s$|r$|d$/.test(top.slice(0, 1) === "w" ? "w" : top.slice(1))) { s.draw.unshift(top); top = null; } } while (!top);
+    s.top = top; s.color = top[0]; s.drew = null; s.turn = Math.floor(Math.random() * n);
+  } else if (tb.game === "maid") {
+    const d = cardShuffle(cardDeck52().concat(["JK"])); d.forEach((c, i) => s.hands[tb.seats[i % n]].push(c));
+    tb.seats.forEach(p => { s.hands[p] = maidPairs(s.hands[p]); cardShuffle(s.hands[p]); });
+    s.turn = Math.floor(Math.random() * n); s.turn = cardNext(tb, s.turn - 1 + n, x => s.hands[x].length > 0);
+  } else if (tb.game === "big2") {
+    const d = cardShuffle(cardDeck52()); for (let i = 0; i < 13 * n; i++) s.hands[tb.seats[i % n]].push(d[i]);
+    tb.seats.forEach(p => s.hands[p].sort((a, b) => b2Val(a) - b2Val(b)));
+    let lo = null, who = 0; tb.seats.forEach((p, i) => { const c = s.hands[p][0]; if (!lo || b2Val(c) < b2Val(lo)) { lo = c; who = i; } });
+    s.turn = who; s.must = lo; s.last = null; s.passes = 0;
+  } else if (tb.game === "heart") {
+    const d = cardShuffle(cardDeck52()); const per = Math.floor(52 / n); for (let i = 0; i < per * n; i++) s.hands[tb.seats[i % n]].push(d[i]);
+    s.pile = []; s.count = 1; s.slap = null; s.turn = Math.floor(Math.random() * n);
+  }
+  tb.s = s; tb.phase = "play"; tb.msg = "遊戲開始！"; tb.ver++;
+}
+function maidPairs(h) { const by = {}, out = []; h.forEach(c => { if (c === "JK") { out.push(c); return; } const r = cardRank(c); if (by[r]) { out.splice(out.indexOf(by[r]), 1); delete by[r]; } else { by[r] = c; out.push(c); } }); return out; }
+function cardEnd(tb, msg) { tb.phase = "end"; tb.msg = msg; tb.s.until = 0; tb.ver++; }
+function cardAct(tb, who, mv, now) {
+  now = now || Date.now();
+  const s = tb.s, G = CARD_GAMES[tb.game];
+  if (tb.phase !== "play") throw new Error("遊戲還沒開始");
+  const me = tb.seats.indexOf(who); if (me < 0) throw new Error("你不在這一桌");
+  const myTurn = s.turn === me, hand = s.hands[who];
+  const advance = (i) => { s.turn = i; s.until = now + G.turnMs; };
+  if (tb.game === "uno") {
+    if (!myTurn) throw new Error("還沒輪到你");
+    if (mv.a === "play") {
+      const i = hand.indexOf(mv.c); if (i < 0) throw new Error("你沒有這張牌");
+      if (s.drew && s.drew !== mv.c) throw new Error("抽牌後只能出剛抽到的那張，或按「不出」");
+      if (!unoOk(mv.c, s)) throw new Error("這張牌接不上（要同顏色或同數字）");
+      hand.splice(i, 1); s.used.push(s.top); s.top = mv.c; s.drew = null;
+      s.color = mv.c[0] === "w" ? ("rygb".indexOf(mv.color) >= 0 ? mv.color : "r") : mv.c[0];
+      tb.msg = `${who} 出了一張牌`;
+      if (!hand.length) return cardEnd(tb, `🎉 ${who} 先出完牌，贏了！`);
+      const v = mv.c.slice(1), n = tb.seats.length;
+      if (v === "r") { s.dir = -s.dir; if (n === 2) { advance(me); tb.ver++; return; } }
+      let nx = cardNext(tb, me);
+      if (v === "s") { tb.msg = `${tb.seats[nx]} 被跳過了！`; nx = cardNext(tb, nx); }
+      else if (v === "d" || mv.c === "w4") { const k = v === "d" ? 2 : 4; unoDraw(s, tb.seats[nx], k); tb.msg = `${tb.seats[nx]} 要抽 ${k} 張，還被跳過！`; nx = cardNext(tb, nx); }
+      advance(nx);
+    } else if (mv.a === "draw") {
+      if (s.drew) throw new Error("這一輪已經抽過了");
+      unoDraw(s, who, 1); const c = hand[hand.length - 1];
+      if (c && unoOk(c, s)) { s.drew = c; s.until = now + G.turnMs; tb.msg = `${who} 抽了一張牌`; }
+      else { s.drew = null; tb.msg = `${who} 抽了一張牌，接不上，換下一家`; advance(cardNext(tb, me)); }
+    } else if (mv.a === "pass") {
+      if (!s.drew) throw new Error("要先抽一張牌");
+      s.drew = null; advance(cardNext(tb, me)); tb.msg = `${who} 不出`;
+    } else throw new Error("看不懂的動作");
+  } else if (tb.game === "maid") {
+    if (!myTurn) throw new Error("還沒輪到你");
+    const alive = x => s.hands[x].length > 0, ti = cardNext(tb, me, alive), tn = tb.seats[ti], th = s.hands[tn];
+    const k = Math.max(0, Math.min(th.length - 1, Math.floor(Number(mv.i) || 0))), c = th.splice(k, 1)[0];
+    const before = hand.length; s.hands[who] = maidPairs(hand.concat([c])); cardShuffle(s.hands[who]);
+    tb.msg = s.hands[who].length < before + 1 ? `${who} 抽到一張，湊成一對丟掉了！` : `${who} 抽了 ${tn} 一張牌${c === "JK" ? "……好像表情怪怪的 👻" : ""}`;
+    s.lastPick = { from: tn, to: who, pair: s.hands[who].length < before + 1 };
+    tb.seats.forEach(p => { if (!s.hands[p].length && s.done.indexOf(p) < 0) s.done.push(p); });
+    const left = tb.seats.filter(alive);
+    if (left.length <= 1) return cardEnd(tb, `👻 ${left[0] || "?"} 最後拿著鬼牌！${s.done[0]} 最先出完，大家好棒！`);
+    advance(alive(who) ? cardNext(tb, me, alive) : cardNext(tb, me, alive));
+  } else if (tb.game === "big2") {
+    if (!myTurn) throw new Error("還沒輪到你");
+    if (mv.a === "pass") {
+      if (!s.last) throw new Error("你是這一輪第一個出牌的，不能 pass");
+      s.passes++; tb.msg = `${who} pass`;
+      if (s.passes >= tb.seats.length - 1) { const li = tb.seats.indexOf(s.last.by); s.last = null; s.passes = 0; advance(li); tb.msg = `大家都 pass，${s.last ? "" : tb.seats[li]} 可以自由出牌`; }
+      else advance(cardNext(tb, me));
+    } else if (mv.a === "play") {
+      const cs = (mv.cards || []).map(String); if (!cs.length || cs.some(c => hand.indexOf(c) < 0) || new Set(cs).size !== cs.length) throw new Error("請選你手上的牌");
+      const cb = b2Combo(cs); if (!cb) throw new Error("這不是合法的牌型");
+      if (s.must && cs.indexOf(s.must) < 0) throw new Error("第一手要包含最小的那張牌");
+      if (s.last && !b2Beats(cb, s.last.combo)) throw new Error(s.last.combo.t !== cb.t ? `要出一樣張數的牌（${s.last.combo.name}）` : "要比上一手大才能出");
+      cs.forEach(c => hand.splice(hand.indexOf(c), 1)); s.must = null;
+      s.last = { by: who, cards: cs.sort((a, b) => b2Val(a) - b2Val(b)), combo: cb }; s.passes = 0; tb.msg = `${who} 出了${cb.name}`;
+      if (!hand.length) return cardEnd(tb, `🎉 ${who} 先出完牌，贏了！`);
+      advance(cardNext(tb, me));
+    } else throw new Error("看不懂的動作");
+  } else if (tb.game === "heart") {
+    if (mv.a === "flip") {
+      if (!myTurn) throw new Error("還沒輪到你翻牌");
+      if (s.slap) throw new Error("先等大家拍完");
+      const c = hand.shift(); s.pile.push(c); const said = s.count; s.count = said % 13 + 1;
+      s.lastFlip = { by: who, c, said };
+      tb.msg = `${who} 喊「${cardSay(said)}」翻出 ${c}`;
+      if (cardRank(c) === said) { s.slap = { until: now + 3500, at: now, who: {} }; tb.msg += "　💥 一樣！快拍！"; }
+      else if (!hand.length) return cardEnd(tb, `🎉 ${who} 的牌出完了，贏了！`);
+      advance(cardNext(tb, me, x => s.hands[x].length > 0));
+      if (s.slap) s.until = s.slap.until + 500;
+    } else if (mv.a === "slap") {
+      if (!s.slap) {   // 亂拍：收整疊
+        if (!s.pile.length) throw new Error("桌上沒有牌");
+        s.hands[who] = hand.concat(cardShuffle(s.pile)); s.pile = []; tb.msg = `😵 ${who} 亂拍！把整疊牌收回去了`;
+      } else if (!s.slap.who[who]) s.slap.who[who] = mv.at || now;
+    } else throw new Error("看不懂的動作");
+  }
+  tb.ver++; tb.t = now;
+}
+// 時間到：心臟病結算拍桌、太久沒動作自動幫忙出、電腦玩家出牌
+function cardTick(tb, now) {
+  now = now || Date.now();
+  if (tb.phase !== "play") return false;
+  const s = tb.s, cur = tb.seats[s.turn]; let changed = false;
+  if (tb.game === "heart" && s.slap) {
+    tb.seats.forEach((p, i) => { if (cardIsBot(p) && !s.slap.who[p] && now > s.slap.at + 900 + (i * 523) % 1500) s.slap.who[p] = now; });
+    if (now >= s.slap.until) {
+      const no = tb.seats.filter(p => !s.slap.who[p]);
+      const loser = no.length ? no[Math.floor(Math.random() * no.length)] : tb.seats.slice().sort((a, b) => s.slap.who[b] - s.slap.who[a])[0];
+      s.hands[loser] = s.hands[loser].concat(cardShuffle(s.pile)); s.pile = []; s.slap = null;
+      tb.msg = `🖐️ ${loser} ${no.length ? "沒拍到" : "最慢拍"}，把整疊牌收回去了！`;
+      const out = tb.seats.find(p => !s.hands[p].length);
+      if (out) { cardEnd(tb, `🎉 ${out} 的牌出完了，贏了！`); return true; }
+      s.until = now + CARD_GAMES.heart.turnMs; tb.ver++; return true;
+    }
+    return false;
+  }
+  const botWait = cardIsBot(cur) && now > s.until - CARD_GAMES[tb.game].turnMs + 1500;
+  if (now < s.until && !botWait) return false;
+  try {
+    if (tb.game === "uno") {
+      const h = s.hands[cur], ok = s.drew ? [s.drew] : h.filter(c => unoOk(c, s));
+      if (ok.length) { const c = ok.sort((a, b) => (a[0] === "w") - (b[0] === "w"))[0]; const cnt = {}; h.forEach(x => { if (x[0] !== "w") cnt[x[0]] = (cnt[x[0]] || 0) + 1; }); const best = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0] || "r"; cardAct(tb, cur, { a: "play", c, color: best }, now); }
+      else if (!s.drew) cardAct(tb, cur, { a: "draw" }, now);
+      else cardAct(tb, cur, { a: "pass" }, now);
+    } else if (tb.game === "maid") cardAct(tb, cur, { a: "pick", i: Math.floor(Math.random() * 20) }, now);
+    else if (tb.game === "big2") {
+      const h = s.hands[cur].slice().sort((a, b) => b2Val(a) - b2Val(b)); let play = null;
+      if (!s.last) play = s.must ? [s.must] : [h[0]];
+      else if (s.last.combo.t === 1) { const c = h.find(x => b2Val(x) > s.last.combo.key); if (c) play = [c]; }
+      else if (s.last.combo.t === 2) { for (let i = 0; i < h.length - 1 && !play; i++) for (let j = i + 1; j < h.length; j++) if (cardRank(h[i]) === cardRank(h[j]) && b2Beats(b2Combo([h[i], h[j]]), s.last.combo)) { play = [h[i], h[j]]; break; } }
+      if (play) cardAct(tb, cur, { a: "play", cards: play }, now); else cardAct(tb, cur, { a: "pass" }, now);
+    } else if (tb.game === "heart") cardAct(tb, cur, { a: "flip" }, now);
+    changed = true;
+  } catch (e) { s.turn = cardNext(tb, s.turn); s.until = now + CARD_GAMES[tb.game].turnMs; tb.ver++; changed = true; }
+  return changed;
+}
+function cardView(tb, who, now) {
+  now = now || Date.now();
+  const s = tb.s, v = { id: tb.id, game: tb.game, host: tb.host, seats: tb.seats, phase: tb.phase, ver: tb.ver, msg: tb.msg };
+  if (!s) return v;
+  v.turn = tb.seats[s.turn]; v.left = Math.max(0, Math.round((s.until - now) / 1000));
+  v.counts = {}; tb.seats.forEach(p => v.counts[p] = s.hands[p].length);
+  v.hand = s.hands[who] ? s.hands[who].slice() : null;
+  if (tb.phase === "end") v.hands = s.hands;
+  if (tb.game === "uno") { v.top = s.top; v.color = s.color; v.drew = s.turn === tb.seats.indexOf(who) ? s.drew : null; v.dir = s.dir; v.deck = s.draw.length; }
+  if (tb.game === "maid") { v.done = s.done; v.lastPick = s.lastPick || null; if (tb.seats.indexOf(who) >= 0) { const alive = x => s.hands[x].length > 0; v.target = s.turn === tb.seats.indexOf(who) ? tb.seats[cardNext(tb, s.turn, alive)] : null; } }
+  if (tb.game === "big2") { v.last = s.last ? { by: s.last.by, cards: s.last.cards, name: s.last.combo.name } : null; v.must = s.must; }
+  if (tb.game === "heart") { v.pile = s.pile.length; v.top = s.pile[s.pile.length - 1] || null; v.count = s.count; v.lastFlip = s.lastFlip || null; v.slap = s.slap ? { left: Math.max(0, s.slap.until - now), who: Object.keys(s.slap.who) } : null; }
+  return v;
+}
+// 一張張桌子存在一起：建立、加入、離開、加電腦、開始、出牌、再來一局
+function cardOp(tables, who, req, now) {
+  now = now || Date.now();
+  tables = (tables || []).filter(t => now - t.t < 40 * 60000 && t.seats.some(p => !cardIsBot(p)));
+  tables.forEach(t => { if (cardTick(t, now)) t.t = now; });
+  const find = () => { const t = tables.find(x => x.id === req.id); if (!t) throw new Error("這張桌子已經不在了"); return t; };
+  const mine = tables.find(t => t.seats.indexOf(who) >= 0);
+  if (req.op === "create") {
+    if (mine) throw new Error("你已經坐在一張桌子了，先離開再開新桌");
+    if (tables.length >= 12) throw new Error("遊戲桌滿了，等一下再開");
+    tables.push(cardNew(req.game, who, now));
+  } else if (req.op === "join") {
+    const t = find(); if (mine && mine !== t) throw new Error("你已經坐在別桌了");
+    if (t.seats.indexOf(who) < 0) { if (t.phase === "play") throw new Error("這桌已經開始了，可以先觀看"); if (t.seats.length >= CARD_GAMES[t.game].max) throw new Error("這桌坐滿了"); t.seats.push(who); t.ver++; t.t = now; }
+  } else if (req.op === "leave") {
+    const t = find(), i = t.seats.indexOf(who);
+    if (i >= 0) {
+      if (t.phase === "play") { cardEnd(t, `${who} 離開了，這局結束`); }
+      t.seats.splice(i, 1); if (t.host === who) t.host = t.seats.find(p => !cardIsBot(p)) || ""; if (t.phase !== "wait") { t.phase = "wait"; t.s = null; t.msg = "有人離開了，等大家坐好再開始"; } t.ver++; t.t = now;
+    }
+  } else if (req.op === "bot") {
+    const t = find(); if (t.host !== who) throw new Error("只有桌長可以加電腦玩家"); if (t.phase === "play") throw new Error("遊戲進行中");
+    if (t.seats.length >= CARD_GAMES[t.game].max) throw new Error("這桌坐滿了");
+    const b = CARD_BOTS.find(x => t.seats.indexOf(x) < 0); t.seats.push(b); t.ver++; t.t = now;
+  } else if (req.op === "kick") {
+    const t = find(); if (t.host !== who || t.phase === "play") throw new Error("只有桌長在開始前可以請電腦離開");
+    const i = t.seats.indexOf(req.name); if (i > 0 && cardIsBot(req.name)) { t.seats.splice(i, 1); t.ver++; }
+  } else if (req.op === "start") {
+    const t = find(); if (t.host !== who) throw new Error("只有桌長可以開始"); if (t.phase === "play") throw new Error("已經開始了");
+    cardStart(t, now); t.t = now;
+  } else if (req.op === "act") {
+    const t = find(); cardAct(t, who, req.mv || {}, now); t.t = now;
+  }
+  const me = tables.find(t => t.seats.indexOf(who) >= 0);
+  const watch = req.watch ? tables.find(t => t.id === req.watch) : null;
+  return { tables, out: { list: tables.map(t => ({ id: t.id, game: t.game, host: t.host, seats: t.seats, phase: t.phase })), table: me ? cardView(me, who, now) : watch ? cardView(watch, "", now) : null } };
+}
+
+const dwc = { list: [], table: null, watch: "", sel: [], timer: null, ver: -1, wild: null };
+async function cardsCall(req) {
+  try {
+    const r = await (DEMO ? demo.cards(req) : api("cards", req));
+    dwc.list = r.list || []; dwc.table = r.table || null;
+    if (dwc.table && !dwc.table.hand) dwc.sel = [];
+    const sig = JSON.stringify([dwc.list, dwc.table && dwc.table.ver, dwc.table && dwc.table.left, dwc.table && dwc.table.slap]);
+    if (sig !== dwc.sig) { dwc.sig = sig; dwCardsPaint(); }
+  } catch (e) { toast("⚠️ " + e.message, 3500); }
+}
+function cardsAct(mv) { return cardsCall({ op: "act", id: dwc.table.id, mv }); }
+function dwCardsHtml() {
+  clearInterval(dwc.timer); dwc.sig = "";
+  dwc.timer = setInterval(() => { if (dw.tab !== "cards" || !document.body.classList.contains("dream-open")) { clearInterval(dwc.timer); return; } if (!document.hidden) cardsCall({ op: "view", watch: dwc.watch }); }, DEMO ? 1000 : 1800);
+  setTimeout(() => cardsCall({ op: "view", watch: dwc.watch }), 0);
+  return `<div class="dwc" id="dwc"><p class="dw-note">載入遊戲桌中…</p></div>`;
+}
+function cardFace(c, opt = {}) {
+  if (c === "back") return `<span class="cd back ${opt.cls || ""}" ${opt.click ? `onclick="${opt.click}"` : ""}>🂠</span>`;
+  if (/^[rygbw]/.test(c) && !/^[SHDC]\d/.test(c)) {   // 接龍
+    const col = c[0], v = c.slice(1), lab = c === "w" ? "🌈" : c === "w4" ? "+4" : v === "s" ? "⛔" : v === "r" ? "🔁" : v === "d" ? "+2" : v;
+    return `<span class="cd uno u-${col} ${opt.cls || ""}" ${opt.click ? `onclick="${opt.click}"` : ""}>${lab}</span>`;
+  }
+  if (c === "JK") return `<span class="cd jk ${opt.cls || ""}" ${opt.click ? `onclick="${opt.click}"` : ""}>👻<small>鬼牌</small></span>`;
+  const suit = { S: "♠", H: "♥", D: "♦", C: "♣" }[c[0]], red = c[0] === "H" || c[0] === "D";
+  return `<span class="cd ${red ? "red" : ""} ${opt.cls || ""}" ${opt.click ? `onclick="${opt.click}"` : ""}><b>${cardSay(cardRank(c))}</b>${suit}</span>`;
+}
+function dwCardsPaint() {
+  const el = document.getElementById("dwc"); if (!el) return;
+  const me = session.user.name, T = dwc.table;
+  if (!T) {
+    el.innerHTML = `<p class="dw-note">🃏 找同學一起玩牌！開一張桌子，等同學加入（不夠人可以加 🤖 電腦玩家）。每桌 2～4 人。</p>
+      <div class="dwc-games">${session.user.role === "parent" ? "" : Object.entries(CARD_GAMES).map(([k, g]) => `<div class="dwc-game"><b>${g.name}</b><small>${g.tip}</small><button class="dw-btn" onclick="cardsCall({op:'create', game:'${k}'})">開一桌</button></div>`).join("")}</div>
+      <h3>🪑 現在的桌子</h3>
+      ${dwc.list.length ? dwc.list.map(t => `<div class="dwc-row"><b>${CARD_GAMES[t.game].name}</b><span>${t.seats.map(n => escapeHtml(shortName(n))).join("、")}（${t.seats.length}/${CARD_GAMES[t.game].max}）</span><i>${t.phase === "play" ? "進行中" : t.phase === "end" ? "剛結束" : "等人中"}</i>
+        ${t.phase !== "play" && t.seats.length < CARD_GAMES[t.game].max && session.user.role !== "parent" ? `<button class="dw-btn" onclick="cardsCall({op:'join', id:'${t.id}'})">加入</button>` : ""}<button class="dw-btn ghost" onclick="dwc.watch='${t.id}'; cardsCall({op:'view', watch:'${t.id}'})">👀 看</button></div>`).join("") : `<p class="dw-note">還沒有人開桌，你來開第一桌吧！</p>`}`;
+    return;
+  }
+  const G = CARD_GAMES[T.game], seated = T.seats.indexOf(me) >= 0, myTurn = T.turn === me && T.phase === "play", host = T.host === me;
+  const seats = T.seats.map(n => `<div class="dwc-seat ${T.turn === n && T.phase === "play" ? "turn" : ""} ${n === me ? "me" : ""}"><b>${cardIsBot(n) ? "" : "🧑‍✈️"}${escapeHtml(shortName(n))}</b><small>${T.counts ? `🂠×${T.counts[n]}` : n === T.host ? "👑 桌長" : "準備好了"}</small>${T.phase === "wait" && host && cardIsBot(n) ? `<button onclick="cardsCall({op:'kick', id:'${T.id}', name:'${n}'})">✕</button>` : ""}</div>`).join("");
+  let mid = "", mine = "", btns = "";
+  if (T.phase === "wait" || (T.phase === "end" && !T.hand)) {
+    mid = `<p class="dw-note">${escapeHtml(T.msg)}</p><p class="dw-note">${G.tip}</p>`;
+  }
+  if (T.phase !== "wait" && T.hand !== undefined) {
+    const hand = T.hand || [];
+    if (T.game === "uno") {
+      mid = `<div class="dwc-mid"><div>${cardFace(T.top, { cls: "big" })}<small>現在的顏色：<i class="dot u-${T.color}"></i></small></div><div>${cardFace("back", { cls: "big" })}<small>牌堆 ${T.deck} 張</small></div></div>`;
+      if (seated) mine = hand.map(c => cardFace(c, { cls: myTurn && unoOk(c, { top: T.top, color: T.color }) && (!T.drew || T.drew === c) ? "ok" : "", click: myTurn ? `dwcUno('${c}')` : "" })).join("");
+      if (myTurn) btns = T.drew ? `<button class="dw-btn" onclick="cardsAct({a:'pass'})">不出，換下一家</button>` : `<button class="dw-btn" onclick="cardsAct({a:'draw'})">抽一張牌</button>`;
+      if (dwc.wild) btns = `<b>選顏色：</b>${"rygb".split("").map(k => `<button class="dw-btn u-${k}" onclick="cardsAct({a:'play', c:'${dwc.wild}', color:'${k}'}); dwc.wild=null">${{ r: "紅", y: "黃", g: "綠", b: "藍" }[k]}</button>`).join("")}`;
+    } else if (T.game === "maid") {
+      const tg = T.target;
+      mid = myTurn && tg ? `<p class="dw-note">👉 從 <b>${escapeHtml(shortName(tg))}</b> 的牌裡抽一張：</p><div class="dwc-hand">${Array.from({ length: T.counts[tg] }, (_, i) => cardFace("back", { cls: "ok", click: `cardsAct({a:'pick', i:${i}})` })).join("")}</div>` : `<p class="dw-note">${T.done && T.done.length ? "已經出完：" + T.done.map(shortName).join("、") : ""}</p>`;
+      if (seated) mine = hand.map(c => cardFace(c)).join("");
+    } else if (T.game === "big2") {
+      mid = `<div class="dwc-mid">${T.last ? `<div><div class="dwc-hand">${T.last.cards.map(c => cardFace(c)).join("")}</div><small>${escapeHtml(shortName(T.last.by))} 出的${T.last.name}</small></div>` : `<p class="dw-note">${T.turn ? escapeHtml(shortName(T.turn)) + " 可以自由出牌" : ""}${T.must ? `（第一手要有 ${cardFace(T.must)}）` : ""}</p>`}</div>`;
+      if (seated) mine = hand.map(c => cardFace(c, { cls: dwc.sel.includes(c) ? "sel" : "", click: `dwcSel('${c}')` })).join("");
+      if (myTurn) btns = `<button class="dw-btn" onclick="cardsAct({a:'play', cards:dwc.sel}).then(()=>{dwc.sel=[]; dwCardsPaint();})">出牌（${dwc.sel.length} 張）</button>${T.last ? `<button class="dw-btn ghost" onclick="cardsAct({a:'pass'})">Pass</button>` : ""}<button class="dw-btn ghost" onclick="dwc.sel=[]; dwCardsPaint()">清除</button>`;
+    } else if (T.game === "heart") {
+      const lf = T.lastFlip;
+      mid = `<div class="dwc-mid"><div>${T.top ? cardFace(T.top, { cls: "big" }) : cardFace("back", { cls: "big" })}<small>桌上 ${T.pile} 張</small></div><div class="dwc-say">${lf ? `${escapeHtml(shortName(lf.by))} 喊<b>「${cardSay(lf.said)}」</b>` : ""}<br>下一個喊：<b>${cardSay(T.count)}</b></div></div>
+        ${T.slap ? `<p class="dwc-slapnow">💥 一樣！快拍！（已經拍：${T.slap.who.map(shortName).join("、") || "還沒有人"}）</p>` : ""}`;
+      if (seated) mine = `<span class="dw-note">我手上還有 🂠×${hand.length}</span>`;
+      if (seated && T.phase === "play") btns = `${myTurn && !T.slap ? `<button class="dw-btn" onclick="cardsAct({a:'flip'})">🂠 翻牌</button>` : ""}<button class="dw-btn slap" onclick="cardsAct({a:'slap'})">🖐️ 拍！</button>`;
+    }
+  }
+  const endHands = T.phase === "end" && T.hands ? `<div class="dwc-end">${T.seats.map(n => `<div><b>${escapeHtml(shortName(n))}</b>：${(T.hands[n] || []).length ? (T.game === "heart" ? `🂠×${T.hands[n].length}` : T.hands[n].slice(0, 13).map(c => cardFace(c, { cls: "sm" })).join("")) : "✨ 出完了"}</div>`).join("")}</div>` : "";
+  el.innerHTML = `<div class="dwc-head"><b>${G.name}</b><span>${T.phase === "play" ? (T.turn ? `輪到 <b>${escapeHtml(shortName(T.turn))}</b>${T.turn === me ? "（你）" : ""}・剩 ${T.left} 秒` : "") : T.phase === "end" ? "🏁 這局結束" : "🪑 等人中"}</span>
+      ${seated ? `<button class="dw-btn ghost" onclick="cardsCall({op:'leave', id:'${T.id}'})">離開桌子</button>` : `<button class="dw-btn ghost" onclick="dwc.watch=''; cardsCall({op:'view'})">← 回大廳</button>`}</div>
+    <div class="dwc-msg">${escapeHtml(T.msg || "")}</div>
+    <div class="dwc-seats">${seats}</div>
+    ${mid}${endHands}
+    ${mine ? `<div class="dwc-mine"><small>我的牌</small><div class="dwc-hand">${mine}</div></div>` : ""}
+    <div class="dwc-btns">${btns}${host && T.phase !== "play" ? `${T.seats.length < G.max ? `<button class="dw-btn ghost" onclick="cardsCall({op:'bot', id:'${T.id}'})">🤖 加入電腦玩家</button>` : ""}<button class="dw-btn" onclick="cardsCall({op:'start', id:'${T.id}'})">${T.phase === "end" ? "🔄 再來一局" : "▶️ 開始"}</button>` : ""}</div>`;
+}
+function dwcUno(c) { if (c[0] === "w" && !/^[SHDC]/.test(c)) { dwc.wild = c; dwCardsPaint(); return; } cardsAct({ a: "play", c }); }
+function dwcSel(c) { const i = dwc.sel.indexOf(c); if (i >= 0) dwc.sel.splice(i, 1); else dwc.sel.push(c); dwCardsPaint(); }
 // ── 🧟 殭屍＋⚔️ 裝備 ──
 // 裝備用金幣買（記在金幣紀錄「裝備:代號」）；藥水喝掉的數量記在 spent["eq:potion"]
 const DW_GEAR = [
@@ -6682,10 +7130,10 @@ async function clearPhoto(name) {
 const CHAT_QUICK = ["👋 嗨！", "要不要來比賽？⚔️", "我拿三顆星了！⭐", "錯題島見！🌋", "加油！💪", "好難喔 😵"];
 
 const net = {
-  others: [], messages: [], battle: null, timer: null, sig: "",
+  others: [], messages: [], dream: [], battle: null, timer: null, sig: "",
   start() {
     this.stop();
-    this.others = []; this.messages = []; this.battle = null; this.sig = "";
+    this.others = []; this.messages = []; this.dream = []; this.battle = null; this.sig = "";
     this.heartbeat();
     this.timer = setInterval(() => { if (!document.hidden) this.heartbeat(); }, 4000);
   },
@@ -6695,7 +7143,7 @@ const net = {
     if (!session) return;
     try {
       const since = this.messages.length ? this.messages[this.messages.length - 1].id : 0;
-      this.apply(await this.call("presence", { place: myPlace(), since, emoji: myEmoji(), color: myColor(), pv: myPv(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0, battleOn: battleOn() }));
+      this.apply(await this.call("presence", { place: myPlace(), since, dsince: this.dLast(), emoji: myEmoji(), color: myColor(), pv: myPv(), lv: session.user.role === "student" ? getLevelInfo(stats.score).lv : 0, battleOn: battleOn() }));
     } catch (e) { /* 網路斷掉時下次再試 */ }
   },
   apply(r) {
@@ -6704,6 +7152,7 @@ const net = {
     const known = new Set(this.messages.map(m => m.id));
     (r.messages || []).forEach(m => { if (!known.has(m.id)) this.messages.push(m); });
     this.messages = this.messages.slice(-40);
+    if (Array.isArray(r.dream)) { const dk = new Set(this.dream.map(m => m.id)); r.dream.forEach(m => { if (!dk.has(m.id)) this.dream.push(m); }); this.dream = this.dream.slice(-60); }
     this.battle = r.battle || null;
     applyBridgePulse(r.bridge || (DEMO ? demoBridge("pulse") : null));
     const sig = this.others.map(o => o.name + o.place + o.emoji + (o.pv || "")).join("|");
@@ -6713,7 +7162,8 @@ const net = {
     if (typeof w3ChatSync === "function") w3ChatSync();
     renderBattle();
   },
-  async chat(text) { this.apply(await this.call("chat", { text, place: myPlace(), since: this.lastId() })); },
+  async chat(text, opt = {}) { this.apply(await this.call("chat", { text, place: myPlace(), since: this.lastId(), dsince: this.dLast(), ch: opt.ch || "", to: opt.to || "" })); },
+  dLast() { return this.dream.length ? this.dream[this.dream.length - 1].id : 0; },
   lastId() { return this.messages.length ? this.messages[this.messages.length - 1].id : 0; },
   async battleOp(op, extra = {}) { this.apply(await this.call("battle", Object.assign({ op, place: myPlace(), since: this.lastId() }, extra))); },
   async saveProfile(p) { return this.call("saveProfile", p); },
@@ -6728,7 +7178,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true, worldMusic: "auto" };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -7312,6 +7762,7 @@ async function renderBridge() {
         <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions ?? 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc ?? 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div>
           <small>🎈 <b>試玩模式</b>：局數和正確率都填 <b>0</b>，就不檢查任何條件（錯題也不用先訂正）、也不限每天時間。<button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.getElementById('rule-world').checked=true; document.getElementById('rule-world-n').value=0; document.getElementById('rule-world-acc').value=0; toast('🎈 已填好試玩設定，記得按下面的「💾 儲存航海規則」')">一鍵填好試玩設定</button></small></span></label>
+        <div class="bridge-switch"><span><b>🎵 異想世界的背景音樂</b><br><select id="rule-music" style="margin-top:6px">${Object.entries(W3_MUSIC).map(([k, v]) => `<option value="${k}" ${(r.worldMusic || "auto") === k ? "selected" : ""}>${v}</option>`).join("")}</select><br><small>音樂是即時合成的原創小曲。每個學生可以自己按 🎵 關掉聲音。異想世界的白天、晚霞、夜晚會跟著真實時間變化。</small></span></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-zombie" ${r.zombieOn !== false ? "checked" : ""}> <span><b>🧟 異想世界的殭屍</b><br><small>打開：荒野會有殭屍追人，被碰到會少愛心，愛心用完掉 1～2 個材料。關掉：殭屍全部消失，可以安心逛。在 3D 世界裡也可以直接按右邊的「🧟 殭屍」按鈕切換。</small></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
@@ -7378,7 +7829,7 @@ async function saveRules() {
     sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
     fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)),
     worldOn: document.getElementById("rule-world").checked, worldSessions: Math.max(0, Math.min(50, Number(document.getElementById("rule-world-n").value) || 0)),
-    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked };
+    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked, worldMusic: document.getElementById("rule-music").value };
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
   if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
@@ -8802,7 +9253,7 @@ const demo = (() => {
     { name: "508示範同學三", seat: "03", emoji: "🦊", color: "#bbf7d0", battleOn: false }
   ];
   const LINES = ["好喔！", "我剛剛在錯題島複習完 💪", "要不要來比一場？", "這單元好難 😵", "我搭飛機過來的 ✈️", "加油加油！"];
-  const st = { places: {}, msgs: [], battle: null, nextBotChallenge: Date.now() + 25000 };
+  const st = { places: {}, msgs: [], dmsgs: [], battle: null, nextBotChallenge: Date.now() + 25000 };
   const bots = () => BOTS.filter(b => b.name !== session.user.name);
   const allPlaces = () => {
     const list = ["W:BOSS", ...WORLD.filter(s => s.units.length).map(s => "W:" + s.key)];
@@ -8810,7 +9261,7 @@ const demo = (() => {
     return list;
   };
   const botSay = (bot, text) => st.msgs.push({ id: Date.now() + Math.random(), name: bot.name, emoji: bot.emoji, color: bot.color, role: "student", text, t: nowStr() });
-  const snapshot = (since) => {
+  const snapshot = (since, dsince) => {
     const b = st.battle;
     let battle = null;
     if (b) {
@@ -8822,7 +9273,8 @@ const demo = (() => {
     }
     return {
       others: bots().map(bot => Object.assign({ battleOn: true }, bot, { place: st.places[bot.name] })),
-      messages: st.msgs.filter(m => m.id > since), battle
+      messages: st.msgs.filter(m => m.id > since), battle,
+      dream: dsince === undefined ? undefined : st.dmsgs.filter(m => m.id > dsince && (!m.to || m.to === session.user.name || m.name === session.user.name))
     };
   };
   function resolve(b) {
@@ -8852,7 +9304,8 @@ const demo = (() => {
     setTimeout(() => { if (st.battle === b && b.status === "active") { b.ans[bot.name] = Math.random() < 0.65 ? b.q.ans : (b.q.ans + 1) % b.q.opts.length; if (b.ans[session.user.name] != null) resolve(b); } }, 2500 + Math.random() * 4000);
   }
   return {
-    presence({ place, since }) {
+    cards(req) { st.cards = cardOp(st.cards || [], session.user.name, req, Date.now()); const out = st.cards.out; st.cards = st.cards.tables; return out; },
+    presence({ place, since, dsince }) {
       bots().forEach(bot => {
         if (!st.places[bot.name] || Math.random() < 0.2) st.places[bot.name] = Math.random() < 0.45 ? place : pickRandom(allPlaces());
       });
@@ -8863,14 +9316,20 @@ const demo = (() => {
           st.nextBotChallenge = Date.now() + 90000;
         }
       }
-      return snapshot(since);
+      return snapshot(since, dsince);
     },
-    chat({ text, since }) {
+    chat({ text, since, dsince, ch, to }) {
       demoChatCheck(text);
+      if (ch === "dream") {
+        st.dmsgs.push({ id: Date.now(), name: session.user.name, emoji: myEmoji(), color: myColor(), role: session.user.role, text, to: to || "", t: nowStr() });
+        const bot = to ? bots().find(b => b.name === to) : pickRandom(bots());
+        if (bot) setTimeout(() => st.dmsgs.push({ id: Date.now() + Math.random(), name: bot.name, emoji: bot.emoji, color: bot.color, role: "student", text: to ? "收到你的悄悄話了！🤫" : pickRandom(["來我家玩！🏠", "我在城堡這邊 🏰", "要不要一起打牌？🃏", "好漂亮！😍"]), to: to ? session.user.name : "", t: nowStr() }), 1800);
+        return snapshot(since, dsince);
+      }
       st.msgs.push({ id: Date.now(), name: session.user.name, emoji: myEmoji(), color: myColor(), role: session.user.role, text, t: nowStr() });
       const bot = pickRandom(bots());
       if (bot) setTimeout(() => botSay(bot, text.includes("@" + shortName(bot.name)) ? "嗨嗨！👋" : pickRandom(LINES)), 1800);
-      return snapshot(since);
+      return snapshot(since, dsince);
     },
     battle({ op, to, id, accept, choice, since, subject }) {
       const me = session.user.name;
