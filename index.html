@@ -745,6 +745,23 @@
   .dw-gate { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; text-align: left; }
   .dw-gate div { color: #1e293b; display: flex; gap: 10px; align-items: center; background: #fef2f2; border-radius: 12px; padding: 8px 12px; flex-wrap: wrap; }
   .dw-gate div.ok { background: #f0fdf4; } .dw-gate span { font-size: .84rem; opacity: .8; margin-left: auto; }
+  .dw-body.world { padding: 0; max-width: none; }
+  .dw3d { position: relative; width: 100%; height: calc(100vh - 64px); min-height: 420px; overflow: hidden; touch-action: none; background: #9fdcff; }
+  .dw3d canvas { display: block; width: 100%; height: 100%; }
+  .dw3d-msg { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 1.2rem; font-weight: 900; color: #4c1d95; }
+  .dw3d-hud { position: absolute; inset: 0; pointer-events: none; }
+  .dw3d-hud > * { pointer-events: auto; }
+  .dw3d-help { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(15,23,42,.6); color: #fff; padding: 5px 14px; border-radius: 999px; font-size: .8rem; font-weight: 700; white-space: nowrap; max-width: 96%; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  .dw3d-prompt { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .dw3d-prompt button { border: 3px solid #fff; background: linear-gradient(135deg, #f59e0b, #ec4899); color: #fff; font: inherit; font-weight: 900; font-size: 1.05rem; padding: 10px 22px; border-radius: 999px; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.3); animation: dwFloat 1.6s ease-in-out infinite; }
+  .dw3d-prompt small { color: #fff; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .dw3d-joy { position: absolute; left: 22px; bottom: 22px; width: 110px; height: 110px; border-radius: 50%; background: rgba(255,255,255,.25); border: 2px solid rgba(255,255,255,.6); touch-action: none; }
+  .dw3d-joy i { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .dw3d-jump { position: absolute; right: 24px; bottom: 34px; width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); background: rgba(255,255,255,.3); font-size: 1.6rem; font-weight: 900; color: #fff; touch-action: none; }
+  @media (hover: hover) and (pointer: fine) { .dw3d-joy, .dw3d-jump { display: none; } }
+  .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
+  .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+  @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
   .dw-toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); z-index: 1500; background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 14px; font-weight: 800; max-width: 90vw; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
   .dw-cele { position: fixed; inset: 0; z-index: 2000; pointer-events: none; display: flex; align-items: center; justify-content: center; }
   .dw-cele b { background: #fff; padding: 14px 24px; border-radius: 20px; font-size: 1.3rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: dwPop .5s; }
@@ -2197,8 +2214,8 @@ async function openDream() {
   el.hidden = false; document.body.classList.add("dream-open");
   el.innerHTML = `<div class="dw-loading">🌈 正在打開異想世界的大門…</div>`;
   try { dw.home = dwFix((await bridgeCall("homeGet", { who: dwMe() })).home); } catch (e) { dw.home = dwFix(null); toast("⚠️ " + e.message); }
-  dw.tab = "village"; dw.view = null; dw.hand = null;
-  await dwLoadVillage();
+  dw.tab = "world"; dw.view = null; dw.hand = null;
+  await dwLoadVillage(); w3Reset();
   renderDream();
   clearInterval(dw.timer);
   if (session.user.role === "student") dw.timer = setInterval(() => {
@@ -2238,18 +2255,20 @@ async function dwFlush() {
 function renderDream() {
   const el = document.getElementById("dream"); if (!el) return;
   const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
-  const tabs = [["village", "🏘️ 508 村莊"], ["castle", "🏰 老師的天空城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : [])];
+  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : []), ["list", "🏘️ 村莊名冊"]];
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
       <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
       <button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
-    <div class="dw-body" id="dw-body">${dwBody()}</div>`;
+    <div class="dw-body ${dw.tab === "world" && !dw.view ? "world" : ""}" id="dw-body">${dwBody()}</div>`;
+  if (dw.tab === "world" && !dw.view) { dwSyncMine(); w3Mount(); }
 }
-function dwTab(t) { dw.tab = t; dw.view = null; dw.hand = null; renderDream(); }
+function dwTab(t) { if (dw.hand && dw.hand.from) dwStash(true); dw.tab = t; dw.view = null; dw.hand = null; renderDream(); }
 function dwBody() {
   if (dw.view) return dwVisitHtml();
-  if (dw.tab === "village") return dwVillageHtml();
+  if (dw.tab === "world") return `<div id="dw3d" class="dw3d"></div>`;
+  if (dw.tab === "list" || dw.tab === "village") return dwVillageHtml();
   if (dw.tab === "castle") return dwCastleHtml();
   if (dw.tab === "home") return dwHomeHtml();
   if (dw.tab === "shop") return dwShopHtml();
@@ -2410,7 +2429,7 @@ function dwVisitHtml() {
       <div class="dw-stickers">收到的貼圖：${dwStickerSum(name)}</div>
       ${session.user.role === "student" ? `<div class="dw-row">送一張貼圖：${DW_STICKERS.map(s => `<button class="dw-stk" onclick='dwSticker(${JSON.stringify(name)}, "${s}")'>${s}</button>`).join("")}</div><small>每天可以送每一家一張。</small>` : ""}
       ${session.user.role === "teacher" ? `<button class="btn-ghost" style="margin-top:8px" onclick='dwReset(${JSON.stringify(name)})'>🧹 名字不恰當：重設家名</button>` : ""}
-      <button class="btn-primary" style="width:100%; margin-top:10px" onclick="dw.view=null; renderDream()">⬅ 回到村莊</button></div></div></div>`;
+      <button class="btn-primary" style="width:100%; margin-top:10px" onclick="dw.view=null; renderDream()">⬅ 回到異想世界</button></div></div></div>`;
 }
 async function dwSticker(to, s) {
   try { const r = await bridgeCall("homeSticker", { to, s }); const v = (dw.village || []).find(x => x.name === to); if (v) v.st = r.st; toast(`${s} 已經送給 ${shortName(to)}！`); renderDream(); }
@@ -2461,7 +2480,7 @@ function dwCastleHtml() {
   };
   const defs = `<defs><linearGradient id="crb2" x1="0" x2="1"><stop offset="0" stop-color="#f87171"/><stop offset=".25" stop-color="#facc15"/><stop offset=".5" stop-color="#4ade80"/><stop offset=".75" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>`;
   const hot = Object.entries(DW_CASTLE_ITEMS).filter(([, v]) => v.hot);
-  return `<div class="dw-castle"><div class="dw-castle-head"><h2>🏰 船長老師的天空城堡</h2><p>歡迎光臨！點有 ✨ 的地方可以玩，許願池和扭蛋機每天都有禮物喔！</p></div>
+  return `<div class="dw-castle"><div class="dw-castle-head"><button class="btn-ghost" style="float:left" onclick="dwTab('world')">⬅ 回到異想世界</button><h2>🏰 船長老師的天空城堡</h2><p>歡迎光臨！點有 ✨ 的地方可以玩，許願池和扭蛋機每天都有禮物喔！</p></div>
     <div class="dw-home-wrap"><div class="dw-room">${dwIso(DW_CASTLE, { n: 12, tw: 58, wallH: 120, wall: "#7c3aed", extraItems: DW_CASTLE_ITEMS, click: "dwCastleTap", extraWall: wall, defs, maxW: 1000 })}</div>
     <div class="dw-side"><div class="dw-card" id="dw-castle-panel">${dwCastlePanel("intro")}</div>
       <div class="dw-card"><b>✨ 城堡景點</b><div class="dw-hot">${hot.map(([k, v]) => `<button onclick="dwHot('${k}')">${v.emoji}<small>${v.name}</small></button>`).join("")}</div></div></div></div></div>`;
@@ -2531,6 +2550,363 @@ function dwNote(f) {
   } catch (e) {}
 }
 
+// ── 🌍 3D 方塊世界：一進異想世界就站在村莊廣場上，走到門口就能進屋 ──
+const W3D_LIB = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+let w3 = null;   // { renderer, scene, camera, ... } 只建一次，切回來時重新掛上
+function w3Load() {
+  if (window.THREE) return Promise.resolve();
+  return new Promise((ok, bad) => { const s = document.createElement("script"); s.src = W3D_LIB; s.onload = ok; s.onerror = () => bad(new Error("3D 引擎載入失敗")); document.head.appendChild(s); });
+}
+function w3Supported() { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl") || c.getContext("experimental-webgl")); } catch (e) { return false; } }
+// 像素材質：16×16 小圖，最近點取樣
+function w3Tex(fn) {
+  const c = document.createElement("canvas"); c.width = c.height = 16; const g = c.getContext("2d"), R = seeded("tex" + fn.toString().length + Math.random());
+  fn(g, R); const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; return t;
+}
+function w3Noise(g, R, base, vary, n = 256) { g.fillStyle = base; g.fillRect(0, 0, 16, 16); for (let i = 0; i < n; i++) { g.fillStyle = vary[(R() * vary.length) | 0]; g.fillRect((R() * 16) | 0, (R() * 16) | 0, 1, 1); } }
+function w3Materials() {
+  const L = (opt) => new THREE.MeshLambertMaterial(opt);
+  const grassTop = w3Tex((g, R) => w3Noise(g, R, "#5cb83a", ["#4ea52f", "#6ccb45", "#58b236", "#7bd655"], 120));
+  const dirt = w3Tex((g, R) => w3Noise(g, R, "#8b5a2b", ["#7a4e25", "#9c6a37", "#6e4420"], 110));
+  const grassSide = w3Tex((g, R) => { w3Noise(g, R, "#8b5a2b", ["#7a4e25", "#9c6a37", "#6e4420"], 110); g.fillStyle = "#5cb83a"; g.fillRect(0, 0, 16, 4); for (let x = 0; x < 16; x++) if (R() < .5) g.fillRect(x, 4, 1, 1 + ((R() * 2) | 0)); });
+  const stone = w3Tex((g, R) => w3Noise(g, R, "#8a8f98", ["#7b8089", "#9aa0a8", "#6f747c"], 120));
+  const sand = w3Tex((g, R) => w3Noise(g, R, "#f2dc9b", ["#e8cf88", "#f8e7b2", "#dcc27a"], 90));
+  const plank = w3Tex((g, R) => { w3Noise(g, R, "#c08a52", ["#b07c47", "#cd9861"], 70); g.fillStyle = "#8a5a2f"; [3, 7, 11, 15].forEach(y => g.fillRect(0, y, 16, 1)); });
+  const logSide = w3Tex((g, R) => { w3Noise(g, R, "#7a5230", ["#6a4527", "#8a5f39"], 60); g.fillStyle = "#5b3a1f"; for (let x = 1; x < 16; x += 4) g.fillRect(x, 0, 1, 16); });
+  const leaves = w3Tex((g, R) => w3Noise(g, R, "#2f8f2f", ["#257a25", "#3fa63f", "#1e6b1e", "#49b049"], 160));
+  const brick = w3Tex((g, R) => { g.fillStyle = "#b5442f"; g.fillRect(0, 0, 16, 16); g.fillStyle = "#d9cfc4"; for (let y = 0; y < 16; y += 4) { g.fillRect(0, y, 16, 1); for (let x = (y / 4) % 2 ? 0 : 4; x < 16; x += 8) g.fillRect(x, y, 1, 4); } });
+  const glass = w3Tex((g) => { g.fillStyle = "rgba(190,230,255,.55)"; g.fillRect(0, 0, 16, 16); g.fillStyle = "#fff"; g.fillRect(0, 0, 16, 1); g.fillRect(0, 0, 1, 16); g.fillRect(3, 3, 3, 1); g.fillRect(3, 3, 1, 3); });
+  const quartz = w3Tex((g, R) => w3Noise(g, R, "#f4f1ea", ["#ebe6dc", "#faf8f3"], 60));
+  const gold = w3Tex((g, R) => { w3Noise(g, R, "#f6c945", ["#ffd95a", "#e5b42f", "#fff0a0"], 80); g.fillStyle = "#c9971f"; g.fillRect(0, 15, 16, 1); g.fillRect(15, 0, 1, 16); });
+  const purple = w3Tex((g, R) => w3Noise(g, R, "#7c3aed", ["#6d28d9", "#8b5cf6", "#5b21b6"], 90));
+  const cobble = w3Tex((g, R) => { w3Noise(g, R, "#9ca3af", ["#6b7280", "#d1d5db"], 90); g.fillStyle = "#4b5563"; for (let i = 0; i < 6; i++) g.fillRect((R() * 14) | 0, (R() * 14) | 0, 3, 1); });
+  const path = w3Tex((g, R) => w3Noise(g, R, "#c9a66b", ["#b8955c", "#d6b57d", "#a98552"], 120));
+  const qmark = w3Tex((g) => { g.fillStyle = "#f59e0b"; g.fillRect(0, 0, 16, 16); g.fillStyle = "#fde68a"; g.fillRect(1, 1, 14, 14); g.fillStyle = "#b45309"; g.font = "bold 13px sans-serif"; g.textAlign = "center"; g.fillText("?", 8, 13); });
+  const wool = c => w3Tex((g, R) => w3Noise(g, R, c, [c, "rgba(0,0,0,.08)", "rgba(255,255,255,.12)"], 70));
+  const M = {
+    grass: [L({ map: grassSide }), L({ map: grassSide }), L({ map: grassTop }), L({ map: dirt }), L({ map: grassSide }), L({ map: grassSide })],
+    dirt: L({ map: dirt }), stone: L({ map: stone }), sand: L({ map: sand }), plank: L({ map: plank }), log: L({ map: logSide }),
+    leaves: L({ map: leaves, transparent: false }), brick: L({ map: brick }), glass: L({ map: glass, transparent: true }), quartz: L({ map: quartz }),
+    gold: L({ map: gold }), purple: L({ map: purple }), cobble: L({ map: cobble }), path: L({ map: path }), q: L({ map: qmark, emissive: 0x553300 }),
+    water: L({ color: 0x3b82f6, transparent: true, opacity: 0.72 })
+  };
+  ["#dc2626", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#db2777", "#0d9488", "#475569", "#ffffff", "#facc15", "#fb923c", "#22c55e", "#60a5fa", "#a78bfa", "#f472b6"].forEach(c => { M["w" + c] = L({ map: wool(c) }); });
+  return M;
+}
+// 地形高度：平滑的隨機丘陵；中央廣場整平；左下有一座湖
+function w3World(homes) {
+  const S = 48, R = seeded("508-dream-world"), G = {};
+  const grid = {}; for (let i = -6; i <= 6; i++) for (let j = -6; j <= 6; j++) grid[i + "," + j] = R();
+  const vn = (x, z) => { const fx = x / 9, fz = z / 9, ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz, s = t => t * t * (3 - 2 * t), g = (a, b) => grid[a + "," + b] || 0;
+    const a = g(ix, iz) * (1 - s(tx)) + g(ix + 1, iz) * s(tx), b = g(ix, iz + 1) * (1 - s(tx)) + g(ix + 1, iz + 1) * s(tx); return a * (1 - s(tz)) + b * s(tz); };
+  const LAKE = { x: -28, z: 26, r: 9 };
+  const H = (x, z) => {
+    const d = Math.hypot(x, z), ld = Math.hypot(x - LAKE.x, z - LAKE.z);
+    let h = 5 + Math.round(vn(x + 60, z + 60) * 6 - 2);
+    const flat = Math.max(0, Math.min(1, (d - 30) / 10)); h = Math.round(5 + (h - 5) * flat);
+    if (ld < LAKE.r) h = 3; else if (ld < LAKE.r + 2.2) h = 4;
+    if (Math.abs(x) >= S - 1 || Math.abs(z) >= S - 1) h = Math.max(h, 5);
+    return Math.max(2, h);
+  };
+  const put = (x, y, z, t) => { G[x + "," + y + "," + z] = t; };
+  const del = (x, y, z) => { delete G[x + "," + y + "," + z]; };
+  const hmap = {};
+  for (let x = -S; x <= S; x++) for (let z = -S; z <= S; z++) {
+    const h = H(x, z); hmap[x + "," + z] = h; const ld = Math.hypot(x - LAKE.x, z - LAKE.z);
+    for (let y = 0; y <= h; y++) put(x, y, z, y === h ? (ld < LAKE.r + 2.2 ? "sand" : "grass") : y > h - 3 ? "dirt" : "stone");
+    if (ld < LAKE.r) { put(x, 4, z, "water"); }
+  }
+  const ground = (x, z) => hmap[Math.round(x) + "," + Math.round(z)] || 5;
+  // 廣場：石子路十字＋圓環
+  for (let x = -S + 2; x <= S - 2; x++) for (let z = -1; z <= 1; z++) { if (Math.hypot(x - LAKE.x, z - LAKE.z) > LAKE.r + 1) { put(x, ground(x, z), z, "path"); put(z, ground(z, x), x, "path"); } }
+  for (let a = 0; a < 360; a += 1) { const r = 19, x = Math.round(Math.cos(a * Math.PI / 180) * r), z = Math.round(Math.sin(a * Math.PI / 180) * r); put(x, 5, z, "path"); }
+  // 老師的天空城堡（北邊，z 負方向）：金色主體、紫色尖塔、彩虹拱門、噴水池
+  const C = { x0: -8, x1: 8, z0: -34, z1: -24, y: 5 };
+  for (let x = C.x0; x <= C.x1; x++) for (let z = C.z0; z <= C.z1; z++) { for (let y = C.y + 1; y <= 30; y++) del(x, y, z); put(x, C.y, z, "quartz"); hmap[x + "," + z] = C.y; }
+  for (let x = C.x0; x <= C.x1; x++) for (let z = C.z0; z <= C.z1; z++) {
+    const edge = x === C.x0 || x === C.x1 || z === C.z0 || z === C.z1;
+    if (edge) for (let y = C.y + 1; y <= C.y + 8; y++) put(x, y, z, (y === C.y + 4 || y === C.y + 7) && (x + z) % 3 === 0 ? "glass" : "gold");
+    if (edge && (x + z) % 2 === 0) put(x, C.y + 9, z, "gold");
+    put(x, C.y + 8, z, edge ? "gold" : "purple");
+  }
+  const tower = (tx, tz, h) => { for (let x = tx - 1; x <= tx + 1; x++) for (let z = tz - 1; z <= tz + 1; z++) for (let y = C.y + 1; y <= C.y + h; y++) put(x, y, z, y % 4 === 0 && x === tx ? "glass" : "gold");
+    for (let k = 0; k < 4; k++) for (let x = tx - 1 + Math.ceil(k / 2); x <= tx + 1 - Math.ceil(k / 2); x++) for (let z = tz - 1 + Math.ceil(k / 2); z <= tz + 1 - Math.ceil(k / 2); z++) put(x, C.y + h + 1 + k, z, "purple");
+    put(tx, C.y + h + 5, tz, "log"); put(tx, C.y + h + 6, tz, "log"); put(tx + 1, C.y + h + 6, tz, "w#dc2626"); put(tx + 2, C.y + h + 6, tz, "w#dc2626"); put(tx + 1, C.y + h + 5, tz, "w#dc2626"); };
+  tower(C.x0, C.z0, 12); tower(C.x1, C.z0, 12); tower(C.x0, C.z1, 10); tower(C.x1, C.z1, 10); tower(0, C.z0 + 2, 16);
+  for (let y = C.y + 1; y <= C.y + 4; y++) for (let x = -1; x <= 1; x++) del(x, y, C.z1);   // 大門
+  const RB = ["#dc2626", "#fb923c", "#facc15", "#22c55e", "#60a5fa", "#a78bfa"];
+  for (let a = 0; a <= 180; a += 2) RB.forEach((c, i) => { const r = 15 - i, x = Math.round(Math.cos(a * Math.PI / 180) * r), y = C.y + Math.round(Math.sin(a * Math.PI / 180) * r) + 2; put(x, y, C.z0 - 2, "w" + c); });
+  for (let x = -3; x <= 3; x++) for (let z = -17; z <= -11; z++) { const d = Math.hypot(x, z + 14); if (d <= 3.2) { put(x, 5, z, d > 2.3 ? "cobble" : "water"); if (d > 2.3) put(x, 6, z, "cobble"); } }
+  for (let y = 6; y <= 8; y++) put(0, y, -14, "quartz"); put(0, 9, -14, "water");
+  // 學生的家：兩圈圍著廣場，門朝向中央
+  const list = homes.filter(h => h.name.indexOf("__") !== 0);
+  const plots = list.map((h, i) => { const ring = i < 14 ? 0 : 1, n = ring ? Math.max(1, list.length - 14) : Math.min(14, list.length), k = ring ? i - 14 : i;
+    const a = Math.PI * 1.84 + (k + .5) / n * Math.PI * 1.32, r = ring ? 37 : 27; return { h, x: Math.round(Math.cos(a) * r), z: Math.round(Math.sin(a) * r), a }; });
+  const doors = [{ kind: "castle", x: 0, z: C.z1 + 1, y: C.y + 1, label: "🏰 老師的天空城堡" }];
+  plots.forEach(p => {
+    const lv = p.h.lv || 0, roof = "w" + (p.h.rf || "#dc2626"), w = lv >= 3 ? 3 : 2, base = ground(p.x, p.z), hh = [2, 3, 4, 6, 6][lv];
+    const dx = -Math.cos(p.a), dz = -Math.sin(p.a), face = Math.abs(dx) > Math.abs(dz) ? [Math.sign(dx), 0] : [0, Math.sign(dz)];
+    for (let x = p.x - w - 1; x <= p.x + w + 1; x++) for (let z = p.z - w - 1; z <= p.z + w + 1; z++) { for (let y = base + 1; y <= base + 14; y++) del(x, y, z); put(x, base, z, "path"); hmap[x + "," + z] = base; }
+    const wallT = ["", "log", "brick", "quartz", "cobble"][lv];
+    if (lv === 0) {
+      for (let k = 0; k <= w; k++) for (let a = -w + k; a <= w - k; a++) for (let b = -w; b <= w; b++) { const x = face[1] ? p.x + a : p.x + b, z = face[1] ? p.z + b : p.z + a; put(x, base + 1 + k, z, roof); }
+      for (let a = -w + 1; a <= w - 1; a++) for (let b = -w + 1; b <= w - 1; b++) for (let k = 0; k < w; k++) { const x = face[1] ? p.x + a : p.x + b, z = face[1] ? p.z + b : p.z + a; if (Math.abs(a) < w - k) del(x, base + 1 + k, z); }
+    }
+    else {
+      for (let x = p.x - w; x <= p.x + w; x++) for (let z = p.z - w; z <= p.z + w; z++) {
+        const edge = x === p.x - w || x === p.x + w || z === p.z - w || z === p.z + w;
+        if (edge) for (let y = base + 1; y <= base + hh; y++) put(x, y, z, y === base + 2 && (x + z) % 2 && lv >= 2 ? "glass" : lv === 3 && y === base + 4 ? "plank" : wallT);
+      }
+      for (let k = 0; k <= w; k++) for (let x = p.x - w + k; x <= p.x + w - k; x++) for (let z = p.z - w + k; z <= p.z + w - k; z++) put(x, base + hh + 1 + k, z, roof);
+      if (lv === 4) [[-w, -w], [w, -w], [-w, w], [w, w]].forEach(([ox, oz]) => { for (let y = base + 1; y <= base + hh + 3; y++) put(p.x + ox, y, p.z + oz, "cobble"); put(p.x + ox, base + hh + 4, p.z + oz, roof); });
+    }
+    const doorX = p.x + face[0] * w, doorZ = p.z + face[1] * w;
+    del(doorX, base + 1, doorZ); if (lv > 0) del(doorX, base + 2, doorZ);
+    doors.push({ kind: "home", name: p.h.name, x: doorX + face[0], z: doorZ + face[1], y: base + 1, top: base + hh + w + 2, cx: p.x, cz: p.z, open: p.h.open, label: (p.h.nm || shortName(p.h.name) + "的家") });
+  });
+  // 樹和花（避開路、房子、湖、城堡）
+  const flowers = [];
+  for (let i = 0; i < 260; i++) {
+    const x = Math.round((R() * 2 - 1) * (S - 3)), z = Math.round((R() * 2 - 1) * (S - 3)), b = hmap[x + "," + z];
+    if (G[x + "," + b + "," + z] !== "grass" || Math.hypot(x, z) < 14) continue;
+    if (plots.some(q => Math.abs(q.x - x) <= 9 && Math.abs(q.z - z) <= 9)) continue;
+    if ([-2, -1, 0, 1, 2].some(k => G[(x + k) + "," + b + "," + z] === "path" || G[x + "," + b + "," + (z + k)] === "path")) continue;
+    if (R() < 0.42) { const th = 4 + ((R() * 2) | 0); for (let y = 1; y <= th; y++) put(x, b + y, z, "log");
+      for (let lx = -2; lx <= 2; lx++) for (let lz = -2; lz <= 2; lz++) for (let ly = th - 1; ly <= th + 1; ly++) if (Math.abs(lx) + Math.abs(lz) + Math.max(0, ly - th) * 2 < 4 && !(lx === 0 && lz === 0 && ly <= th)) if (!G[(x + lx) + "," + (b + ly) + "," + (z + lz)]) put(x + lx, b + ly, z + lz, "leaves");
+      put(x, b + th + 2, z, "leaves"); }
+    else flowers.push([x, b + 1, z, ["#f472b6", "#facc15", "#ffffff", "#fb7185", "#a78bfa"][(R() * 5) | 0]]);
+  }
+  // 異想元素：天空中的浮島（上面有樹和花）、巨大蘑菇、彩色水晶柱
+  [[-30, 20, -20], [32, 22, -18], [28, 18, 30], [-12, 26, 40]].forEach(([fx, fy, fz], n) => {
+    for (let x = -4; x <= 4; x++) for (let z = -4; z <= 4; z++) { const d = Math.hypot(x, z); if (d > 4.3) continue; put(fx + x, fy, fz + z, "grass"); for (let k = 1; k <= Math.round(4.3 - d) + 1; k++) put(fx + x, fy - k, fz + z, k > 2 ? "stone" : "dirt"); }
+    for (let y = 1; y <= 4; y++) put(fx, fy + y, fz, "log");
+    for (let lx = -2; lx <= 2; lx++) for (let lz = -2; lz <= 2; lz++) for (let ly = 4; ly <= 6; ly++) if (Math.abs(lx) + Math.abs(lz) + (ly - 4) < 4 && !(lx === 0 && lz === 0 && ly === 4)) put(fx + lx, fy + ly, fz + lz, ["leaves", "w#f472b6", "leaves", "w#facc15"][n]);
+    flowers.push([fx + 2, fy + 1, fz + 1, "#f472b6"], [fx - 2, fy + 1, fz - 1, "#facc15"]);
+    for (let y = 1; y <= 3; y++) put(fx - 3, fy - 1 - y * 2, fz, "w#60a5fa");   // 浮島下垂的小瀑布
+  });
+  const MR = seeded("mush");
+  for (let i = 0; i < 7; i++) {
+    const a = MR() * Math.PI * 2, r = 40 + MR() * 5, mx = Math.round(Math.cos(a) * r), mz = Math.round(Math.sin(a) * r), b = hmap[mx + "," + mz]; if (!b || Math.abs(mx) > S - 4 || Math.abs(mz) > S - 4 || plots.some(q => Math.abs(q.x - mx) <= 7 && Math.abs(q.z - mz) <= 7) || Math.hypot(mx - LAKE.x, mz - LAKE.z) < LAKE.r + 4) continue;
+    const st = 4 + ((MR() * 3) | 0); for (let y = 1; y <= st; y++) put(mx, b + y, mz, "quartz");
+    for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) { const d = Math.hypot(x, z); if (d <= 3.2) put(mx + x, b + st + 1, mz + z, (x * 7 + z * 3) % 4 === 0 ? "w#ffffff" : "w#dc2626"); if (d <= 2) put(mx + x, b + st + 2, mz + z, (x + z) % 3 === 0 ? "w#ffffff" : "w#dc2626"); }
+  }
+  [[10, -9], [-10, -9], [11, 8], [-11, 8]].forEach(([cx, cz], i) => { const c = ["w#a78bfa", "w#60a5fa", "w#f472b6", "w#22c55e"][i]; for (let y = 1; y <= 5 - (i % 2); y++) put(cx, 5 + y, cz, c); put(cx, 11 - (i % 2), cz, "gold"); });
+  return { G, hmap, doors, flowers, S, C };
+}
+function w3Build(world, M) {
+  const geo = new THREE.BoxGeometry(1, 1, 1), groups = {}, G = world.G;
+  const SOLIDLESS = { water: 1, glass: 1, leaves: 1 };
+  Object.keys(G).forEach(k => {
+    const t = G[k], [x, y, z] = k.split(",").map(Number);
+    const nb = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([a, b, c]) => { const n = G[(x + a) + "," + (y + b) + "," + (z + c)]; return !n || (SOLIDLESS[n] && n !== t); });
+    if (!nb) return;
+    (groups[t] = groups[t] || []).push([x, y, z]);
+  });
+  const root = new THREE.Group(), m = new THREE.Matrix4();
+  Object.entries(groups).forEach(([t, list]) => {
+    const mat = M[t] || M.stone, mesh = new THREE.InstancedMesh(t === "water" ? new THREE.BoxGeometry(1, 0.8, 1) : geo, mat, list.length);
+    list.forEach((p, i) => { m.makeTranslation(p[0], p[1] - (t === "water" ? 0.1 : 0), p[2]); mesh.setMatrixAt(i, m); });
+    mesh.instanceMatrix.needsUpdate = true; root.add(mesh);
+  });
+  // 小花
+  if (world.flowers.length) {
+    const fg = new THREE.BoxGeometry(0.28, 0.5, 0.28), byC = {};
+    world.flowers.forEach(f => (byC[f[3]] = byC[f[3]] || []).push(f));
+    Object.entries(byC).forEach(([c, list]) => { const mesh = new THREE.InstancedMesh(fg, new THREE.MeshLambertMaterial({ color: c }), list.length); list.forEach((f, i) => { m.makeTranslation(f[0], f[1] - 0.25, f[2]); mesh.setMatrixAt(i, m); }); root.add(mesh); });
+  }
+  return root;
+}
+function w3Label(text, sub, color = "#7c3aed") {
+  const c = document.createElement("canvas"); c.width = 512; c.height = sub ? 150 : 100; const g = c.getContext("2d");
+  g.fillStyle = "rgba(255,255,255,.92)"; const r = 30; g.beginPath(); g.moveTo(r, 4); g.arcTo(508, 4, 508, c.height - 4, r); g.arcTo(508, c.height - 4, 4, c.height - 4, r); g.arcTo(4, c.height - 4, 4, 4, r); g.arcTo(4, 4, 508, 4, r); g.fill();
+  g.strokeStyle = color; g.lineWidth = 6; g.stroke();
+  g.fillStyle = "#1e293b"; g.textAlign = "center"; g.font = "bold 48px 'Noto Sans TC', sans-serif"; g.fillText(text, 256, 66);
+  if (sub) { g.font = "bold 34px 'Noto Sans TC', sans-serif"; g.fillStyle = color; g.fillText(sub, 256, 122); }
+  const t = new THREE.CanvasTexture(c); const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: true }));
+  s.scale.set(5, 5 * c.height / 512, 1); return s;
+}
+// 原創的方塊小船長：深藍船長帽、海軍藍上衣
+function w3Avatar() {
+  const g = new THREE.Group(), box = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), Array.isArray(c) ? c : new THREE.MeshLambertMaterial({ color: c })); m.position.set(x, y, z); g.add(m); return m; };
+  const face = document.createElement("canvas"); face.width = face.height = 16; const f = face.getContext("2d");
+  f.fillStyle = "#f5c99b"; f.fillRect(0, 0, 16, 16); f.fillStyle = "#1e293b"; f.fillRect(4, 7, 2, 2); f.fillRect(10, 7, 2, 2); f.fillStyle = "#e11d48"; f.fillRect(6, 11, 4, 1); f.fillStyle = "#fda4af"; f.fillRect(2, 10, 2, 1); f.fillRect(12, 10, 2, 1);
+  const ft = new THREE.CanvasTexture(face); ft.magFilter = THREE.NearestFilter;
+  const skin = new THREE.MeshLambertMaterial({ color: "#f5c99b" });
+  const head = box(0.6, 0.6, 0.6, [skin, skin, skin, skin, new THREE.MeshLambertMaterial({ map: ft }), skin], 0, 1.55, 0);
+  box(0.66, 0.16, 0.66, "#1e3a8a", 0, 1.9, 0); box(0.5, 0.14, 0.5, "#1e3a8a", 0, 2.02, 0); box(0.66, 0.05, 0.2, "#facc15", 0, 1.86, 0.25);
+  box(0.6, 0.7, 0.32, "#2563eb", 0, 0.9, 0); box(0.6, 0.08, 0.34, "#facc15", 0, 0.62, 0);
+  const la = box(0.2, 0.65, 0.22, "#2563eb", -0.41, 0.95, 0), ra = box(0.2, 0.65, 0.22, "#2563eb", 0.41, 0.95, 0);
+  const ll = box(0.26, 0.55, 0.28, "#334155", -0.15, 0.28, 0), rl = box(0.26, 0.55, 0.28, "#334155", 0.15, 0.28, 0);
+  [la, ra, ll, rl].forEach(p => { p.geometry.translate(0, -p.geometry.parameters.height / 2 + 0.05, 0); p.position.y += p.geometry.parameters.height / 2 - 0.05; });
+  g.userData = { la, ra, ll, rl, head }; return g;
+}
+function w3Animal(kind) {
+  const g = new THREE.Group(), box = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ color: c })); m.position.set(x, y, z); g.add(m); return m; };
+  if (kind === "sheep") { box(0.9, 0.6, 1.2, "#f8fafc", 0, 0.7, 0); box(0.45, 0.45, 0.45, "#e2e8f0", 0, 0.9, 0.75); box(0.3, 0.3, 0.1, "#475569", 0, 0.85, 0.98); [[-.3, -.4], [.3, -.4], [-.3, .4], [.3, .4]].forEach(([x, z]) => box(0.18, 0.45, 0.18, "#475569", x, 0.22, z)); }
+  else if (kind === "chick") { box(0.4, 0.4, 0.45, "#fde047", 0, 0.35, 0); box(0.3, 0.3, 0.3, "#fde047", 0, 0.65, 0.18); box(0.12, 0.08, 0.14, "#f97316", 0, 0.62, 0.38); box(0.06, 0.18, 0.06, "#f97316", -0.08, 0.08, 0); box(0.06, 0.18, 0.06, "#f97316", 0.08, 0.08, 0); }
+  else { box(0.6, 0.55, 1.0, "#fb923c", 0, 0.5, 0); box(0.5, 0.45, 0.45, "#fb923c", 0, 0.7, 0.6); box(0.14, 0.2, 0.08, "#fb923c", -0.15, 1.0, 0.6); box(0.14, 0.2, 0.08, "#fb923c", 0.15, 1.0, 0.6); box(0.6, 0.12, 0.12, "#fff7ed", 0, 0.62, -0.55); [[-.2, -.3], [.2, -.3], [-.2, .3], [.2, .3]].forEach(([x, z]) => box(0.14, 0.3, 0.14, "#9a3412", x, 0.15, z)); }
+  return g;
+}
+
+async function w3Mount() {
+  const host = document.getElementById("dw3d"); if (!host) return;
+  if (!w3Supported()) { host.innerHTML = `<div class="dw3d-msg">這台裝置不支援 3D 畫面，請改用「🏘️ 村莊名冊」逛同學的家。</div>`; return; }
+  if (!w3) {
+    host.innerHTML = `<div class="dw3d-msg">🌈 正在打造方塊世界…</div>`;
+    try { await w3Load(); } catch (e) { host.innerHTML = `<div class="dw3d-msg">⚠️ 3D 引擎載入失敗，請檢查網路後重新進入。</div>`; return; }
+    w3Create();
+  }
+  host.innerHTML = ""; host.appendChild(w3.renderer.domElement); host.appendChild(w3.hud);
+  w3Resize(); w3.running = true; w3.last = performance.now(); requestAnimationFrame(w3Loop);
+}
+function w3Create() {
+  const renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fdcff); scene.fog = new THREE.Fog(0xbfe6ff, 40, 95);
+  const camera = new THREE.PerspectiveCamera(65, 1, 0.1, 300);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x88aa66, 0.75));
+  const sun = new THREE.DirectionalLight(0xfff4d6, 0.75); sun.position.set(30, 60, 20); scene.add(sun);
+  const world = w3World(dw.village || []);
+  const M = w3Materials();
+  scene.add(w3Build(world, M));
+  // 太陽和雲
+  const sunM = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 1), new THREE.MeshBasicMaterial({ color: 0xfff3a0, fog: false })); sunM.position.set(60, 70, -110); scene.add(sunM);
+  const clouds = new THREE.Group(), cm = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 }), CR = seeded("clouds");
+  for (let i = 0; i < 16; i++) { const c = new THREE.Group(); for (let k = 0; k < 3 + ((CR() * 3) | 0); k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(4 + CR() * 6, 1.4, 3 + CR() * 4), cm); b.position.set(k * 3 - 3, CR() * .6, CR() * 3 - 1.5); c.add(b); } c.position.set(CR() * 120 - 60, 30 + CR() * 6, CR() * 120 - 60); clouds.add(c); }
+  scene.add(clouds);
+  // 名牌
+  const labels = [];
+  world.doors.forEach(d => {
+    const s = d.kind === "castle" ? w3Label("🏰 老師的天空城堡", "人人都可以進來玩！", "#7c3aed") : w3Label(d.label, `${shortName(d.name)}${d.open ? "・🚪 歡迎參觀" : "・🔒"}`, d.open ? "#16a34a" : "#64748b");
+    if (d.kind === "castle") { s.position.set(0, world.C.y + 10.5, world.C.z1 + 3); s.scale.multiplyScalar(1.4); } else s.position.set(d.cx, d.top + 1.6, d.cz);
+    scene.add(s); labels.push(s);
+  });
+  // 每日寶箱（學生限定）：世界裡藏 5 個發光的問號方塊
+  const chests = [];
+  if (session.user.role === "student") {
+    const d = nowStr().slice(0, 10), CRr = seeded("chest" + d + session.user.name), done = (dw.home && dw.home.daily && dw.home.daily.d === d && dw.home.daily.done) || [];
+    const qm = M.q;
+    for (let i = 0; i < 5; i++) {
+      let x, z, tries = 0; do { x = Math.round((CRr() * 2 - 1) * (world.S - 6)); z = Math.round((CRr() * 2 - 1) * (world.S - 6)); tries++; } while (tries < 40 && (Math.hypot(x, z) < 12 || !world.hmap[x + "," + z] || world.G[x + "," + (world.hmap[x + "," + z] + 1) + "," + z] || world.G[x + "," + world.hmap[x + "," + z] + "," + z] === "sand"));
+      if (done.includes("t" + i)) continue;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), qm); m.position.set(x, world.hmap[x + "," + z] + 1.3, z); scene.add(m); chests.push({ i, m });
+    }
+  }
+  // 小動物
+  const animals = []; const AR = seeded("animals");
+  ["sheep", "sheep", "sheep", "chick", "chick", "chick", "fox", "sheep", "chick"].forEach(k => { const a = w3Animal(k); let x, z; do { x = AR() * 70 - 35; z = AR() * 70 - 35; } while (Math.hypot(x, z) < 16); a.position.set(x, 0, z); scene.add(a); animals.push({ a, dir: AR() * 6.28, t: 0 }); });
+  const player = w3Avatar(); player.position.set(0, 6, -3); player.rotation.y = Math.PI; scene.add(player);
+  const myTag = w3Label(shortName(session.user.name), "", "#f59e0b"); myTag.scale.multiplyScalar(0.5); scene.add(myTag);
+  // 操作介面
+  const hud = document.createElement("div"); hud.className = "dw3d-hud";
+  hud.innerHTML = `<div class="dw3d-help">🖱️ 拖曳轉視角　⌨️ WASD／方向鍵走路　空白鍵跳　走到門口按 E 進屋${session.user.role === "student" ? "　✨ 找找看今天藏起來的 5 個 ❓寶箱！" : ""}</div>
+    <div class="dw3d-prompt" id="dw3d-prompt" hidden></div>
+    <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
+    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡</button>${session.user.role === "student" ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+  w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
+  w3Controls();
+}
+function w3Solid(x, y, z) { const t = w3.world.G[Math.round(x) + "," + Math.round(y) + "," + Math.round(z)]; return t && t !== "water" && t !== "flower"; }
+function w3Hit(p) { for (const dx of [-0.3, 0.3]) for (const dz of [-0.3, 0.3]) for (const dy of [0.1, 1.0, 1.7]) if (w3Solid(p.x + dx, p.y + dy, p.z + dz)) return true; return false; }
+function w3Controls() {
+  const el = w3.renderer.domElement;
+  let drag = null;
+  el.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
+  el.addEventListener("pointerup", () => { drag = null; });
+  el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
+  window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
+  window.addEventListener("keyup", e => { if (w3) w3.keys[e.code] = false; });
+  window.addEventListener("resize", () => w3 && w3.running && w3Resize());
+  const joy = w3.hud.querySelector("#dw3d-joy"), knob = joy.querySelector("i"); let jid = null, jc = null;
+  joy.addEventListener("pointerdown", e => { jid = e.pointerId; const r = joy.getBoundingClientRect(); jc = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; joy.setPointerCapture(jid); e.stopPropagation(); });
+  joy.addEventListener("pointermove", e => { if (e.pointerId !== jid) return; let dx = e.clientX - jc.x, dy = e.clientY - jc.y; const d = Math.hypot(dx, dy), mx = 40; if (d > mx) { dx *= mx / d; dy *= mx / d; } knob.style.transform = `translate(${dx}px,${dy}px)`; w3.joy = { x: dx / mx, y: dy / mx }; });
+  const jend = () => { jid = null; knob.style.transform = ""; w3.joy = { x: 0, y: 0 }; };
+  joy.addEventListener("pointerup", jend); joy.addEventListener("pointercancel", jend);
+  w3.hud.querySelector("#dw3d-jump").addEventListener("pointerdown", e => { e.stopPropagation(); if (w3.onGround) { w3.vel.y = 8.2; w3.onGround = false; } });
+}
+function w3Resize() { const host = document.getElementById("dw3d"); if (!host || !w3) return; const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
+function w3Warp(where) {
+  if (!w3) return;
+  if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = 0; }
+  else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === session.user.name); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
+  w3.vel.set(0, 0, 0);
+}
+function w3Enter() {
+  if (!w3 || !w3.near) return;
+  const d = w3.near;
+  if (d.kind === "castle") return dwTab("castle");
+  if (d.name === session.user.name) return dwTab("home");
+  if (!d.open && session.user.role !== "teacher") return toast(`🔒 ${shortName(d.name)}還沒開放參觀`);
+  dwVisit(d.name);
+}
+function w3Loop(now) {
+  if (!w3 || !w3.running) return;
+  if (!document.getElementById("dw3d") || !document.body.classList.contains("dream-open")) { w3.running = false; return; }
+  const dt = Math.min(0.05, (now - w3.last) / 1000); w3.last = now;
+  const k = w3.keys, P = w3.player.position;
+  let fx = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0) - w3.joy.y, sx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0) + w3.joy.x;
+  const len = Math.hypot(fx, sx); if (len > 1) { fx /= len; sx /= len; }
+  const speed = 5.2, fwd = new THREE.Vector3(-Math.sin(w3.yaw), 0, -Math.cos(w3.yaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  const move = fwd.multiplyScalar(fx * speed * dt).add(right.multiplyScalar(sx * speed * dt));
+  const moving = len > 0.05;
+  if (moving) w3.player.rotation.y = Math.atan2(move.x, move.z);
+  // 水平移動：撞到就試著爬上一格
+  ["x", "z"].forEach(ax => {
+    if (!move[ax]) return; const old = P[ax]; P[ax] += move[ax];
+    if (w3Hit(P)) { P.y += 1.05; if (w3Hit(P) || !w3.onGround) { P.y -= 1.05; P[ax] = old; } }
+  });
+  if ((k.Space) && w3.onGround) { w3.vel.y = 8.2; w3.onGround = false; }
+  w3.vel.y -= 22 * dt; P.y += w3.vel.y * dt;
+  if (w3Hit(P)) { if (w3.vel.y < 0) { P.y = Math.floor(P.y + 0.1) + 0.5; while (w3Hit(P)) P.y += 1; w3.onGround = true; } else P.y -= w3.vel.y * dt; w3.vel.y = 0; } else w3.onGround = false;
+  const S = w3.world.S - 1; P.x = Math.max(-S, Math.min(S, P.x)); P.z = Math.max(-S, Math.min(S, P.z));
+  if (P.y < -5) { w3Warp("castle"); }
+  // 走路擺手
+  const u = w3.player.userData, sw = moving ? Math.sin(now / 110) * 0.7 : 0;
+  u.la.rotation.x = sw; u.ra.rotation.x = -sw; u.ll.rotation.x = -sw; u.rl.rotation.x = sw;
+  w3.myTag.position.set(P.x, P.y + 2.7, P.z);
+  // 相機跟在後面
+  const cd = w3.dist, cp = new THREE.Vector3(P.x + Math.sin(w3.yaw) * Math.cos(w3.pitch) * cd, P.y + 1.6 + Math.sin(w3.pitch) * cd, P.z + Math.cos(w3.yaw) * Math.cos(w3.pitch) * cd);
+  const head = new THREE.Vector3(P.x, P.y + 1.5, P.z), dir = cp.clone().sub(head), full = dir.length(); dir.normalize();
+  let ok = full; for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
+  cp.copy(head.addScaledVector(dir, ok));
+  w3.camera.position.lerp(cp, 0.25); w3.camera.lookAt(P.x, P.y + 1.4, P.z);
+  // 門口提示
+  let near = null, best = 9;
+  w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
+  if (near !== w3.near) {
+    w3.near = near; const pr = document.getElementById("dw3d-prompt");
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">🚪 ${near.kind === "castle" ? "進入老師的天空城堡" : near.name === session.user.name ? "回到我的家（布置）" : near.open || session.user.role === "teacher" ? `參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+  }
+  // 寶箱
+  w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
+    if ((c.m.position.x - P.x) ** 2 + (c.m.position.z - P.z) ** 2 < 1.4 && Math.abs(c.m.position.y - P.y - 0.8) < 1.6) { c.m.visible = false; w3Chest(c.i); } });
+  // 小動物閒逛
+  w3.animals.forEach(o => { o.t -= dt; if (o.t <= 0) { o.dir += (Math.random() - 0.5) * 2.4; o.t = 1 + Math.random() * 3; o.stop = Math.random() < 0.35; }
+    if (!o.stop) { const nx = o.a.position.x + Math.sin(o.dir) * dt * 1.2, nz = o.a.position.z + Math.cos(o.dir) * dt * 1.2, h = w3.world.hmap[Math.round(nx) + "," + Math.round(nz)];
+      if (h && h >= 4 && Math.abs(nx) < S - 2 && Math.abs(nz) < S - 2 && !w3Solid(nx, h + 1, nz)) { o.a.position.x = nx; o.a.position.z = nz; o.a.rotation.y = o.dir; } else o.dir += Math.PI; }
+    const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
+  w3.clouds.position.x = (now / 1000 * 0.6) % 60;
+  w3.renderer.render(w3.scene, w3.camera);
+  requestAnimationFrame(w3Loop);
+}
+function w3Chest(i) {
+  const d = dwDaily(); if (d.done.includes("t" + i)) return;
+  const m = DW_MATS[Math.floor(Math.random() * DW_MATS.length)], n = 2 + Math.floor(Math.random() * 3);
+  d.done.push("t" + i); dw.home.gift.mats[m.k] = (dw.home.gift.mats[m.k] || 0) + n; dwSave();
+  const left = 5 - d.done.filter(x => /^t\d$/.test(x)).length;
+  toast(`❓ 打開寶箱：${m.icon} ${m.name} ×${n}！${left ? `今天還有 ${left} 個寶箱藏在世界裡` : "今天的 5 個寶箱全部找到了！"}`, 4000);
+  if (!left) dwCelebrate("🎉 今天的寶箱全部找到了！");
+  renderDreamStat();
+}
+
+function w3Reset() { if (w3) { try { w3.running = false; w3.renderer.dispose(); w3.renderer.forceContextLoss(); } catch (e) {} } w3 = null; }
+function dwSyncMine() {
+  if (!dw.home || session.user.role !== "student" || !dw.village) return;
+  const v = dw.village.find(x => x.name === session.user.name); if (!v) return;
+  const changed = v.lv !== dw.home.lv || v.rf !== dw.home.rf || v.open !== dw.home.open || v.nm !== dw.home.nm;
+  Object.assign(v, { lv: dw.home.lv, rf: dw.home.rf, open: dw.home.open, nm: dw.home.nm });
+  if (changed) w3Reset();
+}
 // ── 單字王：聽寫通關考（系統念單字 → 拼出英文＋選出中文，兩個一起送出，都對才算對） ──
 const DICT_SAY = { "pe(physical education)": "P.E." };
 /** 一個單字可以接受的拼法：parent(s) → parent／parents；(tv) set → set／tv set；a (an) → a／an */
