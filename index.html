@@ -650,6 +650,106 @@
   .tq-pill { background: #dc2626 !important; color: #fff !important; animation: tqPulse 1.6s ease-in-out infinite; }
   @keyframes tqPulse { 50% { box-shadow: 0 0 0 6px rgba(220,38,38,.25); } }
   u.typo { text-decoration: none; border-bottom: 3px solid #ef4444; background: rgba(239,68,68,.15); padding: 0 2px; border-radius: 3px; }
+  /* 🌈 508 異想世界 */
+  .dream-portal { position: absolute; right: 12px; top: 12px; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 0; padding: 8px 14px; border-radius: 18px; border: 2px solid #fff;
+    background: linear-gradient(135deg, #f472b6, #a78bfa 45%, #38bdf8); color: #fff; font: inherit; cursor: pointer; box-shadow: 0 6px 18px rgba(167,139,250,.55); animation: dwFloat 3s ease-in-out infinite; font-size: 1.5rem; line-height: 1.1; }
+  .dream-portal b { font-size: .86rem; } .dream-portal small { font-size: .68rem; opacity: .9; }
+  @keyframes dwFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  body.dream-open { overflow: hidden; }
+  .dream { position: fixed; inset: 0; z-index: 900; overflow-y: auto; color: #1e293b;
+    background: linear-gradient(180deg, #a5f3fc 0%, #e0e7ff 35%, #fbcfe8 70%, #fef3c7 100%); font-family: inherit; }
+  .dw-loading { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 1.4rem; font-weight: 900; }
+  .dw-top { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; background: rgba(255,255,255,.82); backdrop-filter: blur(8px); box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  .dw-title { font-weight: 900; font-size: 1.2rem; background: linear-gradient(90deg, #ec4899, #8b5cf6, #0ea5e9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .dw-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dw-tabs button, .dw-cats button { border: 2px solid #c4b5fd; background: #fff; color: #5b21b6; border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 800; font-size: .86rem; cursor: pointer; }
+  .dw-tabs button.on, .dw-cats button.on { background: #8b5cf6; color: #fff; border-color: #8b5cf6; }
+  .dw-stat { display: flex; gap: 8px; flex-wrap: wrap; font-weight: 800; font-size: .88rem; margin-left: auto; }
+  .dw-stat span { background: #fff; border-radius: 999px; padding: 2px 9px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  .dw-close { border: 0; background: #1e293b; color: #fff; border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 800; cursor: pointer; }
+  .dw-body { padding: 14px; max-width: 1280px; margin: 0 auto; }
+  .dw-home-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+  @media (max-width: 860px) { .dw-home-wrap { grid-template-columns: 1fr; } .dw-stat { margin-left: 0; } }
+  @media (max-width: 640px) { .dw-top { position: static; padding: 8px; } .dw-tabs button { padding: 4px 9px; font-size: .78rem; } .dw-stat { font-size: .76rem; } }
+  .dw-room { background: rgba(255,255,255,.55); border-radius: 22px; padding: 10px; text-align: center; box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
+  .dw-iso { width: 100%; height: auto; display: block; margin: 0 auto; }
+  .dw-iso .dw-tile { cursor: pointer; } .dw-iso .dw-tile:hover { filter: brightness(1.12); }
+  .dw-iso .dw-item { cursor: pointer; } .dw-iso .dw-item:hover text { filter: drop-shadow(0 0 4px #fff); }
+  .dw-iso .dw-item.hot text:first-of-type { animation: dwBob 2.2s ease-in-out infinite; }
+  @keyframes dwBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .dw-spark { animation: dwTw 1.6s ease-in-out infinite; } @keyframes dwTw { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
+  .dw-hint { margin-top: 8px; font-size: .88rem; font-weight: 700; }
+  .dw-hint .btn-ghost { padding: 2px 10px; font-size: .8rem; }
+  .dw-side { display: flex; flex-direction: column; gap: 12px; }
+  .dw-card { background: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 4px 14px rgba(139,92,246,.15); text-align: left; }
+  .dw-card > b { font-size: 1.05rem; display: block; } .dw-card > small { opacity: .7; }
+  .dw-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: .88rem; }
+  .dw-row input[type=text], .dw-row input:not([type]) { flex: 1; min-width: 0; padding: 5px 8px; border-radius: 10px; border: 1px solid #cbd5e1; font: inherit; }
+  .dw-row select { padding: 3px 6px; border-radius: 8px; font: inherit; font-size: .84rem; }
+  .dw-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #94a3b8; cursor: pointer; }
+  .dw-swatch.on { box-shadow: 0 0 0 3px #8b5cf6; }
+  .dw-inv { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; margin-top: 8px; }
+  .dw-inv button { position: relative; font-size: 1.6rem; padding: 4px; border-radius: 12px; border: 2px solid #e9d5ff; background: #faf5ff; cursor: pointer; }
+  .dw-inv button.on { border-color: #8b5cf6; background: #ede9fe; }
+  .dw-inv small { position: absolute; right: 3px; bottom: 1px; font-size: .62rem; font-weight: 900; }
+  .dw-empty, .dw-note { font-size: .82rem; opacity: .8; }
+  .dw-stickers { margin-top: 8px; font-size: .88rem; }
+  .dw-stk { font-size: 1.4rem; border: 0; background: #fef3c7; border-radius: 12px; padding: 4px 8px; cursor: pointer; }
+  .dw-stk:hover { transform: scale(1.15); }
+  .dw-shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
+  .dw-shop-card { background: #fff; border-radius: 16px; padding: 10px; text-align: center; box-shadow: 0 3px 10px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 3px; position: relative; }
+  .dw-shop-card .e { font-size: 2.3rem; } .dw-shop-card small { font-size: .76rem; opacity: .8; }
+  .dw-shop-card i { position: absolute; left: 8px; top: 6px; font-style: normal; font-size: .68rem; background: #dcfce7; color: #166534; border-radius: 999px; padding: 0 6px; }
+  .dw-shop-card button { border: 0; border-radius: 10px; background: #8b5cf6; color: #fff; font: inherit; font-weight: 800; padding: 5px; cursor: pointer; font-size: .82rem; }
+  .dw-shop-card button:disabled { background: #cbd5e1; cursor: default; }
+  .dw-fl { display: inline-block; width: 52px; height: 36px; border-radius: 8px; border: 2px solid #fff; box-shadow: 0 0 0 1px #cbd5e1; }
+  .dw-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .dw-bag { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } @media (max-width: 760px) { .dw-bag { grid-template-columns: 1fr; } }
+  .dw-mats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  .dw-mats div { background: #faf5ff; border-radius: 14px; padding: 8px; text-align: center; display: flex; flex-direction: column; }
+  .dw-mats span { font-size: 1.8rem; } .dw-mats b { font-size: 1.3rem; } .dw-mats small { font-size: .7rem; opacity: .7; }
+  .dw-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+  .dw-levels div { border-radius: 12px; padding: 6px 4px; text-align: center; background: #f1f5f9; display: flex; flex-direction: column; font-size: .74rem; }
+  .dw-levels div span { font-size: 1.7rem; } .dw-levels .now { background: #ede9fe; outline: 3px solid #8b5cf6; } .dw-levels .done { background: #dcfce7; }
+  .dw-village { position: relative; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #bbf7d0 28%, #86efac 100%); border-radius: 26px; padding: 18px 14px 20px; overflow: hidden; }
+  .dw-sky { position: absolute; inset: 0 0 auto 0; height: 120px; pointer-events: none; }
+  .dw-sky .cloud { position: absolute; font-size: 2.6rem; opacity: .9; animation: dwCloud 40s linear infinite; }
+  .dw-sky .c1 { top: 6px; left: -10%; } .dw-sky .c2 { top: 40px; left: -30%; animation-duration: 55s; } .dw-sky .c3 { top: 12px; left: -50%; animation-duration: 70s; }
+  .dw-sky .bal { position: absolute; right: 8%; top: 20px; font-size: 1.8rem; animation: dwFloat 4s ease-in-out infinite; }
+  @keyframes dwCloud { from { transform: translateX(0); } to { transform: translateX(130vw); } }
+  .dw-castle-gate { position: relative; display: flex; flex-direction: column; align-items: center; margin: 0 auto 14px; border: 0; background: none; cursor: pointer; font: inherit; color: #4c1d95; }
+  .dw-castle-gate b { font-size: 1.2rem; background: rgba(255,255,255,.85); border-radius: 999px; padding: 2px 14px; margin-top: -6px; }
+  .dw-castle-gate small { font-size: .8rem; font-weight: 700; margin-top: 3px; }
+  .dw-castle-gate:hover .dw-castle-svg { transform: scale(1.04); }
+  .dw-castle-svg { width: min(340px, 80vw); height: auto; transition: transform .3s; filter: drop-shadow(0 8px 14px rgba(124,58,237,.35)); }
+  .dw-plots { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; position: relative; }
+  .dw-plot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px; border-radius: 18px; border: 0; cursor: pointer; font: inherit; color: #1e293b;
+    background: radial-gradient(ellipse 46% 16% at 50% 58%, #84cc16 0 96%, transparent 100%), rgba(255,255,255,.6); box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+  .dw-plot.mine { outline: 3px solid #f59e0b; } .dw-plot.locked { opacity: .78; }
+  .dw-plot b { font-size: .88rem; } .dw-plot small { font-size: .72rem; opacity: .75; }
+  .dw-plot:hover { transform: translateY(-3px); }
+  .dw-hs { width: 92px; height: auto; } .dw-st { position: absolute; top: 4px; right: 6px; font-size: .7rem; background: #fff; border-radius: 999px; padding: 0 5px; }
+  .dw-castle-head { text-align: center; } .dw-castle-head h2 { margin: 0; color: #6d28d9; } .dw-castle-head p { margin: 4px 0 10px; font-weight: 700; }
+  .dw-castle .dw-room { background: radial-gradient(ellipse at 50% 30%, rgba(255,255,255,.9), rgba(237,233,254,.6)); }
+  .dw-hot { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px; }
+  .dw-hot button { display: flex; flex-direction: column; align-items: center; font-size: 1.5rem; border: 0; background: #faf5ff; border-radius: 12px; padding: 5px 2px; cursor: pointer; }
+  .dw-hot small { font-size: .62rem; font-weight: 800; }
+  .dw-reward { background: linear-gradient(135deg, #fef3c7, #fce7f3); border-radius: 14px; padding: 12px; text-align: center; font-weight: 800; margin-top: 8px; line-height: 1.7; }
+  .dw-reward big { font-size: 1.5rem; }
+  .dw-gacha { display: flex; justify-content: center; padding: 20px; } .dw-gacha .ball { font-size: 3rem; animation: dwSpin .4s linear infinite; }
+  @keyframes dwSpin { to { transform: rotate(360deg); } }
+  .dw-keys { display: flex; gap: 4px; margin-top: 8px; } .dw-keys button { flex: 1; height: 70px; border: 1px solid #94a3b8; border-radius: 0 0 8px 8px; background: #fff; font: inherit; font-weight: 800; font-size: .76rem; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+  .dw-keys button:active { background: #ddd6fe; }
+  .dw-poem { background: #fffbeb; border-radius: 12px; padding: 10px; font-family: "Noto Serif TC", serif; line-height: 1.8; margin: 6px 0; }
+  .dw-top5 { margin: 6px 0; padding-left: 1.4em; line-height: 1.9; }
+  .dw-gate { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; text-align: left; }
+  .dw-gate div { color: #1e293b; display: flex; gap: 10px; align-items: center; background: #fef2f2; border-radius: 12px; padding: 8px 12px; flex-wrap: wrap; }
+  .dw-gate div.ok { background: #f0fdf4; } .dw-gate span { font-size: .84rem; opacity: .8; margin-left: auto; }
+  .dw-toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); z-index: 1500; background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 14px; font-weight: 800; max-width: 90vw; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+  .dw-cele { position: fixed; inset: 0; z-index: 2000; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+  .dw-cele b { background: #fff; padding: 14px 24px; border-radius: 20px; font-size: 1.3rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: dwPop .5s; }
+  .dw-cele i { position: absolute; top: -10%; font-style: normal; font-size: 2rem; animation: dwFall 2.8s linear forwards; }
+  @keyframes dwFall { to { transform: translateY(120vh) rotate(360deg); } } @keyframes dwPop { from { transform: scale(.4); } to { transform: scale(1); } }
   /* 唐詩島 */
   .zy { display: inline-flex; align-items: center; margin: 0 .42em 0 1px; vertical-align: middle; }
   .zy > b { font-weight: 700; }
@@ -1045,6 +1145,7 @@
           <svg id="map-svg" role="group" aria-label="知識大航海地圖"></svg>
           <div id="avatar-layer"></div>
           <div id="map-toast" class="map-toast" hidden></div>
+          <button id="dream-portal" class="dream-portal" onclick="openDream()" hidden>🌈<b>508 異想世界</b><small>蓋自己的家</small></button>
         </div>
       </div>
       <div class="map-hint" id="map-hint"></div>
@@ -1982,6 +2083,452 @@ function tangUnitMeta(u) {
   const ps = tangUnitPoems(u);
   u.icon = st.icon;
   u.lore = `<b>【${escapeHtml(u.unit)}】</b>第 ${ps[0].n}～${ps[ps.length - 1].n} 首：${ps.map(p => escapeHtml(p.t)).join("、")}<br>點一首詩：看注音、聽朗讀、讀注釋和賞析，再做閱讀測驗。`;
+}
+
+// =========================================================
+// 🌈 508 異想世界：學習換材料、材料蓋家園；村莊參觀同學的家（主人同意才開放）；老師的天空城堡人人可以進來玩
+// =========================================================
+const DW_MATS = [
+  { k: "wood", icon: "🪵", name: "木材", from: "國語" }, { k: "stone", icon: "🪨", name: "石材", from: "數學" },
+  { k: "cloth", icon: "🧵", name: "布料", from: "英語" }, { k: "seed", icon: "🌱", name: "種子", from: "自然" },
+  { k: "relic", icon: "🏺", name: "古物", from: "社會" }, { k: "scroll", icon: "📜", name: "詩卷", from: "唐詩" }];
+const DW_SUBJ_MAT = { "國語": "wood", "數學": "stone", "英語": "cloth", "單字王": "cloth", "自然": "seed", "社會": "relic", "唐詩": "scroll" };
+// 房子五個等級：格子愈大、外觀愈豪華；升級要五科材料（詩卷是加分）
+const DW_LEVELS = [
+  { name: "露營帳篷", icon: "⛺", n: 6, cost: null },
+  { name: "森林小木屋", icon: "🛖", n: 7, cost: { wood: 30, stone: 15, cloth: 15, seed: 15, relic: 15 } },
+  { name: "紅磚小屋", icon: "🏠", n: 8, cost: { wood: 60, stone: 60, cloth: 40, seed: 40, relic: 40 } },
+  { name: "兩層洋房", icon: "🏡", n: 9, cost: { wood: 120, stone: 120, cloth: 100, seed: 100, relic: 100, scroll: 20 } },
+  { name: "夢幻城堡", icon: "🏰", n: 10, cost: { wood: 250, stone: 250, cloth: 200, seed: 200, relic: 200, scroll: 50 } }];
+// 家具：[代號, 名稱, 圖案, 價格(金幣), 分類, 要等級(房子)]；價格 0 = 只能在老師城堡的扭蛋機抽到
+const DW_ITEMS = [
+  ["bed", "單人床", "🛏️", 40, "臥室"], ["couch", "沙發", "🛋️", 60, "客廳"], ["chair", "椅子", "🪑", 15, "客廳"], ["lamp", "檯燈", "💡", 15, "客廳"],
+  ["tv", "電視", "📺", 80, "客廳"], ["clock", "時鐘", "🕰️", 35, "客廳"], ["frame", "畫框", "🖼️", 30, "客廳"], ["mirror", "鏡子", "🪞", 30, "臥室"],
+  ["teddy", "泰迪熊", "🧸", 25, "臥室"], ["doll", "俄羅斯娃娃", "🪆", 30, "臥室"], ["lantern", "紙燈籠", "🏮", 25, "客廳"], ["candle", "蠟燭", "🕯️", 10, "客廳"],
+  ["books", "書堆", "📚", 25, "書房"], ["globe", "地球儀", "🌍", 45, "書房"], ["pc", "電腦", "🖥️", 120, "書房"], ["laptop", "筆電", "💻", 90, "書房"],
+  ["micro", "顯微鏡", "🔬", 70, "書房"], ["scope", "望遠鏡", "🔭", 90, "書房"], ["abacus", "算盤", "🧮", 30, "書房"], ["scroll", "書法卷軸", "📜", 30, "書房", 0, { scroll: 5 }],
+  ["bath", "浴缸", "🛁", 80, "浴室"], ["toilet", "馬桶", "🚽", 40, "浴室"], ["shower", "淋浴間", "🚿", 50, "浴室"], ["soap", "泡泡", "🫧", 10, "浴室"],
+  ["stove", "爐子", "🍳", 50, "廚房"], ["fridge", "冰箱", "🧊", 70, "廚房"], ["pot", "燉鍋", "🍲", 25, "廚房"], ["cake", "蛋糕", "🎂", 30, "廚房"],
+  ["donut", "甜甜圈", "🍩", 15, "廚房"], ["teapot", "茶壺", "🫖", 25, "廚房"], ["bento", "便當", "🍱", 20, "廚房"], ["boba", "珍珠奶茶", "🧋", 20, "廚房"],
+  ["plant", "盆栽", "🪴", 20, "植物"], ["cactus", "仙人掌", "🌵", 20, "植物"], ["tulip", "鬱金香", "🌷", 15, "植物"], ["sunflower", "向日葵", "🌻", 15, "植物"],
+  ["rose", "玫瑰", "🌹", 20, "植物"], ["sakura", "櫻花", "🌸", 25, "植物", 0, { seed: 5 }], ["bonsai", "竹子", "🎋", 30, "植物"], ["tree", "大樹", "🌳", 40, "植物", 0, { seed: 10 }],
+  ["palm", "椰子樹", "🌴", 45, "植物"], ["xmas", "聖誕樹", "🎄", 60, "植物"], ["mushroom", "蘑菇", "🍄", 15, "植物"], ["clover", "幸運草", "🍀", 20, "植物"],
+  ["guitar", "吉他", "🎸", 60, "音樂"], ["piano", "鋼琴", "🎹", 150, "音樂", 2], ["violin", "小提琴", "🎻", 80, "音樂"], ["drum", "鼓", "🥁", 60, "音樂"],
+  ["sax", "薩克斯風", "🎷", 80, "音樂"], ["trumpet", "小號", "🎺", 60, "音樂"], ["mic", "麥克風", "🎤", 40, "音樂"], ["radio", "收音機", "📻", 45, "音樂"],
+  ["game", "遊戲機", "🎮", 100, "玩具"], ["puzzle", "拼圖", "🧩", 20, "玩具"], ["kite", "風箏", "🪁", 25, "玩具"], ["yoyo", "溜溜球", "🪀", 15, "玩具"],
+  ["ball", "足球", "⚽", 20, "玩具"], ["basket", "籃球", "🏀", 20, "玩具"], ["robot", "機器人", "🤖", 90, "玩具", 1], ["rocket", "火箭模型", "🚀", 100, "玩具", 1],
+  ["train", "火車模型", "🚂", 70, "玩具"], ["dice", "骰子", "🎲", 10, "玩具"], ["balloon", "氣球", "🎈", 10, "玩具"], ["gift", "禮物盒", "🎁", 20, "玩具"],
+  ["anchor", "船錨", "⚓", 40, "海盜", 0, { stone: 5 }], ["ship", "帆船模型", "⛵", 80, "海盜"], ["chest", "寶箱", "🧰", 60, "海盜"], ["flag", "海盜旗", "🏴‍☠️", 50, "海盜"],
+  ["parrot", "鸚鵡", "🦜", 70, "海盜"], ["crab", "螃蟹", "🦀", 30, "海洋"], ["fish", "熱帶魚缸", "🐠", 60, "海洋"], ["octopus", "章魚", "🐙", 50, "海洋"],
+  ["shell", "貝殼", "🐚", 20, "海洋"], ["dolphin", "海豚雕像", "🐬", 90, "海洋", 2], ["whale", "鯨魚", "🐳", 120, "海洋", 2], ["turtle", "海龜", "🐢", 50, "海洋"],
+  ["moon", "月亮燈", "🌙", 40, "太空"], ["star", "星星燈", "⭐", 30, "太空"], ["planet", "土星模型", "🪐", 80, "太空"], ["ufo", "飛碟", "🛸", 120, "太空", 2],
+  ["alien", "外星人", "👽", 60, "太空"], ["satellite", "衛星", "🛰️", 90, "太空", 2], ["comet", "彗星", "☄️", 70, "太空"], ["astronaut", "太空人", "🧑‍🚀", 100, "太空", 3],
+  ["fan", "摺扇", "🪭", 30, "唐風", 0, { scroll: 3 }], ["kimono", "漢服", "👘", 60, "唐風", 0, { scroll: 5, cloth: 10 }], ["vase", "青花瓷", "🏺", 70, "唐風", 0, { relic: 10 }], ["dragon", "金龍", "🐉", 200, "唐風", 3, { scroll: 20 }],
+  ["pagoda", "小塔", "🛕", 150, "唐風", 2, { stone: 20, scroll: 10 }], ["gong", "銅鑼", "🔔", 40, "唐風"], ["torii", "牌樓", "⛩️", 120, "唐風", 2, { wood: 20 }], ["mooncake", "月餅", "🥮", 15, "唐風"],
+  ["cat", "小貓", "🐈", 80, "寵物"], ["dog", "小狗", "🐕", 80, "寵物"], ["rabbit", "兔子", "🐇", 60, "寵物"], ["hamster", "倉鼠", "🐹", 40, "寵物"],
+  ["chick", "小雞", "🐥", 30, "寵物"], ["panda", "熊貓", "🐼", 150, "寵物", 2], ["penguin", "企鵝", "🐧", 90, "寵物", 1], ["butterfly", "蝴蝶", "🦋", 30, "寵物"],
+  ["fountain", "小噴泉", "⛲", 150, "戶外", 2, { stone: 20 }], ["tent", "帳篷", "⛺", 50, "戶外"], ["campfire", "營火", "🔥", 30, "戶外", 0, { wood: 10 }], ["snowman", "雪人", "⛄", 40, "戶外"],
+  ["bench", "長椅", "🪑", 20, "戶外"], ["mailbox", "信箱", "📮", 25, "戶外"], ["swing", "鞦韆", "🎠", 120, "戶外", 2], ["slide", "摩天輪", "🎡", 250, "戶外", 3],
+  ["trophy", "獎盃", "🏆", 100, "收藏", 1], ["medal", "金牌", "🥇", 60, "收藏"], ["crown", "皇冠", "👑", 200, "收藏", 3], ["gem", "鑽石", "💎", 180, "收藏", 3],
+  // 扭蛋限定（商店買不到）
+  ["unicorn", "獨角獸", "🦄", 0, "扭蛋限定"], ["rainbow", "彩虹", "🌈", 0, "扭蛋限定"], ["peacock", "孔雀", "🦚", 0, "扭蛋限定"], ["phoenix", "火鳥", "🐦‍🔥", 0, "扭蛋限定"],
+  ["crystal", "水晶球", "🔮", 0, "扭蛋限定"], ["genie", "神燈", "🪔", 0, "扭蛋限定"], ["mermaid", "美人魚", "🧜‍♀️", 0, "扭蛋限定"], ["fairy", "小仙子", "🧚", 0, "扭蛋限定"]
+].map(([id, name, emoji, price, cat, lv, mats]) => ({ id, name, emoji, price, cat, lv: lv || 0, mats: mats || null }));
+const DW_ITEM = Object.fromEntries(DW_ITEMS.map(x => [x.id, x]));
+const DW_FLOORS = [["wood", "木地板", "#c08a52", "#a8743f", 0], ["tile", "白磁磚", "#f1f5f9", "#dbe3ec", 40], ["grass", "草皮", "#86efac", "#4ade80", 40], ["tatami", "榻榻米", "#d9c77a", "#c6b265", 60],
+  ["pink", "粉紅地毯", "#fbcfe8", "#f9a8d4", 60], ["blue", "海洋地毯", "#93c5fd", "#60a5fa", 60], ["chess", "西洋棋盤", "#f8fafc", "#1e293b", 80], ["sand", "沙灘", "#fde68a", "#fcd34d", 80],
+  ["marble", "大理石", "#f5f5f4", "#d6d3d1", 120], ["star", "星空地板", "#312e81", "#1e1b4b", 150], ["gold", "黃金地板", "#fde047", "#eab308", 250]]
+  .map(([id, name, a, b, price]) => ({ id, name, a, b, price }));
+const DW_WALLS = [["cream", "米白牆", "#fef3c7", 0], ["sky", "天空藍", "#bae6fd", 30], ["mint", "薄荷綠", "#bbf7d0", 30], ["peach", "蜜桃粉", "#fecdd3", 30], ["lav", "薰衣草紫", "#ddd6fe", 40],
+  ["log", "原木牆", "#b45309", 60], ["brick", "紅磚牆", "#b91c1c", 80], ["ocean", "深海藍", "#1d4ed8", 80], ["night", "星空牆", "#1e1b4b", 120], ["palace", "宮廷紅", "#9f1239", 150], ["goldw", "金碧輝煌", "#ca8a04", 250]]
+  .map(([id, name, c, price]) => ({ id, name, c, price }));
+const DW_ROOFS = ["#dc2626", "#2563eb", "#16a34a", "#9333ea", "#f59e0b", "#db2777", "#0d9488", "#475569"];
+const DW_STICKERS = ["👍", "🌟", "😍", "🏆", "🎉"];
+const DW_KINDS = { item: "家具", floor: "地板", wall: "壁紙" };
+
+let dw = { tab: "village", home: null, view: null, viewHome: null, hand: null, village: null, saving: null, timer: null, shopCat: "全部" };
+function dwMe() { return session.user.role === "parent" ? session.user.child : session.user.name; }
+function dwRules() { const r = rulesNow(), num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); return { on: r.worldOn !== false, n: num(r.worldSessions, 5), acc: num(r.worldAcc, 70), min: num(r.worldMin, 20) || 20 }; }
+
+// ── 學習換材料：答對 +1、訂正答對再 +1、整局全對（至少 5 題）+3 ──
+function dwEarned() {
+  const m = Object.fromEntries(DW_MATS.map(x => [x.k, 0]));
+  const kind = (s, u) => DW_SUBJ_MAT[s] || (s === "武林大會" ? DW_SUBJ_MAT[Object.keys(DW_SUBJ_MAT).find(k => String(u || "").indexOf(k) === 0)] : null);
+  myRows.forEach(r => { if (!r.ok) return; const k = kind(r.subject, r.unit); if (!k) return; m[k] += 1; if (r.mode === "訂正") m[k] += 1; });
+  mySessions.forEach(x => { const k = kind(x.subject, x.unit); if (k && x.total >= 5 && x.correct === x.total) m[k] += 3; });
+  return m;
+}
+function dwMats(home = dw.home) {
+  const e = dwEarned(), g = (home && home.gift && home.gift.mats) || {}, sp = (home && home.spent) || {};
+  return Object.fromEntries(DW_MATS.map(x => [x.k, Math.max(0, (e[x.k] || 0) + (g[x.k] || 0) - (sp[x.k] || 0))]));
+}
+function dwMatText(cost) { return Object.entries(cost).map(([k, v]) => `${DW_MATS.find(x => x.k === k).icon}${v}`).join(" "); }
+// 擁有的東西＝商店買的（金幣紀錄）＋扭蛋抽到的
+function dwOwned(kind, id, home = dw.home) {
+  const bought = coinRows.filter(r => r.op === "spend" && r.note === `${DW_KINDS[kind]}:${id}`).length;
+  const ex = (home && home.gift && home.gift.items && home.gift.items[id]) || 0;
+  return bought + (kind === "item" ? ex : 0);
+}
+function dwFree(id, home = dw.home) { return dwOwned("item", id, home) - (home.it || []).filter(t => t[0] === id).length - (dw.hand && dw.hand.id === id && !dw.hand.from ? 0 : 0); }
+
+// ── 進島條件 ──
+function dwGate() {
+  if (!session || session.user.role !== "student" || !FINAL) return { ok: true, list: [] };
+  const R = dwRules(), done = mySessions.filter(x => x.total > 0 && x.subject !== "航行").length;
+  const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0, pend = stats.pending.length;
+  const list = [
+    { label: `完成 ${R.n} 局闖關`, have: `${done} 局`, ok: done >= R.n },
+    { label: `期末正確率 ${R.acc}% 以上`, have: `${acc}%`, ok: acc >= R.acc },
+    { label: "錯題全部訂正完", have: `待訂正 ${pend} 題`, ok: pend === 0, go: pend ? "openMistakeBook()" : "" }];
+  return { ok: list.every(x => x.ok), list };
+}
+function dwTimeKey() { return "508_DREAM_T_" + session.user.name; }
+function dwTimeUsed() { const t = load(dwTimeKey(), null), d = nowStr().slice(0, 10); return t && t.d === d ? t.s : 0; }
+
+async function openDream() {
+  if (!session) return;
+  const R = dwRules();
+  if (!R.on && session.user.role === "student") return toast("🌈 老師暫時關閉了異想世界");
+  const g = dwGate();
+  if (!g.ok) return dwGateModal(g);
+  if (session.user.role === "student" && dwTimeUsed() >= R.min * 60) return toast(`🌙 今天在異想世界已經玩滿 ${R.min} 分鐘了，明天再來吧！`, 4500);
+  let el = document.getElementById("dream");
+  if (!el) { el = document.createElement("div"); el.id = "dream"; el.className = "dream"; document.body.appendChild(el); }
+  el.hidden = false; document.body.classList.add("dream-open");
+  el.innerHTML = `<div class="dw-loading">🌈 正在打開異想世界的大門…</div>`;
+  try { dw.home = dwFix((await bridgeCall("homeGet", { who: dwMe() })).home); } catch (e) { dw.home = dwFix(null); toast("⚠️ " + e.message); }
+  dw.tab = "village"; dw.view = null; dw.hand = null;
+  await dwLoadVillage();
+  renderDream();
+  clearInterval(dw.timer);
+  if (session.user.role === "student") dw.timer = setInterval(() => {
+    const t = load(dwTimeKey(), null), d = nowStr().slice(0, 10), s = (t && t.d === d ? t.s : 0) + 5;
+    store(dwTimeKey(), { d, s });
+    const left = dwRules().min * 60 - s, el2 = document.getElementById("dw-time");
+    if (el2) el2.textContent = `⏳ 今天還能玩 ${Math.max(0, Math.ceil(left / 60))} 分鐘`;
+    if (left <= 0) { closeDream(); toast(`🌙 今天的異想世界時間（${dwRules().min} 分鐘）用完了，回去學習換更多材料吧！`, 5000); }
+  }, 5000);
+}
+function closeDream() {
+  clearInterval(dw.timer); dwFlush();
+  const el = document.getElementById("dream"); if (el) el.hidden = true;
+  document.body.classList.remove("dream-open");
+}
+function dwGateModal(g) {
+  const R = dwRules();
+  document.getElementById("quiz-content").innerHTML = `<div style="text-align:center"><div style="font-size:3rem">🌈🔒</div>
+    <h2 style="margin:6px 0">508 異想世界還沒解鎖</h2><p>認真學習，就能進入異想世界蓋自己的家！每次進島都會檢查這三個條件：</p>
+    <div class="dw-gate">${g.list.map(x => `<div class="${x.ok ? "ok" : ""}"><b>${x.ok ? "✅" : "⬜"} ${escapeHtml(x.label)}</b><span>目前：${escapeHtml(x.have)}</span>${!x.ok && x.go ? `<button class="btn-ghost" onclick="closeModal('quiz-modal'); ${x.go}">去訂正</button>` : ""}</div>`).join("")}</div>
+    <p style="font-size:.85rem; opacity:.8">在異想世界每天最多玩 ${R.min} 分鐘。蓋房子的材料要靠答題換：國語→🪵、數學→🪨、英語→🧵、自然→🌱、社會→🏺、唐詩→📜。</p></div>`;
+  openModal("quiz-modal");
+}
+function dwFix(h) {
+  h = h && typeof h === "object" ? h : {};
+  return Object.assign({ nm: "", lv: 0, fl: "wood", wl: "cream", rf: DW_ROOFS[0], it: [], open: false, spent: {}, gift: { mats: {}, items: {} }, daily: {} }, h, { gift: Object.assign({ mats: {}, items: {} }, h.gift || {}) });
+}
+async function dwLoadVillage() { try { dw.village = (await bridgeCall("homeVillage")).homes || []; } catch (e) { dw.village = []; } }
+function dwSave() { clearTimeout(dw.saving); dw.saving = setTimeout(dwFlush, 1200); }
+async function dwFlush() {
+  if (!dw.saving || !dw.home || session.user.role !== "student") return;
+  clearTimeout(dw.saving); dw.saving = null;
+  try { await bridgeCall("homeSave", { home: dw.home }); } catch (e) { toast("⚠️ 家園沒有存到：" + e.message); }
+}
+
+// ── 畫面 ──
+function renderDream() {
+  const el = document.getElementById("dream"); if (!el) return;
+  const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
+  const tabs = [["village", "🏘️ 508 村莊"], ["castle", "🏰 老師的天空城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["bag", "🎒 材料與升級"]] : [])];
+  el.innerHTML = `<div class="dw-top">
+      <div class="dw-title">🌈 508 異想世界</div>
+      <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
+      <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
+      <button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
+    <div class="dw-body" id="dw-body">${dwBody()}</div>`;
+}
+function dwTab(t) { dw.tab = t; dw.view = null; dw.hand = null; renderDream(); }
+function dwBody() {
+  if (dw.view) return dwVisitHtml();
+  if (dw.tab === "village") return dwVillageHtml();
+  if (dw.tab === "castle") return dwCastleHtml();
+  if (dw.tab === "home") return dwHomeHtml();
+  if (dw.tab === "shop") return dwShopHtml();
+  if (dw.tab === "bag") return dwBagHtml();
+  return "";
+}
+
+// ── 斜角俯視的房間 ──
+function dwIso(home, o = {}) {
+  const N = o.n || DW_LEVELS[home.lv || 0].n, W = o.tw || 64, H = W / 2, wallH = o.wallH || 96;
+  const ox = N * W / 2 + 20, oy = wallH + 24, P = (x, y) => [(x - y) * W / 2 + ox, (x + y) * H / 2 + oy];
+  const fl = DW_FLOORS.find(f => f.id === home.fl) || DW_FLOORS[0], wl = o.wall || (DW_WALLS.find(w => w.id === home.wl) || DW_WALLS[0]).c;
+  const pts = a => a.map(p => p.join(",")).join(" "), up = ([x, y], h) => [x, y - h];
+  let s = "";
+  // 後面兩道牆
+  s += `<polygon points="${pts([P(0, 0), P(N, 0), up(P(N, 0), wallH), up(P(0, 0), wallH)])}" fill="${wl}" stroke="rgba(0,0,0,.25)"/>`;
+  s += `<polygon points="${pts([P(0, 0), P(0, N), up(P(0, N), wallH), up(P(0, 0), wallH)])}" fill="${wl}" style="filter:brightness(.86)" stroke="rgba(0,0,0,.25)"/>`;
+  // 窗戶
+  [[N * 0.3, 0], [N * 0.7, 0]].forEach(([x]) => { const a = P(x - 0.6, 0), b = P(x + 0.6, 0); s += `<polygon points="${pts([up(a, wallH * .35), up(b, wallH * .35), up(b, wallH * .75), up(a, wallH * .75)])}" fill="#bae6fd" stroke="#fff" stroke-width="3"/>`; });
+  { const a = P(0, N * 0.5 - 0.6), b = P(0, N * 0.5 + 0.6); s += `<polygon points="${pts([up(a, wallH * .35), up(b, wallH * .35), up(b, wallH * .75), up(a, wallH * .75)])}" fill="#bae6fd" stroke="#fff" stroke-width="3" style="filter:brightness(.9)"/>`; }
+  if (o.extraWall) s += o.extraWall(P, up, pts, N, wallH);
+  // 地板
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const c = (x + y) % 2 ? fl.a : fl.b;
+    s += `<polygon class="dw-tile" points="${pts([P(x, y), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1)])}" fill="${c}" stroke="rgba(0,0,0,.12)" ${o.click ? `onclick="${o.click}(${x},${y})"` : ""}/>`;
+  }
+  // 家具（由後往前畫）
+  const items = (home.it || []).map(t => ({ id: t[0], x: t[1], y: t[2], f: t[3] })).filter(t => t.x < N && t.y < N).sort((a, b) => a.x + a.y - (b.x + b.y));
+  items.forEach(t => {
+    const it = DW_ITEM[t.id] || (o.extraItems || {})[t.id]; if (!it) return;
+    const [cx, cy] = P(t.x + 0.5, t.y + 0.5), fs = (it.big ? 1.6 : 1) * W * 0.72;
+    s += `<g class="dw-item ${it.hot ? "hot" : ""}" ${o.click ? `onclick="${o.click}(${t.x},${t.y})"` : ""}><ellipse cx="${cx}" cy="${cy + 2}" rx="${W * .26}" ry="${H * .22}" fill="rgba(0,0,0,.18)"/>
+      <text x="${cx}" y="${cy + H * 0.18}" font-size="${fs}" text-anchor="middle" ${t.f ? `transform="translate(${2 * cx},0) scale(-1,1)"` : ""}>${it.emoji}</text>${it.hot ? `<text x="${cx + W * .28}" y="${cy - fs * .7}" font-size="${W * .28}" class="dw-spark">✨</text>` : ""}</g>`;
+  });
+  if (o.after) s += o.after(P, N);
+  const w = N * W + 40, h = N * H + wallH + 40;
+  return `<svg class="dw-iso" viewBox="0 0 ${w} ${h}" style="max-width:${Math.min(w, o.maxW || 900)}px">${o.defs || ""}${s}</svg>`;
+}
+
+// ── 我的家（編輯） ──
+function dwHomeHtml() {
+  const h = dw.home, L = DW_LEVELS[h.lv], inv = DW_ITEMS.filter(x => dwFree(x.id) > 0);
+  return `<div class="dw-home-wrap"><div class="dw-room">${dwIso(h, { click: "dwTile" })}
+      <div class="dw-hint">${dw.hand ? `✋ 手上拿著 <b>${DW_ITEM[dw.hand.id].emoji} ${DW_ITEM[dw.hand.id].name}</b>：點空的地板放下 <button class="btn-ghost" onclick="dwFlip()">↔️ 翻面</button> <button class="btn-ghost" onclick="dwStash()">🎒 收回背包</button>` : "點背包裡的家具，再點地板放上去；點房間裡的家具可以拿起來移動。"}</div></div>
+    <div class="dw-side">
+      <div class="dw-card"><b>${L.icon} ${escapeHtml(h.nm || dwMe() + "的家")}</b><small>${L.name}・${L.n}×${L.n} 格</small>
+        <div class="dw-row"><input id="dw-name" maxlength="12" placeholder="幫家取個名字" value="${escapeHtml(h.nm || "")}"><button class="btn-ghost" onclick="dwRename()">✏️</button></div>
+        <label class="dw-row" style="cursor:pointer"><input type="checkbox" ${h.open ? "checked" : ""} onchange="dw.home.open=this.checked; dwSave(); toast(this.checked ? '🚪 已開放：同學可以來參觀你的家' : '🔒 已關門：同學看不到你家裡')"> 🚪 開放同學參觀</label>
+        <div class="dw-row">屋頂顏色 ${DW_ROOFS.map(c => `<button class="dw-swatch ${h.rf === c ? "on" : ""}" style="background:${c}" onclick="dw.home.rf='${c}'; dwSave(); renderDream()"></button>`).join("")}</div>
+        <div class="dw-row">地板 <select onchange="dw.home.fl=this.value; dwSave(); renderDream()">${DW_FLOORS.filter(f => !f.price || dwOwned("floor", f.id)).map(f => `<option value="${f.id}" ${h.fl === f.id ? "selected" : ""}>${f.name}</option>`).join("")}</select>
+          壁紙 <select onchange="dw.home.wl=this.value; dwSave(); renderDream()">${DW_WALLS.filter(w => !w.price || dwOwned("wall", w.id)).map(w => `<option value="${w.id}" ${h.wl === w.id ? "selected" : ""}>${w.name}</option>`).join("")}</select></div>
+        <div class="dw-stickers">收到的貼圖：${dwStickerSum(dwMe())}</div></div>
+      <div class="dw-card"><b>🎒 背包</b>${inv.length ? `<div class="dw-inv">${inv.map(x => `<button title="${escapeHtml(x.name)}" class="${dw.hand && dw.hand.id === x.id ? "on" : ""}" onclick="dwPick('${x.id}')">${x.emoji}<small>×${dwFree(x.id)}</small></button>`).join("")}</div>` : `<p class="dw-empty">背包是空的，到 🛒 家具店買家具，或去 🏰 老師城堡轉扭蛋！</p>`}</div>
+    </div></div>`;
+}
+function dwStickerSum(name) { const v = (dw.village || []).find(x => x.name === name); return v && v.st ? DW_STICKERS.map(s => v.st[s] ? `${s}${v.st[s]}` : "").join(" ") || "還沒有" : "還沒有"; }
+function dwRename() { const v = document.getElementById("dw-name").value.replace(/[<>]/g, "").trim().slice(0, 12); dw.home.nm = v; dwSave(); renderDream(); toast("🏷️ 家的名字改好了"); }
+function dwPick(id) { if (dw.hand && !dw.hand.from && dw.hand.id === id) dw.hand = null; else { dwStash(true); dw.hand = { id, f: 0 }; } renderDream(); }
+function dwFlip() { if (dw.hand) { dw.hand.f = dw.hand.f ? 0 : 1; renderDream(); } }
+function dwStash(silent) { if (dw.hand && dw.hand.from) dwSave(); dw.hand = null; if (silent !== true) renderDream(); }
+function dwTile(x, y) {
+  const h = dw.home, i = h.it.findIndex(t => t[1] === x && t[2] === y);
+  if (dw.hand) {
+    if (i >= 0) return toast("這一格已經有東西了");
+    if (dwFree(dw.hand.id) <= 0 && !dw.hand.from) return toast("背包裡沒有了");
+    h.it.push([dw.hand.id, x, y, dw.hand.f || 0]); dw.hand = null; dwSave(); return renderDream();
+  }
+  if (i >= 0) { const t = h.it.splice(i, 1)[0]; dw.hand = { id: t[0], f: t[3] || 0, from: true }; dwSave(); renderDream(); }
+}
+
+// ── 家具店 ──
+function dwShopHtml() {
+  const cats = ["全部", ...new Set(DW_ITEMS.filter(x => x.price).map(x => x.cat)), "地板", "壁紙"], c = coinState(), mats = dwMats(), lv = dw.home.lv;
+  const card = (kind, x, emoji, name, price, need, mt) => {
+    const own = dwOwned(kind, x.id), lockLv = need > lv, poor = c.wallet < price, noMat = mt && Object.entries(mt).some(([k, v]) => (mats[k] || 0) < v);
+    const once = kind !== "item" && own;
+    return `<div class="dw-shop-card"><div class="e">${emoji}</div><b>${escapeHtml(name)}</b><small>🪙${price}${mt ? `＋${dwMatText(mt)}` : ""}</small>${own ? `<i>已有 ${own}</i>` : ""}
+      ${once ? `<button disabled>已擁有</button>` : lockLv ? `<button disabled>🔒 ${DW_LEVELS[need].name}解鎖</button>` : `<button ${poor || noMat ? "disabled" : ""} onclick="dwBuy('${kind}','${x.id}')">${poor ? "金幣不夠" : noMat ? "材料不夠" : "購買"}</button>`}</div>`;
+  };
+  let list = "";
+  if (dw.shopCat === "地板") list = DW_FLOORS.filter(f => f.price).map(f => card("floor", f, `<span class="dw-fl" style="background:linear-gradient(135deg,${f.a} 50%,${f.b} 50%)"></span>`, f.name, f.price, 0)).join("");
+  else if (dw.shopCat === "壁紙") list = DW_WALLS.filter(w => w.price).map(w => card("wall", w, `<span class="dw-fl" style="background:${w.c}"></span>`, w.name, w.price, 0)).join("");
+  else list = DW_ITEMS.filter(x => x.price && (dw.shopCat === "全部" || x.cat === dw.shopCat)).map(x => card("item", x, x.emoji, x.name, x.price, x.lv, x.mats)).join("");
+  return `<div class="dw-shop"><div class="dw-cats">${cats.map(k => `<button class="${dw.shopCat === k ? "on" : ""}" onclick="dw.shopCat='${k}'; renderDream()">${k}</button>`).join("")}</div>
+    <p class="dw-note">用錢袋裡的 🪙 金幣買（寶庫裡的要先領出來）；有些家具還要材料，或房子升級後才能買。🦄 扭蛋限定家具只能在老師城堡的扭蛋機抽到！</p>
+    <div class="dw-shop-grid">${list}</div></div>`;
+}
+async function dwBuy(kind, id) {
+  const x = kind === "item" ? DW_ITEM[id] : kind === "floor" ? DW_FLOORS.find(f => f.id === id) : DW_WALLS.find(w => w.id === id);
+  if (!x || !x.price) return;
+  if (coinState().wallet < x.price) return toast("🪙 錢袋裡的金幣不夠，先去寶庫領出來，或多答題賺金幣！");
+  if (x.mats) { const m = dwMats(); if (Object.entries(x.mats).some(([k, v]) => (m[k] || 0) < v)) return toast("材料不夠"); }
+  try {
+    await coinOp("spend", x.price, `${DW_KINDS[kind]}:${id}`);
+    if (x.mats) { Object.entries(x.mats).forEach(([k, v]) => { dw.home.spent[k] = (dw.home.spent[k] || 0) + v; }); }
+    if (kind === "floor") dw.home.fl = id; if (kind === "wall") dw.home.wl = id;
+    dwSave(); toast(`🛒 買到了 ${x.emoji || ""} ${x.name}！${kind === "item" ? "已經放進 🏠 我的家的背包" : "已經換上了"}`); renderDream();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+}
+
+// ── 材料與升級 ──
+function dwBagHtml() {
+  const h = dw.home, m = dwMats(), e = dwEarned(), next = DW_LEVELS[h.lv + 1];
+  const can = next && Object.entries(next.cost).every(([k, v]) => (m[k] || 0) >= v);
+  return `<div class="dw-bag"><div class="dw-card"><b>🎒 我的材料</b><div class="dw-mats">${DW_MATS.map(x => `<div><span>${x.icon}</span><b>${m[x.k]}</b><small>${x.name}・答對${x.from}題</small></div>`).join("")}</div>
+      <p class="dw-note">怎麼得到材料：每答對一題 +1（那一科的材料）；錯題訂正答對再 +1；一局全對（至少 5 題）+3；老師城堡的許願池每天也能許願一次。</p>
+      <p class="dw-note">目前從學習得到的總數：${DW_MATS.map(x => `${x.icon}${e[x.k]}`).join("　")}</p></div>
+    <div class="dw-card"><b>🏗️ 房子升級</b><div class="dw-levels">${DW_LEVELS.map((L, i) => `<div class="${i === h.lv ? "now" : i < h.lv ? "done" : ""}"><span>${L.icon}</span><b>${L.name}</b><small>${L.n}×${L.n} 格${L.cost ? "<br>" + dwMatText(L.cost) : ""}</small></div>`).join("")}</div>
+      ${next ? `<button class="btn-accent" style="width:100%; padding:12px; margin-top:8px" ${can ? "" : "disabled"} onclick="dwUpgrade()">${can ? `🏗️ 升級成 ${next.icon} ${next.name}！` : `材料還不夠：需要 ${dwMatText(next.cost)}`}</button>` : `<p style="text-align:center; font-weight:900">👑 已經是最高級的夢幻城堡了！</p>`}
+      <p class="dw-note">升級需要五科的材料，只練擅長的科目是蓋不起來的喔！</p></div></div>`;
+}
+function dwUpgrade() {
+  const h = dw.home, next = DW_LEVELS[h.lv + 1], m = dwMats(); if (!next) return;
+  if (!Object.entries(next.cost).every(([k, v]) => (m[k] || 0) >= v)) return toast("材料不夠");
+  Object.entries(next.cost).forEach(([k, v]) => { h.spent[k] = (h.spent[k] || 0) + v; });
+  h.lv++; dwSave(); dwFlush(); renderDream();
+  dwCelebrate(`${next.icon} 恭喜！你的家升級成「${next.name}」了！`);
+}
+function dwCelebrate(text) {
+  const d = document.createElement("div"); d.className = "dw-cele"; d.innerHTML = `<div>${"🎉✨🌈⭐🎊".repeat(3).split("").map((c, i) => `<i style="left:${(i * 37) % 100}%; animation-delay:${(i % 7) * .15}s">${c}</i>`).join("")}<b>${escapeHtml(text)}</b></div>`;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3200);
+}
+
+// ── 508 村莊 ──
+function dwHouseSvg(lv, roof, big) {
+  const r = roof || "#dc2626";
+  const shapes = [
+    `<path d="M10 70 L50 18 L90 70Z" fill="${r}"/><path d="M42 70 L50 40 L58 70Z" fill="#7c2d12"/>`,
+    `<rect x="18" y="40" width="64" height="32" fill="#a16207"/><path d="M10 42 L50 14 L90 42Z" fill="${r}"/><rect x="44" y="52" width="12" height="20" fill="#422006"/><rect x="24" y="48" width="12" height="10" fill="#bae6fd"/>`,
+    `<rect x="16" y="36" width="68" height="36" fill="#b45309"/><g stroke="#92400e" stroke-width="1">${[44, 52, 60, 68].map(y => `<path d="M16 ${y}h68"/>`).join("")}</g><path d="M8 38 L50 10 L92 38Z" fill="${r}"/><rect x="44" y="50" width="12" height="22" fill="#422006"/><rect x="22" y="44" width="12" height="10" fill="#bae6fd"/><rect x="66" y="44" width="12" height="10" fill="#bae6fd"/>`,
+    `<rect x="16" y="26" width="68" height="46" fill="#fef3c7" stroke="#d97706"/><path d="M8 28 L50 4 L92 28Z" fill="${r}"/><rect x="44" y="52" width="12" height="20" fill="#7c2d12"/>${[[22, 32], [66, 32], [22, 52], [66, 52]].map(([x, y]) => `<rect x="${x}" y="${y}" width="12" height="10" fill="#bae6fd"/>`).join("")}<rect x="40" y="32" width="20" height="10" fill="#bae6fd"/>`,
+    `<rect x="20" y="30" width="60" height="42" fill="#e2e8f0" stroke="#94a3b8"/>${[8, 74].map(x => `<rect x="${x}" y="16" width="18" height="56" fill="#cbd5e1" stroke="#94a3b8"/><path d="M${x - 3} 18 L${x + 9} 0 L${x + 21} 18Z" fill="${r}"/>`).join("")}<path d="M28 32 L50 12 L72 32Z" fill="${r}"/><path d="M42 72 v-14 a8 8 0 0 1 16 0 v14Z" fill="#7c2d12"/>${[20, 30, 40, 50, 60, 70].map(x => `<rect x="${x}" y="26" width="6" height="5" fill="#e2e8f0" stroke="#94a3b8"/>`).join("")}`];
+  return `<svg viewBox="0 0 100 76" class="dw-hs ${big ? "big" : ""}">${shapes[Math.max(0, Math.min(4, lv || 0))]}</svg>`;
+}
+function dwVillageHtml() {
+  const v = (dw.village || []).filter(x => x.name.indexOf("__") !== 0).slice().sort((a, b) => (a.seat || "").localeCompare(b.seat || "") || a.name.localeCompare(b.name));
+  const me = dwMe();
+  return `<div class="dw-village">
+    <div class="dw-sky"><span class="cloud c1">☁️</span><span class="cloud c2">☁️</span><span class="cloud c3">☁️</span><span class="bal">🎈</span></div>
+    <button class="dw-castle-gate" onclick="dwTab('castle')">${dwCastleOutside()}<b>🏰 老師的天空城堡</b><small>所有人都可以進來玩！許願池、扭蛋機、音樂廳、水族館…</small></button>
+    <div class="dw-plots">${v.map(x => {
+      const mine = x.name === me, can = mine || x.open || session.user.role === "teacher";
+      return `<button class="dw-plot ${mine ? "mine" : ""} ${can ? "" : "locked"}" onclick="${can ? `dwVisit(${escapeHtml(JSON.stringify(x.name))})` : `toast('🔒 ${escapeHtml(shortName(x.name))}還沒開放參觀')`}">
+        ${dwHouseSvg(x.lv, x.rf)}<b>${escapeHtml(x.nm || shortName(x.name) + "的家")}</b><small>${escapeHtml(shortName(x.name))}・${DW_LEVELS[x.lv || 0].name}${can ? "" : " 🔒"}</small>
+        ${x.st ? `<span class="dw-st">${DW_STICKERS.map(s => x.st[s] ? `${s}${x.st[s]}` : "").join("")}</span>` : ""}</button>`;
+    }).join("") || `<p class="dw-empty">村莊還沒有房子，快到 🏠 我的家開始布置吧！</p>`}</div>
+    <p class="dw-note">🚪 只有主人開放參觀的家才能進去；在「我的家」可以開關。參觀時每天可以送每一家一張貼圖。</p></div>`;
+}
+async function dwVisit(name) {
+  if (name === dwMe() && session.user.role === "student") return dwTab("home");
+  try { const r = await bridgeCall("homeGet", { who: name }); dw.view = name; dw.viewHome = dwFix(r.home); renderDream(); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
+function dwVisitHtml() {
+  const h = dw.viewHome, name = dw.view, v = (dw.village || []).find(x => x.name === name) || {};
+  return `<div class="dw-home-wrap"><div class="dw-room">${dwIso(h, {})}</div>
+    <div class="dw-side"><div class="dw-card"><b>${DW_LEVELS[h.lv].icon} ${escapeHtml(h.nm || shortName(name) + "的家")}</b><small>主人：${escapeHtml(shortName(name))}・${DW_LEVELS[h.lv].name}</small>
+      <div class="dw-stickers">收到的貼圖：${dwStickerSum(name)}</div>
+      ${session.user.role === "student" ? `<div class="dw-row">送一張貼圖：${DW_STICKERS.map(s => `<button class="dw-stk" onclick='dwSticker(${JSON.stringify(name)}, "${s}")'>${s}</button>`).join("")}</div><small>每天可以送每一家一張。</small>` : ""}
+      ${session.user.role === "teacher" ? `<button class="btn-ghost" style="margin-top:8px" onclick='dwReset(${JSON.stringify(name)})'>🧹 名字不恰當：重設家名</button>` : ""}
+      <button class="btn-primary" style="width:100%; margin-top:10px" onclick="dw.view=null; renderDream()">⬅ 回到村莊</button></div></div></div>`;
+}
+async function dwSticker(to, s) {
+  try { const r = await bridgeCall("homeSticker", { to, s }); const v = (dw.village || []).find(x => x.name === to); if (v) v.st = r.st; toast(`${s} 已經送給 ${shortName(to)}！`); renderDream(); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
+async function dwReset(name) {
+  try { await bridgeCall("homeReset", { who: name }); toast("🧹 已重設家名"); await dwLoadVillage(); await dwVisit(name); } catch (e) { toast("⚠️ " + e.message); }
+}
+
+// ── 🏰 老師的天空城堡：12×12 的大廳，十個互動景點，每天都有獎勵 ──
+const DW_CASTLE_ITEMS = {
+  hFountain: { emoji: "⛲", name: "許願池", hot: true, big: true }, hGacha: { emoji: "🎰", name: "幸運扭蛋機", hot: true, big: true },
+  hPiano: { emoji: "🎹", name: "星光鋼琴", hot: true }, hBooks: { emoji: "📚", name: "魔法書櫃", hot: true }, hScope: { emoji: "🔭", name: "天文台", hot: true },
+  hAqua: { emoji: "🐠", name: "海底水族館", hot: true }, hTrophy: { emoji: "🏆", name: "榮譽殿堂", hot: true }, hCake: { emoji: "🎂", name: "甜點吧", hot: true },
+  hThrone: { emoji: "👑", name: "船長寶座", hot: true, big: true }, hGuest: { emoji: "📖", name: "訪客簽名簿", hot: true },
+  dCarousel: { emoji: "🎠", big: true }, dWheel: { emoji: "🎡", big: true }, dCoaster: { emoji: "🎢", big: true }, dUni: { emoji: "🦄" }, dPeacock: { emoji: "🦚" },
+  dPalm: { emoji: "🌴" }, dSakura: { emoji: "🌸" }, dDolphin: { emoji: "🐬" }, dOcto: { emoji: "🐙" }, dWhale: { emoji: "🐳" }, dGem: { emoji: "💎" }, dDonut: { emoji: "🍩" },
+  dCup: { emoji: "🧁" }, dLolly: { emoji: "🍭" }, dBalloon: { emoji: "🎈" }, dGift: { emoji: "🎁" }, dRocket: { emoji: "🚀" }, dPlanet: { emoji: "🪐" }, dViolin: { emoji: "🎻" }, dDrum: { emoji: "🥁" },
+  dLantern: { emoji: "🏮" }, dDragon: { emoji: "🐉", big: true }, dRainbow: { emoji: "🌈" }, dTeddy: { emoji: "🧸" }, dParrot: { emoji: "🦜" }, dTulip: { emoji: "🌷" }, dShip: { emoji: "⛵" }, dCrystal: { emoji: "🔮" }
+};
+const DW_CASTLE = { fl: "marble", it: [
+  ["hThrone", 1, 1], ["dGem", 0, 0], ["dCrystal", 3, 0], ["dLantern", 0, 3], ["dDragon", 5, 0], ["dLantern", 7, 0], ["dRainbow", 9, 0], ["dRocket", 11, 0], ["hScope", 10, 1], ["dPlanet", 11, 2],
+  ["hBooks", 0, 6], ["dTeddy", 0, 8], ["dShip", 0, 10], ["dParrot", 1, 10], ["hGuest", 2, 6],
+  ["hFountain", 5, 5], ["dTulip", 4, 4], ["dTulip", 7, 4], ["dSakura", 4, 7], ["dSakura", 7, 7],
+  ["hPiano", 9, 4], ["dViolin", 10, 4], ["dDrum", 11, 4], ["hGacha", 10, 6], ["dGift", 11, 7], ["dBalloon", 9, 7],
+  ["hAqua", 2, 10], ["dDolphin", 3, 11], ["dOcto", 4, 10], ["dWhale", 5, 11],
+  ["dCarousel", 7, 10], ["dWheel", 9, 10], ["dCoaster", 11, 10], ["dUni", 8, 8], ["dPeacock", 6, 9],
+  ["hCake", 3, 3], ["dDonut", 2, 3], ["dCup", 3, 2], ["dLolly", 4, 2], ["hTrophy", 8, 1], ["dPalm", 0, 11], ["dPalm", 11, 11]].map(t => [t[0], t[1], t[2], 0]) };
+function dwCastleOutside() {
+  return `<svg viewBox="0 0 220 150" class="dw-castle-svg"><defs><linearGradient id="cgold" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <linearGradient id="crb" x1="0" x2="1"><stop offset="0" stop-color="#f87171"/><stop offset=".2" stop-color="#fb923c"/><stop offset=".4" stop-color="#facc15"/><stop offset=".6" stop-color="#4ade80"/><stop offset=".8" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>
+    <path d="M10 120 A100 100 0 0 1 210 120" stroke="url(#crb)" stroke-width="10" fill="none" opacity=".75"/>
+    <ellipse cx="110" cy="134" rx="96" ry="14" fill="#e0f2fe"/><ellipse cx="70" cy="136" rx="40" ry="10" fill="#fff"/><ellipse cx="150" cy="136" rx="44" ry="10" fill="#fff"/>
+    <rect x="50" y="70" width="120" height="60" fill="url(#cgold)" stroke="#b45309"/>
+    ${[30, 94, 160].map((x, i) => `<rect x="${x}" y="${i === 1 ? 28 : 46}" width="${i === 1 ? 32 : 30}" height="${i === 1 ? 102 : 84}" fill="url(#cgold)" stroke="#b45309"/><path d="M${x - 5} ${i === 1 ? 30 : 48} L${x + (i === 1 ? 16 : 15)} ${i === 1 ? 2 : 22} L${x + (i === 1 ? 37 : 35)} ${i === 1 ? 30 : 48}Z" fill="#7c3aed"/><path d="M${x + (i === 1 ? 16 : 15)} ${i === 1 ? 2 : 22} v-14 l14 6 -14 6" fill="#ef4444" stroke="#7c2d12"/>`).join("")}
+    <path d="M96 130 v-26 a14 14 0 0 1 28 0 v26Z" fill="#7c2d12"/>${[[64, 84], [140, 84], [104, 50]].map(([x, y]) => `<rect x="${x}" y="${y}" width="14" height="16" rx="7" fill="#bae6fd" stroke="#fff"/>`).join("")}
+    <rect x="97" y="72" width="26" height="14" rx="3" fill="#7c3aed"/><text x="110" y="83" text-anchor="middle" font-size="11" font-weight="900" fill="#fde68a">508</text>
+    ${[[20, 30], [200, 40], [180, 10], [40, 8], [110, 0]].map(([x, y], i) => `<text x="${x}" y="${y + 14}" font-size="12" class="dw-spark" style="animation-delay:${i * .3}s">✨</text>`).join("")}</svg>`;
+}
+function dwCastleHtml() {
+  const wall = (P, up, pts, N, wh) => {
+    // 牆上的彩虹拱門和水晶吊燈
+    const a = P(N * 0.35, 0), b = P(N * 0.65, 0);
+    return `<path d="M${a[0]} ${a[1] - wh * .2} Q ${(a[0] + b[0]) / 2} ${a[1] - wh * 1.35} ${b[0]} ${b[1] - wh * .2}" stroke="url(#crb2)" stroke-width="9" fill="none" opacity=".85"/>
+      <text x="${(a[0] + b[0]) / 2}" y="${(a[1] + b[1]) / 2 - wh * .55}" font-size="26" text-anchor="middle">🪩</text>
+      ${[0.15, 0.85].map(t => { const p = P(N * t, 0); return `<text x="${p[0]}" y="${p[1] - wh * .55}" font-size="20" text-anchor="middle">🖼️</text>`; }).join("")}
+      ${[0.25, 0.75].map(t => { const p = P(0, N * t); return `<text x="${p[0]}" y="${p[1] - wh * .55}" font-size="20" text-anchor="middle">🏮</text>`; }).join("")}`;
+  };
+  const defs = `<defs><linearGradient id="crb2" x1="0" x2="1"><stop offset="0" stop-color="#f87171"/><stop offset=".25" stop-color="#facc15"/><stop offset=".5" stop-color="#4ade80"/><stop offset=".75" stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>`;
+  const hot = Object.entries(DW_CASTLE_ITEMS).filter(([, v]) => v.hot);
+  return `<div class="dw-castle"><div class="dw-castle-head"><h2>🏰 船長老師的天空城堡</h2><p>歡迎光臨！點有 ✨ 的地方可以玩，許願池和扭蛋機每天都有禮物喔！</p></div>
+    <div class="dw-home-wrap"><div class="dw-room">${dwIso(DW_CASTLE, { n: 12, tw: 58, wallH: 120, wall: "#7c3aed", extraItems: DW_CASTLE_ITEMS, click: "dwCastleTap", extraWall: wall, defs, maxW: 1000 })}</div>
+    <div class="dw-side"><div class="dw-card" id="dw-castle-panel">${dwCastlePanel("intro")}</div>
+      <div class="dw-card"><b>✨ 城堡景點</b><div class="dw-hot">${hot.map(([k, v]) => `<button onclick="dwHot('${k}')">${v.emoji}<small>${v.name}</small></button>`).join("")}</div></div></div></div></div>`;
+}
+function dwCastleTap(x, y) { const t = DW_CASTLE.it.find(t => t[1] === x && t[2] === y); if (t && DW_CASTLE_ITEMS[t[0]].hot) dwHot(t[0]); }
+function dwDaily() { const h = dw.home, d = nowStr().slice(0, 10); if (!h.daily || h.daily.d !== d) h.daily = { d, done: [] }; return h.daily; }
+const DW_FACTS_SKY = ["北極星幾乎不動，古時候的水手靠它辨認北方。", "一年四季看到的星座不一樣，夏天有天蠍座，冬天有獵戶座。", "月亮本身不會發光，是反射太陽的光。", "土星的光環是由冰塊和岩石組成的。", "光從太陽到地球大約要 8 分鐘。", "牛郎星（河鼓二）和織女星（織女一）隔著銀河相望，就是七夕故事的主角。", "金星是天空中除了太陽、月亮以外最亮的星星，古人叫它「啟明星」和「長庚星」。", "流星其實是太空中的小石頭衝進大氣層燒起來的光。"];
+const DW_FACTS_SEA = ["海豚睡覺時會讓一半的大腦休息，另一半保持清醒。", "章魚有三顆心臟和藍色的血。", "藍鯨是地球上最大的動物，心臟和一台小汽車差不多大。", "小丑魚住在海葵裡，海葵的刺不會傷害牠。", "海馬是由爸爸懷孕生寶寶的。", "珊瑚其實是動物，不是植物。", "臺灣四面環海，附近海域有超過 3,000 種魚類。"];
+const DW_PIANO = [[523, 523, 784, 784, 880, 880, 784], [698, 698, 659, 659, 587, 587, 523]];
+function dwCastlePanel(k) {
+  const it = DW_CASTLE_ITEMS[k];
+  if (k === "intro") return `<b>👋 歡迎來到天空城堡</b><p class="dw-note">這是 508 船長老師的家！左上角有船長寶座，中間是許願池，右邊是音樂廳和扭蛋機，前面是海底水族館和遊樂園。</p>`;
+  return `<b>${it.emoji} ${it.name}</b>`;
+}
+async function dwHot(k) {
+  const el = document.getElementById("dw-castle-panel"); if (!el) return;
+  const it = DW_CASTLE_ITEMS[k], stu = session.user.role === "student", d = stu ? dwDaily() : { done: [] };
+  const head = `<b>${it.emoji} ${it.name}</b>`;
+  if (k === "hFountain") {
+    if (!stu) return el.innerHTML = head + `<p>學生每天可以在這裡許願一次，得到 3～6 個隨機材料。</p>`;
+    if (d.done.includes("fountain")) return el.innerHTML = head + `<p>💧 今天已經許過願了，明天再來吧！</p>`;
+    const m = DW_MATS[Math.floor(Math.random() * DW_MATS.length)], n = 3 + Math.floor(Math.random() * 4);
+    d.done.push("fountain"); dw.home.gift.mats[m.k] = (dw.home.gift.mats[m.k] || 0) + n; dwSave(); dwFlush();
+    el.innerHTML = head + `<div class="dw-reward">🪙💦 你丟了一枚許願幣…<br><big>${m.icon} ${m.name} ×${n}</big><br>願望成真！</div>`; renderDreamStat(); return;
+  }
+  if (k === "hGacha") {
+    if (!stu) return el.innerHTML = head + `<p>學生每天可以免費轉一次，有機會抽到商店買不到的 🦄 扭蛋限定家具！</p>`;
+    if (d.done.includes("gacha")) return el.innerHTML = head + `<p>🎰 今天的免費扭蛋已經轉過了，明天再來！</p>`;
+    const rare = DW_ITEMS.filter(x => !x.price), common = DW_ITEMS.filter(x => x.price && x.price <= 40 && !x.mats);
+    const pick = Math.random() < 0.15 ? rare[Math.floor(Math.random() * rare.length)] : common[Math.floor(Math.random() * common.length)];
+    d.done.push("gacha"); dw.home.gift.items[pick.id] = (dw.home.gift.items[pick.id] || 0) + 1; dwSave(); dwFlush();
+    el.innerHTML = head + `<div class="dw-gacha"><div class="ball">🔴</div></div>`;
+    setTimeout(() => { const e2 = document.getElementById("dw-castle-panel"); if (e2) e2.innerHTML = head + `<div class="dw-reward">${pick.price ? "🎉 抽到了" : "🌟🌟 超稀有！抽到扭蛋限定"}<br><big>${pick.emoji} ${pick.name}</big><br>已經放進 🏠 我的家的背包！</div>`; if (!pick.price) dwCelebrate(`🌟 抽到扭蛋限定：${pick.emoji} ${pick.name}！`); }, 1300);
+    return;
+  }
+  if (k === "hPiano") {
+    el.innerHTML = head + `<p>🎵 叮叮咚咚…這是〈小星星〉！</p><div class="dw-keys">${["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"].map((n, i) => `<button onclick="dwNote(${[523, 587, 659, 698, 784, 880, 988][i]})">${n}</button>`).join("")}</div><p class="dw-note">自己按琴鍵彈彈看！</p>`;
+    let t = 0; DW_PIANO.flat().forEach(f => { setTimeout(() => dwNote(f), t); t += 380; }); return;
+  }
+  if (k === "hBooks") {
+    const T = window.TANG; const p = T && T.poems[Math.floor(Math.random() * T.poems.length)];
+    el.innerHTML = head + (p ? `<p>📖 你從書櫃抽出一本詩集，翻到：</p><div class="dw-poem"><b>〈${escapeHtml(p.t)}〉</b> ${escapeHtml(p.a)}<br>${p.lines.map(escapeHtml).join("<br>")}</div><button class="btn-ghost" onclick="closeDream(); openTangPoem(${p.n})">📜 去唐詩島讀這首</button>` : "<p>書櫃裡的書都被借走了！</p>");
+    return;
+  }
+  if (k === "hScope") return el.innerHTML = head + `<p>🔭 你從望遠鏡看出去…</p><div class="dw-reward">🌌 ${DW_FACTS_SKY[Math.floor(Math.random() * DW_FACTS_SKY.length)]}</div>`;
+  if (k === "hAqua") return el.innerHTML = head + `<p>🐠🐬🐙 魚兒游來游去…</p><div class="dw-reward">🌊 ${DW_FACTS_SEA[Math.floor(Math.random() * DW_FACTS_SEA.length)]}</div>`;
+  if (k === "hTrophy") {
+    const top = (dw.village || []).filter(x => x.name.indexOf("__") !== 0).map(x => ({ x, n: DW_STICKERS.reduce((t, s) => t + ((x.st || {})[s] || 0), 0) })).filter(a => a.n).sort((a, b) => b.n - a.n).slice(0, 5);
+    return el.innerHTML = head + `<p>🏆 最受歡迎的家（收到最多貼圖）：</p>${top.length ? `<ol class="dw-top5">${top.map(a => `<li>${DW_LEVELS[a.x.lv || 0].icon} ${escapeHtml(a.x.nm || shortName(a.x.name) + "的家")} <small>${a.n} 張</small></li>`).join("")}</ol>` : "<p>還沒有人收到貼圖，快去參觀同學的家吧！</p>"}`;
+  }
+  if (k === "hCake") {
+    const sweets = ["🍰 草莓蛋糕", "🧁 杯子蛋糕", "🍩 巧克力甜甜圈", "🍮 布丁", "🍪 餅乾", "🍡 糰子", "🥮 月餅", "🧋 珍珠奶茶"], s = sweets[Math.floor(Math.random() * sweets.length)];
+    const cheer = ["今天也辛苦了！", "錯題訂正完，最棒！", "每天進步一點點！", "你的努力老師都看到了！", "加油，期末考一定沒問題！"];
+    return el.innerHTML = head + `<div class="dw-reward">老師請你吃 <big>${s}</big><br>💬 ${cheer[Math.floor(Math.random() * cheer.length)]}</div>`;
+  }
+  if (k === "hThrone") return el.innerHTML = head + `<p>👑 這是船長老師的寶座！</p><div class="dw-reward">📣 船長說：「學習就是你們最強的船帆，<br>每答對一題，船就前進一點！」</div>`;
+  if (k === "hGuest") return el.innerHTML = head + `<p>在老師的簽名簿留下一張貼圖吧！</p>${stu ? `<div class="dw-row">${DW_STICKERS.map(s => `<button class="dw-stk" onclick='dwSticker("__teacher", "${s}")'>${s}</button>`).join("")}</div>` : ""}<p class="dw-note">目前收到：${dwStickerSum("__teacher")}</p>`;
+}
+function renderDreamStat() { const top = document.querySelector(".dw-stat"); if (top) { const m = dwMats(); top.querySelectorAll("span").forEach((s, i) => { if (i < DW_MATS.length) s.textContent = DW_MATS[i].icon + m[DW_MATS[i].k]; }); } }
+let dwAudio = null;
+function dwNote(f) {
+  try {
+    dwAudio = dwAudio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = dwAudio.createOscillator(), g = dwAudio.createGain(); o.type = "triangle"; o.frequency.value = f;
+    g.gain.setValueAtTime(0.25, dwAudio.currentTime); g.gain.exponentialRampToValueAtTime(0.001, dwAudio.currentTime + 0.6);
+    o.connect(g); g.connect(dwAudio.destination); o.start(); o.stop(dwAudio.currentTime + 0.6);
+  } catch (e) {}
 }
 
 // ── 單字王：聽寫通關考（系統念單字 → 拼出英文＋選出中文，兩個一起送出，都對才算對） ──
@@ -3617,7 +4164,11 @@ function say(text) {
 }
 
 function toast(text, ms = 3200) {
-  const t = document.getElementById("map-toast");
+  let t = document.getElementById("map-toast");
+  if (document.body.classList.contains("dream-open")) {
+    t = document.getElementById("dw-toast");
+    if (!t) { t = document.createElement("div"); t.id = "dw-toast"; t.className = "dw-toast"; document.body.appendChild(t); }
+  }
   t.textContent = text;
   t.hidden = false;
   clearTimeout(toast.t);
@@ -3811,6 +4362,8 @@ function toggleBattle() {
 }
 function renderPills() {
   const u = session.user;
+  const portal = document.getElementById("dream-portal");
+  if (portal) portal.hidden = !FINAL || (u.role === "student" && rulesNow().worldOn === false);
   const pills = document.getElementById("pills");
   let html = `<span class="pill" style="cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${photoOf(u.name, myPv()) ? `<img class="pill-face" src="${photoOf(u.name, myPv())}" alt="">` : myEmoji()} ${ROLE_INFO[u.role].icon} ${escapeHtml(u.name)} ✏️</span>`;
   if (u.role === "student") {
@@ -5174,7 +5727,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3 };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: true, worldSessions: 5, worldAcc: 70, worldMin: 20 };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -5755,6 +6308,8 @@ async function renderBridge() {
         <label class="bridge-switch"><input type="checkbox" id="rule-fast" ${r.fastOn !== false ? "checked" : ""}> <span><b>⚡ 快答特權</b><br><small>等級愈高，每題最少停留秒數愈短：Lv.20 → 11 秒、Lv.40 → 10 秒、Lv.60 → 9 秒、Lv.80 → 8 秒（最低 8 秒）。閱讀測驗、唐詩等有文章的題目一律 ${PACE.minSeconds} 秒；掉級自動恢復；當天有亂答警告就暫停到隔天。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-balance" ${r.balanceOn !== false ? "checked" : ""}> <span><b>⚖️ 均衡航行</b><br><small>同一科今天連續跑滿幾局後，下一局要先去他正確率最低的科目跑一局，才能再回來（唐詩算國語、單字王算英語；錯題島訂正、老師考卷不受限）。</small>
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn !== false ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions || 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc || 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
     } else if (t === "conduct") {
@@ -5818,7 +6373,9 @@ async function saveRules() {
     schoolStart: document.getElementById("rule-start").value || "07:40", schoolEnd: document.getElementById("rule-end").value || "16:00",
     openStart: document.getElementById("rule-open-start").value || "06:30", openEnd: document.getElementById("rule-open-end").value || "22:00",
     sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
-    fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)) };
+    fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)),
+    worldOn: document.getElementById("rule-world").checked, worldSessions: Math.max(0, Math.min(50, Number(document.getElementById("rule-world-n").value) || 0)),
+    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)) };
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
   if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
@@ -6442,6 +6999,18 @@ function demoBridge(op, d) {
   };
   db.reports = db.reports || [];
   db.tq = db.tq || [];
+  db.homes = db.homes || { "508示範同學二": { nm: "海豚小屋", lv: 2, fl: "blue", wl: "ocean", rf: "#2563eb", open: true, it: [["dolphin", 1, 1, 0], ["fish", 3, 1, 0], ["bed", 6, 1, 0], ["plant", 1, 5, 0], ["couch", 4, 4, 0], ["tv", 4, 2, 0], ["shell", 6, 6, 0]] } };
+  db.stk = db.stk || [];
+  const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st }; };
+  if (op === "homeGet") { const who = d.who, h = db.homes[who] || null; if (who !== session.user.name && session.user.role === "student" && h && !h.open) throw new Error("主人還沒開放參觀"); return { home: h }; }
+  if (op === "homeSave") { db.homes[session.user.name] = d.home; save(); return { ok: true }; }
+  if (op === "homeVillage") return { homes: [...DEMO_ROSTER.filter(a => a.role === "student").map(a => Object.assign(homeSum(a.name), { seat: a.seat })), homeSum("__teacher")] };
+  if (op === "homeSticker") {
+    const day = nowStr().slice(0, 10);
+    if (db.stk.some(x => x.from === session.user.name && x.to === d.to && x.t.slice(0, 10) === day)) throw new Error("今天已經送過這一家貼圖了");
+    db.stk.push({ t: nowStr(), from: session.user.name, to: d.to, s: d.s }); save(); return { st: homeSum(d.to).st };
+  }
+  if (op === "homeReset") { if (db.homes[d.who]) db.homes[d.who].nm = ""; save(); return { ok: true }; }
   if (op === "tqSave") {
     const cls = isAdmin() ? d.cls : [teacherCls()];
     const tq = { id: uid().slice(-8), title: d.title, ids: d.ids, cls, due: d.due || "", show: d.show, by: session.user.name, t: nowStr() };
