@@ -2947,7 +2947,7 @@ function w3Create() {
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
@@ -3431,7 +3431,7 @@ function w3HpRender() {
   el.innerHTML = `<span>${"❤️".repeat(Math.min(hp, g.max))}${"🤍".repeat(Math.max(0, g.max - hp))}</span><small>${g.sw ? g.sw.emoji : "👊"}${g.ar ? g.ar.emoji : ""}${g.spd > 1 ? "👟" : ""} 🧪${g.pot}${session.user.role !== "student" ? "・無敵" : ""}</small>`;
 }
 function w3Attack() {
-  if (!w3 || !w3.zombies || w3.room || w3.atkCd > 0) return;
+  if (!w3 || !w3.zombies || !w3.zon || w3.room || w3.atkCd > 0) return;
   w3.atkCd = 0.4; w3.swing = 0.25;
   const P = w3.player.position, ry = w3.player.rotation.y, fx = Math.sin(ry), fz = Math.cos(ry), dmg = w3Gear().dmg;
   let hit = 0;
@@ -3440,7 +3440,7 @@ function w3Attack() {
       z.hp -= dmg; z.flash = 0.25; z.kb = [dx / (d || 1) * 7, dz / (d || 1) * 7, 0.18]; hit++;
       if (z.hp <= 0) w3ZombieDown(z);
     } });
-  if (!hit) toast("👊 揮空了！靠近殭屍、面向牠再打", 1500);
+  if (!hit && w3.zombies.some(z => !z.dead && Math.hypot(z.g.position.x - P.x, z.g.position.z - P.z) < 6)) toast("👊 揮空了！靠近殭屍、面向牠再打", 1500);
 }
 function w3ZombieDown(z) {
   z.dead = 25; z.g.visible = false;
@@ -3472,8 +3472,22 @@ function w3Hurt(z, now) {
   }
   w3HpRender();
 }
+function w3ZombieOn() { return rulesNow().zombieOn !== false; }
+async function w3ZombieSwitch() {
+  const on = !w3ZombieOn();
+  try { bridgeState.rules = (await bridgeCall("setRules", { rules: { zombieOn: on } })).rules; toast(on ? "🧟 殭屍出動了！學生的畫面約 5 秒內會出現殭屍" : "🌼 殭屍全部消失了！學生可以安心逛", 3500); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
 function w3ZombieTick(dt, now) {
   if (!w3.zombies) return;
+  const zon = w3ZombieOn();
+  if (zon !== w3.zon) {
+    w3.zon = zon; w3.zombies.forEach(z => { z.g.visible = zon && !z.dead; });
+    const b = w3.hud.querySelector("#dw3d-zsw"); if (b) b.textContent = zon ? "🧟 殭屍：開（點一下關掉）" : "🌼 殭屍：關（點一下打開）";
+    const hp = w3.hud.querySelector("#dw3d-hp"), act = w3.hud.querySelector(".dw3d-act"); if (hp) hp.hidden = !zon; if (act) act.hidden = !zon;
+    if (!zon) { w3.hp = w3Gear().max; w3HpRender(); }
+  }
+  if (!zon) return;
   const P = w3.player.position, out = !w3.room && Math.abs(P.x) < w3.world.S + 5, safe = !out || w3Safe(P.x, P.z);
   w3.atkCd = Math.max(0, w3.atkCd - dt);
   if (w3.swing > 0) { w3.swing -= dt; w3.player.userData.ra.rotation.x = -1.6 * Math.sin((0.25 - w3.swing) / 0.25 * Math.PI); }
@@ -6708,7 +6722,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20 };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -7291,6 +7305,7 @@ async function renderBridge() {
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions || 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc || 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div></span></label>
+        <label class="bridge-switch"><input type="checkbox" id="rule-zombie" ${r.zombieOn !== false ? "checked" : ""}> <span><b>🧟 異想世界的殭屍</b><br><small>打開：荒野會有殭屍追人，被碰到會少愛心，愛心用完掉 1～2 個材料。關掉：殭屍全部消失，可以安心逛。在 3D 世界裡也可以直接按右邊的「🧟 殭屍」按鈕切換。</small></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
     } else if (t === "conduct") {
@@ -7356,7 +7371,7 @@ async function saveRules() {
     sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
     fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)),
     worldOn: document.getElementById("rule-world").checked, worldSessions: Math.max(0, Math.min(50, Number(document.getElementById("rule-world-n").value) || 0)),
-    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)) };
+    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked };
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
   if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
