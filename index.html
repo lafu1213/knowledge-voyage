@@ -762,6 +762,11 @@
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
+  .dw-help-btn { border: 2px solid #f59e0b; background: #fffbeb; color: #b45309; border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 900; cursor: pointer; }
+  .dw-guide { position: fixed; inset: 0; z-index: 1200; background: rgba(15,23,42,.55); display: flex; align-items: center; justify-content: center; padding: 14px; }
+  .dw-guide-box { position: relative; background: #fff; border-radius: 22px; padding: 18px 22px; max-width: 640px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .dw-guide-box h2 { margin: 0 0 8px; color: #6d28d9; } .dw-guide-box ol { padding-left: 1.3em; line-height: 1.75; } .dw-guide-box li { margin-bottom: 6px; }
+  .dw-guide-x { position: absolute; right: 12px; top: 10px; border: 0; background: #f1f5f9; border-radius: 50%; width: 32px; height: 32px; font-size: 1rem; cursor: pointer; }
   .dw-toast { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); z-index: 1500; background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 14px; font-weight: 800; max-width: 90vw; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
   .dw-cele { position: fixed; inset: 0; z-index: 2000; pointer-events: none; display: flex; align-items: center; justify-content: center; }
   .dw-cele b { background: #fff; padding: 14px 24px; border-radius: 20px; font-size: 1.3rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: dwPop .5s; }
@@ -2165,7 +2170,7 @@ const DW_KINDS = { item: "家具", floor: "地板", wall: "壁紙" };
 
 let dw = { tab: "village", home: null, view: null, viewHome: null, hand: null, village: null, saving: null, timer: null, shopCat: "全部" };
 function dwMe() { return session.user.role === "parent" ? session.user.child : session.user.name; }
-function dwRules() { const r = rulesNow(), num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); return { on: r.worldOn !== false, n: num(r.worldSessions, 5), acc: num(r.worldAcc, 70), min: num(r.worldMin, 20) || 20 }; }
+function dwRules() { const r = rulesNow(); r.worldOn = r.worldOn === true; const num = (v, d) => (v === undefined || v === null || v === "" || isNaN(Number(v)) ? d : Number(v)); return { on: r.worldOn, n: num(r.worldSessions, 5), acc: num(r.worldAcc, 70), min: num(r.worldMin, 20) || 20 }; }
 
 // ── 學習換材料：答對 +1、訂正答對再 +1、整局全對（至少 5 題）+3 ──
 function dwEarned() {
@@ -2205,7 +2210,7 @@ function dwTimeUsed() { const t = load(dwTimeKey(), null), d = nowStr().slice(0,
 async function openDream() {
   if (!session) return;
   const R = dwRules();
-  if (!R.on && session.user.role === "student") return toast("🌈 老師暫時關閉了異想世界");
+  if (!R.on && session.user.role !== "teacher") return toast("🌈 異想世界還沒開放，請等老師宣布喔！");
   const g = dwGate();
   if (!g.ok) return dwGateModal(g);
   if (session.user.role === "student" && dwTimeUsed() >= R.min * 60) return toast(`🌙 今天在異想世界已經玩滿 ${R.min} 分鐘了，明天再來吧！`, 4500);
@@ -2260,9 +2265,28 @@ function renderDream() {
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
       <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
-      <button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
+      <button class="dw-help-btn" onclick="dwGuide()">❓ 怎麼玩</button><button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
     <div class="dw-body ${dw.tab === "world" && !dw.view ? "world" : ""}" id="dw-body">${dwBody()}</div>`;
   if (dw.tab === "world" && !dw.view) { dwSyncMine(); w3Mount(); }
+}
+function dwGuide() {
+  const R = dwRules();
+  let g = document.getElementById("dw-guide");
+  if (!g) { g = document.createElement("div"); g.id = "dw-guide"; g.className = "dw-guide"; document.getElementById("dream").appendChild(g); }
+  g.hidden = false;
+  g.innerHTML = `<div class="dw-guide-box"><button class="dw-guide-x" onclick="document.getElementById('dw-guide').hidden=true">✕</button>
+    <h2>🌈 508 異想世界怎麼玩？</h2>
+    <ol>
+      <li><b>🔑 先解鎖：</b>完成 ${R.n} 局闖關、期末正確率 ${R.acc}% 以上、錯題全部訂正完，才能進島（每次進島都會檢查）。每天最多玩 ${R.min} 分鐘。</li>
+      <li><b>🚶 到處走走：</b>電腦用 WASD／方向鍵走路、空白鍵跳、拖曳滑鼠轉視角；平板用左下角搖桿。右上角可以傳送到城堡或自己家。</li>
+      <li><b>❓ 找寶箱：</b>每天世界裡藏了 5 個發光的問號寶箱，走過去就能拿到蓋房子的材料。</li>
+      <li><b>🏰 逛老師的城堡：</b>走到金色城堡大門按 E 進去，許願池每天送材料、扭蛋機每天免費轉一次（有機會抽到🦄限定家具）。</li>
+      <li><b>📚 學習換材料：</b>回寶藏海答題！國語→🪵木材、數學→🪨石材、英語→🧵布料、自然→🌱種子、社會→🏺古物、唐詩→📜詩卷。答對 +1、訂正答對再 +1、整局全對 +3。</li>
+      <li><b>🛒 買家具：</b>用錢袋裡的金幣在家具店買，有 130 多種，有些要搭配材料或房子升級後才能買。</li>
+      <li><b>🏠 布置我的家：</b>點背包裡的家具，再點地板放上去；點擺好的家具可以拿起來移動、翻面。還能取家名、換屋頂顏色、地板和壁紙。</li>
+      <li><b>🏗️ 升級房子：</b>帳篷 → 小木屋 → 紅磚屋 → 洋房 → 城堡。升級要五科的材料，只練擅長的科目蓋不起來喔！升級後，3D 世界裡你的房子也會跟著變大變漂亮。</li>
+      <li><b>🚪 開放參觀：</b>在「我的家」勾選「開放同學參觀」，同學就能走進你家；參觀別人家時，每天可以送每一家一張貼圖（👍🌟😍🏆🎉）。收到最多貼圖的家會上城堡的榮譽殿堂！</li>
+    </ol></div>`;
 }
 function dwTab(t) { if (dw.hand && dw.hand.from) dwStash(true); dw.tab = t; dw.view = null; dw.hand = null; renderDream(); }
 function dwBody() {
@@ -4751,7 +4775,11 @@ function toggleBattle() {
 function renderPills() {
   const u = session.user;
   const portal = document.getElementById("dream-portal");
-  if (portal) portal.hidden = !FINAL || (u.role === "student" && rulesNow().worldOn === false);
+  if (portal) {
+    const off = rulesNow().worldOn !== true;
+    portal.hidden = !FINAL || (off && u.role !== "teacher");
+    portal.innerHTML = `🌈<b>508 異想世界</b><small>${off ? "🔒 尚未開放（老師預覽）" : "蓋自己的家"}</small>`;
+  }
   const pills = document.getElementById("pills");
   let html = `<span class="pill" style="cursor:pointer" onclick="openAvatarPicker()" title="換頭像">${photoOf(u.name, myPv()) ? `<img class="pill-face" src="${photoOf(u.name, myPv())}" alt="">` : myEmoji()} ${ROLE_INFO[u.role].icon} ${escapeHtml(u.name)} ✏️</span>`;
   if (u.role === "student") {
@@ -6115,7 +6143,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: true, worldSessions: 5, worldAcc: 70, worldMin: 20 };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20 };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -6696,7 +6724,7 @@ async function renderBridge() {
         <label class="bridge-switch"><input type="checkbox" id="rule-fast" ${r.fastOn !== false ? "checked" : ""}> <span><b>⚡ 快答特權</b><br><small>等級愈高，每題最少停留秒數愈短：Lv.20 → 11 秒、Lv.40 → 10 秒、Lv.60 → 9 秒、Lv.80 → 8 秒（最低 8 秒）。閱讀測驗、唐詩等有文章的題目一律 ${PACE.minSeconds} 秒；掉級自動恢復；當天有亂答警告就暫停到隔天。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-balance" ${r.balanceOn !== false ? "checked" : ""}> <span><b>⚖️ 均衡航行</b><br><small>同一科今天連續跑滿幾局後，下一局要先去他正確率最低的科目跑一局，才能再回來（唐詩算國語、單字王算英語；錯題島訂正、老師考卷不受限）。</small>
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
-        <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn !== false ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
+        <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions || 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc || 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
