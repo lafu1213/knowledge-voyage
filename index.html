@@ -759,6 +759,16 @@
   .dw3d-joy i { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
   .dw3d-jump { position: absolute; right: 24px; bottom: 34px; width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); background: rgba(255,255,255,.3); font-size: 1.6rem; font-weight: 900; color: #fff; touch-action: none; }
   @media (hover: hover) and (pointer: fine) { .dw3d-joy, .dw3d-jump { display: none; } }
+  .dw3d-build { position: absolute; right: 10px; bottom: 16px; width: min(300px, calc(100% - 20px)); background: rgba(255,255,255,.94); border-radius: 16px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25); color: #1e293b; }
+  .dw3d-build-head { display: flex; align-items: center; gap: 8px; } .dw3d-build-head span { color: #64748b; font-size: .8rem; flex: 1; }
+  .dw3d-build-head button, .dw3d-build-mode button { border: 0; border-radius: 10px; background: #e2e8f0; font: inherit; font-weight: 800; font-size: .8rem; padding: 4px 10px; cursor: pointer; }
+  .dw3d-build-mode { display: flex; gap: 6px; margin: 8px 0; } .dw3d-build-mode button { flex: 1; } .dw3d-build-mode button.on { background: #7c3aed; color: #fff; }
+  .dw3d-build-pal { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .dw3d-build-pal button { border: 2px solid transparent; border-radius: 10px; background: #f1f5f9; padding: 3px 0 1px; cursor: pointer; display: flex; flex-direction: column; align-items: center; font: inherit; }
+  .dw3d-build-pal button.on { border-color: #7c3aed; background: #ede9fe; }
+  .dw3d-build-pal i { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(0,0,0,.2); } .dw3d-build-pal small { font-size: .62rem; color: #475569; }
+  .dw3d-build-tip { font-size: .7rem; color: #64748b; margin-top: 6px; line-height: 1.5; }
+  @media (max-width: 640px) { .dw3d-build { bottom: 150px; } }
   .dw3d-mini { position: absolute; right: 10px; top: 48px; display: flex; flex-direction: column; gap: 6px; }
   .dw3d-mini button { border: 0; border-radius: 12px; background: rgba(255,255,255,.88); font: inherit; font-weight: 800; font-size: .8rem; padding: 6px 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
   @media (max-width: 640px) { .dw3d { height: calc(100vh - 150px); } .dw3d-help { font-size: .66rem; top: 6px; } }
@@ -2269,7 +2279,7 @@ function dwGateModal(g) {
 }
 function dwFix(h) {
   h = h && typeof h === "object" ? h : {};
-  return Object.assign({ nm: "", lv: 0, fl: "wood", wl: "cream", rf: DW_ROOFS[0], it: [], open: false, spent: {}, gift: { mats: {}, items: {} }, daily: {} }, h, { gift: Object.assign({ mats: {}, items: {} }, h.gift || {}) });
+  return Object.assign({ nm: "", lv: 0, fl: "wood", wl: "cream", rf: DW_ROOFS[0], it: [], bk: [], open: false, spent: {}, gift: { mats: {}, items: {} }, daily: {} }, h, { gift: Object.assign({ mats: {}, items: {} }, h.gift || {}) });
 }
 async function dwLoadVillage() { try { dw.village = (await bridgeCall("homeVillage")).homes || []; } catch (e) { dw.village = []; } }
 function dwSave() { clearTimeout(dw.saving); dw.saving = setTimeout(dwFlush, 1200); }
@@ -2857,6 +2867,7 @@ async function w3Mount() {
     w3Create();
   }
   host.innerHTML = ""; host.appendChild(w3.renderer.domElement); host.appendChild(w3.hud);
+  if (w3.room && w3.room.name === dwMe() && dwCanEdit()) w3RoomBuild(dwMe(), dw.home);
   w3Resize(); w3.running = true; w3.last = performance.now(); requestAnimationFrame(w3Loop);
 }
 function w3Create() {
@@ -2910,8 +2921,9 @@ function w3Create() {
       <div class="dw3d-chat-quick">${["嗨！👋", "來我家玩！🏠", "寶箱在這裡！❓", "好漂亮！😍", "一起去城堡！🏰", "加油！💪"].map(t => `<button onclick="w3Say('${t}')">${t}</button>`).join("")}</div>
       <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><input name="t" maxlength="40" placeholder="說點什麼…（按 Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
     <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
+    <div class="dw3d-build" id="dw3d-build" hidden></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini"><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
@@ -2955,7 +2967,8 @@ function w3PeerSync(dt, now) {
   const seen = {};
   (net.others || []).forEach(o => {
     if (!/^D:/.test(o.place || "")) return;
-    const [x, y, z, ry] = o.place.slice(2).split(",").map(Number); if (![x, y, z].every(isFinite)) return;
+    const [pos, room = ""] = o.place.slice(2).split("|"); if (room !== (w3.room ? w3.room.name : "")) return;   // 只看得到同一個空間的同學
+    const [x, y, z, ry] = pos.split(",").map(Number); if (![x, y, z].every(isFinite)) return;
     seen[o.name] = 1;
     let p = w3.peers[o.name];
     if (!p) {
@@ -2985,9 +2998,10 @@ function w3Ceil(p) { return W3_CORNERS.some(([dx, dz]) => w3Solid(p.x + dx, p.y 
 function w3Controls() {
   const el = w3.renderer.domElement;
   let drag = null;
-  el.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, id: e.pointerId }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sx: e.clientX, sy: e.clientY, btn: e.button }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("contextmenu", e => { if (w3 && w3.build && w3.build.on) e.preventDefault(); });
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
-  el.addEventListener("pointerup", () => { drag = null; });
+  el.addEventListener("pointerup", e => { if (drag && w3.build && w3.build.on && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) w3BuildClick(e, drag.btn === 2); drag = null; });
   el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
   window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter();
     if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
@@ -3003,10 +3017,12 @@ function w3Controls() {
 function w3Resize() { const host = document.getElementById("dw3d"); if (!host || !w3) return; const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
   if (!w3) return;
+  if (w3.room && where !== "room") w3RoomClear();
   const card = document.getElementById("dw3d-card"); if (card) card.hidden = true;
   if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
   else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
-  else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === dwMe()); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
+  else if (where === "room") { const sp = w3.room.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.75; w3.dist = 10; w3.camD = undefined; w3.player.rotation.y = Math.PI; }
+  else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === (where === "door" && w3.lastRoom ? w3.lastRoom : dwMe())); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
   w3.vel.set(0, 0, 0);
 }
 function w3Enter() {
@@ -3015,9 +3031,13 @@ function w3Enter() {
   if (d.kind === "castle") return w3Warp("inside");
   if (d.kind === "exit") return w3Warp("castle");
   if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
-  if (d.name === session.user.name) return dwTab("home");
-  if (!d.open && session.user.role !== "teacher") return toast(`🔒 ${shortName(d.name)}還沒開放參觀`);
-  dwVisit(d.name);
+  if (d.kind === "hexit") return w3LeaveRoom();
+  if (d.kind === "hedit") return dwTab("home");
+  if (d.kind === "hstk") return w3StickerCard();
+  if (d.kind === "hbuild") return w3BuildToggle();
+  if (d.name === dwMe() && dwCanEdit()) return w3EnterRoom(d.name, dw.home);
+  if (!d.open && session.user.role !== "teacher" && d.name !== dwMe()) return toast(`🔒 ${shortName(d.name)}還沒開放參觀`);
+  w3EnterRoom(d.name, null);
 }
 function w3Loop(now) {
   if (!w3 || !w3.running) return;
@@ -3046,6 +3066,7 @@ function w3Loop(now) {
   }
   const S = w3.world.S - 1; if (Math.abs(P.x) < S + 20) { P.x = Math.max(-S, Math.min(S, P.x)); P.z = Math.max(-S, Math.min(S, P.z)); }
   if (P.y < -5) { w3Warp("castle"); }
+  if (w3.room && P.z > w3.room.z1 + 1.8) w3LeaveRoom();   // 走出家門
   w3.fish.forEach(o => { o.t += dt; o.f.position.x = W3_IN.x - 10 + Math.sin(o.t * 0.8) * 1.2; o.f.position.z = W3_IN.z + 6.5 + Math.cos(o.t * 1.1) * 0.8; o.f.rotation.y = Math.atan2(Math.cos(o.t * 0.8), -Math.sin(o.t * 1.1)); });
   // 走路擺手
   const u = w3.player.userData, sw = moving ? Math.sin(now / 110) * 0.7 : 0;
@@ -3062,10 +3083,10 @@ function w3Loop(now) {
   w3.camera.position.lerp(cp, Math.min(1, dt * 12)); w3.camera.lookAt(w3.look);
   // 門口提示
   let near = null, best = 9;
-  w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" ? 5 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
+  w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" || d.room ? 4 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 回到我的家（布置）" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -3090,6 +3111,147 @@ function w3Chest(i) {
   renderDreamStat();
 }
 
+
+// ── 🏠 走進同學的家：3D 房間（家具用圖案立牌），自己家裡可以疊方塊 ──
+const W3_HM = { x: -130, z: 0, y: 30 };
+// 方塊：[材質, 名稱, 要用的材料]；每放一塊用掉 1 個材料，拆掉會還回來
+const W3_BLOCKS = [["plank", "木板", "wood"], ["log", "原木", "wood"], ["stone", "石頭", "stone"], ["cobble", "圓石", "stone"], ["brick", "紅磚", "stone"],
+  ["grass", "草地", "seed"], ["leaves", "樹葉", "seed"], ["glass", "玻璃", "scroll"], ["quartz", "石英", "relic"], ["gold", "黃金", "relic"],
+  ["w#dc2626", "紅色", "cloth"], ["w#fb923c", "橘色", "cloth"], ["w#facc15", "黃色", "cloth"], ["w#22c55e", "綠色", "cloth"], ["w#60a5fa", "藍色", "cloth"],
+  ["w#a78bfa", "紫色", "cloth"], ["w#f472b6", "粉紅", "cloth"], ["w#ffffff", "白色", "cloth"], ["w#475569", "灰色", "cloth"], ["water", "水", "seed"]];
+const W3_BIG = { bed: 1, couch: 1, piano: 1, bath: 1, fountain: 1, sakura: 1, whale: 1, dragon: 1, unicorn: 1, rocket: 1, xmas: 1, ufo: 1, tv: 1, shower: 1, tree: 1, palm: 1, castle: 1 };
+const W3_BK_MAX = 500;
+function w3Mat(t) {
+  w3.M = w3.M || w3Materials();
+  if (!w3.M[t] && /^w#[0-9a-fA-F]{6}$/.test(t)) w3.M[t] = new THREE.MeshLambertMaterial({ map: w3Tex((g, R) => w3Noise(g, R, t.slice(1), [t.slice(1), "rgba(0,0,0,.06)", "rgba(255,255,255,.1)"], 50)) });
+  return w3.M[t] || w3.M.stone;
+}
+function w3Emoji(e) {
+  w3.emo = w3.emo || {};
+  if (!w3.emo[e]) { const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d"); g.font = "104px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(e, 64, 70); w3.emo[e] = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }); }
+  return w3.emo[e];
+}
+async function w3EnterRoom(name, home) {
+  if (!home) {
+    try { home = dwFix((await bridgeCall("homeGet", { who: name })).home); } catch (e) { return toast("⚠️ " + e.message); }
+    const v = (dw.village || []).find(x => x.name === name) || {};
+    if (v.teacher && !home.it.length && !home.nm) home = dwFix(JSON.parse(JSON.stringify(DW_TEACHER_HOME)));
+  }
+  if (!w3) return;
+  w3RoomBuild(name, home); w3.lastRoom = name; w3Warp("room");
+  const mine = name === dwMe() && dwCanEdit();
+  toast(mine ? "🏠 歡迎回家！走到「🧱 蓋方塊」按 E，就能用學習換來的材料疊方塊" : `🏠 歡迎參觀 ${escapeHtml(home.nm || shortName(name) + "的家")}！`, 4000);
+  net.heartbeat();
+}
+function w3RoomClear() {
+  const r = w3.room; if (!r) return;
+  r.keys.forEach(k => delete w3.world.G[k]);
+  w3.scene.remove(r.group); w3.world.doors = w3.world.doors.filter(d => !d.room);
+  w3.room = null; w3.build = null; w3.near = null;
+  const b = document.getElementById("dw3d-build"); if (b) b.hidden = true;
+  const o = document.getElementById("dw3d-out"); if (o) o.hidden = true;
+}
+function w3LeaveRoom() { if (!w3 || !w3.room) return; w3Warp("door"); net.heartbeat(); }
+function w3RoomBuild(name, h) {
+  const keepBuild = w3.room && w3.room.name === name && w3.build;
+  const prev = w3.room ? { spawn: w3.room.spawn } : null;
+  if (w3.room) { w3.room.keys.forEach(k => delete w3.world.G[k]); w3.scene.remove(w3.room.group); w3.world.doors = w3.world.doors.filter(d => !d.room); }
+  const { x: X, z: Z, y: Y } = W3_HM, n = DW_LEVELS[h.lv || 0].n, G = w3.world.G, keys = [], cells = {};
+  const put = (x, y, z, t) => { const k = x + "," + y + "," + z; G[k] = t; keys.push(k); (cells[t] = cells[t] || []).push([x, y, z]); };
+  const fl = DW_FLOORS.find(f => f.id === h.fl) || DW_FLOORS[0], wl = DW_WALLS.find(w => w.id === h.wl) || DW_WALLS[0], roof = "w" + (h.rf || "#dc2626"), H = 6;
+  const x0 = X - n, x1 = X + n - 1, z0 = Z - n, z1 = Z + n - 1;
+  for (let x = x0 - 1; x <= x1 + 1; x++) for (let z = z0 - 1; z <= z1 + 1; z++) {
+    const edge = x < x0 || x > x1 || z < z0 || z > z1;
+    put(x, Y, z, edge ? roof : "w" + ((Math.floor((x - x0) / 2) + Math.floor((z - z0) / 2)) % 2 ? fl.b : fl.a));
+    if (edge) for (let y = Y + 1; y <= Y + H; y++) {
+      const door = z === z1 + 1 && (x === X - 1 || x === X) && y <= Y + 3, win = y >= Y + 3 && y <= Y + 4 && (x + z) % 4 === 0 && !(z === z1 + 1 && Math.abs(x - X + 0.5) < 3);
+      if (!door) put(x, y, z, win ? "glass" : y === Y + H ? roof : "w" + wl.c);
+    }
+  }
+  // 門外的小平台（從這裡出去）
+  for (let x = X - 2; x <= X + 1; x++) for (let z = z1 + 2; z <= z1 + 3; z++) put(x, Y, z, "path");
+  // 自己蓋的方塊
+  (h.bk || []).forEach(b => { const t = (W3_BLOCKS[b[3]] || W3_BLOCKS[0])[0]; const x = x0 + b[0], y = Y + b[1], z = z0 + b[2]; if (x >= x0 && x <= x1 && z >= z0 && z <= z1 && b[1] >= 1 && b[1] <= 10) put(x, y, z, t); });
+  const group = new THREE.Group(), geo = new THREE.BoxGeometry(1, 1, 1), m4 = new THREE.Matrix4();
+  Object.entries(cells).forEach(([t, list]) => { const mesh = new THREE.InstancedMesh(t === "water" ? new THREE.BoxGeometry(1, 0.8, 1) : geo, w3Mat(t), list.length); list.forEach((p, i) => { m4.makeTranslation(p[0], p[1] - (t === "water" ? 0.1 : 0), p[2]); mesh.setMatrixAt(i, m4); }); mesh.instanceMatrix.needsUpdate = true; group.add(mesh); });
+  // 家具：圖案立牌（站在地板格子的正中央）
+  (h.it || []).forEach(([id, gx, gy]) => {
+    const it = DW_ITEM[id]; if (!it || gx >= n || gy >= n) return;
+    const sz = W3_BIG[id] ? 2.3 : 1.5, s = new THREE.Sprite(w3Emoji(it.emoji)); s.scale.set(sz, sz, 1);
+    s.position.set(x0 + gx * 2 + 0.5, Y + 0.5 + sz / 2 - 0.1, z0 + gy * 2 + 0.5); group.add(s);
+  });
+  const mine = name === dwMe() && dwCanEdit(), doors = [];
+  doors.push({ kind: "hexit", room: 1, x: X - 0.5, z: z1, y: Y + 1, label: "🚪 出門", btn: "🚪 走出房子" });
+  if (mine) {
+    doors.push({ kind: "hbuild", room: 1, x: x0 + 1, z: z1 - 1, y: Y + 1, label: "🧱 蓋方塊", btn: "🧱 開始／停止蓋方塊" });
+    doors.push({ kind: "hedit", room: 1, x: x1 - 1, z: z1 - 1, y: Y + 1, label: "🛋️ 擺家具", btn: "🛋️ 去擺家具（換地板、壁紙）" });
+  } else if (session.user.role === "student") doors.push({ kind: "hstk", room: 1, x: x1 - 1, z: z1 - 1, y: Y + 1, label: "💌 送貼圖", btn: "💌 送主人一張貼圖" });
+  doors.forEach(d => { w3.world.doors.push(d); const s = w3Label(d.label, "", d.kind === "hexit" ? "#7c3aed" : "#f59e0b"); s.scale.multiplyScalar(0.5); s.position.set(d.x, Y + (d.kind === "hexit" ? 4.6 : 3.2), d.z - (d.kind === "hexit" ? -1 : 0.6)); group.add(s); });
+  const title = w3Label(h.nm || (shortName(name) + "的家"), `${DW_LEVELS[h.lv || 0].icon} ${DW_LEVELS[h.lv || 0].name}`, mine ? "#f59e0b" : "#16a34a"); title.position.set(X - 0.5, Y + H + 2.2, z0 - 1); title.scale.multiplyScalar(1.1); group.add(title);
+  w3.scene.add(group);
+  w3.room = { name, home: h, keys, group, n, x0, x1, z0, z1, Y, mine, spawn: prev && keepBuild ? prev.spawn : [X - 0.5, Y + 1.5, Z + 1] };
+  if (!keepBuild) w3.build = null;
+  const o = document.getElementById("dw3d-out"); if (o) o.hidden = false;
+  w3BuildPanel();
+}
+function w3StickerCard() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p || !w3.room) return;
+  const name = w3.room.name;
+  p.innerHTML = `<b>💌 送 ${escapeHtml(shortName(name))} 一張貼圖</b><div class="dw-row" style="margin-top:8px">${DW_STICKERS.map(s => `<button class="dw-stk" onclick='dwSticker(${JSON.stringify(name)}, "${s}")'>${s}</button>`).join("")}</div><small>每天可以送每一家一張。</small>`;
+  c.hidden = false;
+}
+// ── 🧱 蓋方塊 ──
+function w3BuildToggle() {
+  if (!w3.room || !w3.room.mine) return;
+  w3.build = w3.build && w3.build.on ? null : { on: true, t: (w3.build && w3.build.t) || 0, del: false };
+  if (w3.build) toast("🧱 點地板或方塊就能疊上去；切換到「⛏️ 拆」再點方塊就能拆掉（材料會還你）", 4500);
+  w3BuildPanel();
+}
+function w3BuildPanel() {
+  const el = document.getElementById("dw3d-build"); if (!el) return;
+  if (!w3.room || !w3.room.mine || !w3.build) { el.hidden = true; return; }
+  const m = dwMats(), b = w3.build, used = (w3.room.home.bk || []).length;
+  el.hidden = false;
+  el.innerHTML = `<div class="dw3d-build-head"><b>🧱 蓋方塊</b><span>${used}/${W3_BK_MAX}</span><button onclick="w3BuildToggle()">✕ 停止</button></div>
+    <div class="dw3d-build-mode"><button class="${b.del ? "" : "on"}" onclick="w3.build.del=false; w3BuildPanel()">🧱 放</button><button class="${b.del ? "on" : ""}" onclick="w3.build.del=true; w3BuildPanel()">⛏️ 拆</button></div>
+    <div class="dw3d-build-pal">${W3_BLOCKS.map((x, i) => { const mt = DW_MATS.find(q => q.k === x[2]); const c = x[0][0] === "w" && x[0][1] === "#" ? x[0].slice(1) : { plank: "#c08a52", log: "#7a5230", stone: "#8a8f98", cobble: "#9ca3af", brick: "#b5442f", grass: "#5cb83a", leaves: "#2f8f2f", glass: "#bfe6ff", quartz: "#f4f1ea", gold: "#f6c945", water: "#3b82f6" }[x[0]];
+      return `<button class="${!b.del && b.t === i ? "on" : ""}" title="${x[1]}（用 ${mt.icon}${mt.name}）" onclick="w3.build.t=${i}; w3.build.del=false; w3BuildPanel()"><i style="background:${c}"></i><small>${x[1]}</small></button>`; }).join("")}</div>
+    <div class="dw3d-build-tip">${dwIsT() ? "老師蓋方塊免費" : `每塊用 1 個材料：${DW_MATS.map(q => `${q.icon}${m[q.k]}`).join(" ")}`}<br>電腦：左鍵放、右鍵拆；平板：用上面的「放／拆」切換</div>`;
+}
+function w3BuildClick(e, rightBtn) {
+  const r = w3.room, b = w3.build; if (!r || !r.mine || !b) return;
+  const rect = w3.renderer.domElement.getBoundingClientRect();
+  const v = new THREE.Vector3(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1, 0.5).unproject(w3.camera);
+  const o = w3.camera.position.clone(), dir = v.sub(o).normalize(), G = w3.world.G;
+  let prev = null, hit = null;
+  for (let t = 0; t < 40; t += 0.04) {
+    const q = o.clone().addScaledVector(dir, t), c = [Math.round(q.x), Math.round(q.y), Math.round(q.z)];
+    if (prev && c[0] === prev[0] && c[1] === prev[1] && c[2] === prev[2]) continue;
+    if (G[c.join(",")]) { hit = c; break; } prev = c;
+  }
+  if (!hit) return;
+  const h = r.home; h.bk = h.bk || [];
+  const del = b.del || rightBtn;
+  if (del) {
+    const i = h.bk.findIndex(q => r.x0 + q[0] === hit[0] && r.Y + q[1] === hit[1] && r.z0 + q[2] === hit[2]);
+    if (i < 0) return toast("⛏️ 牆壁和地板不能拆，只能拆自己蓋的方塊喔");
+    const k = (W3_BLOCKS[h.bk[i][3]] || W3_BLOCKS[0])[2]; h.bk.splice(i, 1);
+    if (!dwIsT()) h.spent[k] = Math.max(0, (h.spent[k] || 0) - 1);
+  } else {
+    if (!prev) return;
+    const [x, y, z] = prev, P = w3.player.position;
+    if (x < r.x0 || x > r.x1 || z < r.z0 || z > r.z1 || y < r.Y + 1) return toast("🧱 只能蓋在自己家裡面喔");
+    if (y > r.Y + 10) return toast("🧱 太高了，最多疊 10 層");
+    if (Math.round(P.x) === x && Math.round(P.z) === z && y >= Math.round(P.y - 0.5) && y <= Math.round(P.y + 1.3)) return toast("🧱 不能蓋在自己身上啦！");
+    if (h.bk.length >= W3_BK_MAX) return toast(`🧱 一個家最多 ${W3_BK_MAX} 塊方塊`);
+    const k = W3_BLOCKS[b.t][2], mt = DW_MATS.find(q => q.k === k);
+    if (!dwIsT()) { if ((dwMats()[k] || 0) < 1) return toast(`${mt.icon} ${mt.name}不夠了！去練習${mt.from}就能換到更多`, 4000); h.spent[k] = (h.spent[k] || 0) + 1; }
+    h.bk.push([x - r.x0, y - r.Y, z - r.z0, b.t]);
+  }
+  if (h === dw.home) dwSave();
+  const keep = w3.player.position.clone(); w3RoomBuild(r.name, h); w3.player.position.copy(keep);
+  renderDreamStat();
+}
 function w3Reset() { if (w3) { try { w3.running = false; w3.renderer.dispose(); w3.renderer.forceContextLoss(); } catch (e) {} } w3 = null; }
 function dwSyncMine() {
   if (!dw.home || !dwCanEdit() || !dw.village) return;
@@ -4606,7 +4768,7 @@ function posKey() { return view.group ? view.subject + "@" + view.group : view.s
 function dockIdNow() { return view.group ? "UP@" + view.subject + "@" + view.group : "DOCK@" + view.subject; }
 function myPlaceId() { return view.level === "world" ? pos.world : (pos.unit[posKey()] || dockIdNow()); }
 function myPlace() {
-  if (typeof w3 !== "undefined" && w3 && w3.running && document.body.classList.contains("dream-open")) { const p = w3.player.position; return `D:${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)},${w3.player.rotation.y.toFixed(2)}`; }
+  if (typeof w3 !== "undefined" && w3 && w3.running && document.body.classList.contains("dream-open")) { const p = w3.player.position; return `D:${p.x.toFixed(1)},${p.y.toFixed(1)},${p.z.toFixed(1)},${w3.player.rotation.y.toFixed(2)}|${w3.room ? w3.room.name : ""}`; }
   return (view.level === "world" ? "W:" : "U:") + myPlaceId();
 }
 function spotOf(n, k = -1) {
