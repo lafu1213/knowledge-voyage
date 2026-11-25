@@ -1108,10 +1108,12 @@
   @media (max-width: 1024px) { .stage { grid-template-columns: minmax(0, 1fr); } }
   /* ───────── 手機版 ───────── */
   @media (max-width: 700px) {
-    .topbar { position: sticky; top: 0; padding: 6px 10px; gap: 6px; flex-wrap: nowrap; }
+    .topbar { position: static; padding: 6px 10px; gap: 6px; flex-wrap: wrap; }
     .brand { font-size: 0.95rem; white-space: nowrap; }
     .brand small { display: none; }
-    #pills { flex: 1; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    /* 手機：狀態列（含「📝 老師的考卷」）獨立成第二排、自動換行，不再藏在看不到的橫向捲動裡 */
+    #pills { order: 3; flex: 1 1 100%; flex-wrap: wrap; overflow: visible; min-width: 0; gap: 5px; }
+    .topbar > .pills:last-child { margin-left: auto; }
     #pills::-webkit-scrollbar { display: none; }
     .pill { font-size: 0.74rem; padding: 4px 9px; white-space: nowrap; }
     .topbar > .pills:last-child { flex-wrap: nowrap; }
@@ -5844,10 +5846,9 @@ function renderPills() {
   if (u.role === "student") {
     const lv = getLevelInfo(stats.score);
     const p = stats.pending.length;
-    html += `<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
+    html += `${tqPillHtml()}<span class="pill">⭐ Lv.${lv.lv} ${lv.title}</span><span class="pill">🏆 ${stats.score} 分</span>
       <span class="pill${p >= LOCK_LIMIT ? " danger" : ""}" style="cursor:pointer" onclick="openMistakeBook()">👾 待訂正 ${p} / ${LOCK_LIMIT}</span>
       <span class="pill" style="cursor:pointer" onclick="toggleBattle()" title="開：同學可以找你對戰；關：別人無法找你對戰，可以專心練習">${battleOn() ? "⚔️ 接受挑戰：開" : "🛡️ 接受挑戰：關"}</span>
-      ${tqPillHtml()}
       <span class="pill" id="use-pill" style="cursor:pointer" onclick="showConduct(true)" title="今天累計的使用時間；連續最多 ${rulesNow().sessionMin || 60} 分鐘、每天最多 ${rulesNow().dailyMin || 120} 分鐘">${usageText()}</span>`;
   }
   if (FINAL && u.role === "student" && !isTrial()) {
