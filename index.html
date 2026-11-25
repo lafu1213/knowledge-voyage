@@ -826,6 +826,17 @@
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .tq-stu { display: flex; flex-direction: column; gap: 6px; }
+  .tq-stu-row { border: 1px solid var(--line, #e2e8f0); border-radius: 12px; overflow: hidden; }
+  .tq-stu-head { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border: 0; background: rgba(255,255,255,.06); color: inherit; font: inherit; cursor: pointer; text-align: left; }
+  .tq-stu-head .tq-score { font-weight: 900; } .tq-stu-head em { margin-left: auto; font-style: normal; opacity: .7; } .tq-stu-head small { opacity: .7; }
+  .tq-dots { display: inline-flex; gap: 2px; flex-wrap: wrap; } .tq-dots i { width: 9px; height: 9px; border-radius: 2px; background: #94a3b8; } .tq-dots i.ok { background: #22c55e; } .tq-dots i.no { background: #ef4444; }
+  .tq-sheet { padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .tq-line { display: flex; gap: 8px; padding: 6px 8px; border-radius: 10px; line-height: 1.6; } .tq-line.no { background: rgba(239,68,68,.12); } .tq-line.ok { background: rgba(34,197,94,.08); }
+  .tq-mark { flex-shrink: 0; } .tq-ans { font-size: .9rem; margin-top: 2px; } .tq-ans .okc { color: #16a34a; }
+  .tq-exp { font-size: .84rem; opacity: .85; margin-top: 4px; white-space: pre-line; }
+  .tq-wrong { font-size: .86rem; margin-top: 6px; color: var(--danger); line-height: 1.7; } .tq-wrong small { opacity: .8; }
+  .tq-cnt { font-size: .72rem; opacity: .75; margin-left: 2px; }
   .dw3d-fold { display: none; }
   @media (max-width: 900px), (max-height: 560px) {
     .dw-top { position: sticky; flex-wrap: nowrap; overflow-x: auto; padding: 6px 8px; gap: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -7484,19 +7495,22 @@ function previewExam() {
 function examListHtml() {
   if (!examState.tqs) { bridgeCall("tqList").then(r => { examState.tqs = r.list || []; renderBridge(); }).catch(e => toast("⚠️ " + e.message)); return bridgeLoading(); }
   if (!examState.tqs.length) return `<div class="empty-note">還沒有派過線上考卷。到「📝 出考卷」產生題目後，按「💻 派成線上測驗」。</div>`;
+  const note = `<p class="dw-note" style="margin:4px 0 8px">📚 這裡會一直保留你派過的線上考卷（過了截止日也在），直到你按 🗑️ 刪除。按「📊 成績與作答」可以看每個孩子每一題選了什麼。</p>`;
   const today = nowStr().slice(0, 10);
-  return `<div class="dash-table-wrap"><table><thead><tr><th>考卷</th><th>班級</th><th class="num">題數</th><th>截止</th><th>出題</th><th></th></tr></thead><tbody>
+  return note + `<div class="dash-table-wrap"><table><thead><tr><th>考卷</th><th>班級</th><th class="num">題數</th><th>截止</th><th>出題</th><th></th></tr></thead><tbody>
     ${examState.tqs.map(t => `<tr><td><b>${escapeHtml(t.title)}</b>${t.show === "after" ? ` <small style="opacity:.7">交卷後看答案</small>` : ""}</td><td>${escapeHtml(t.cls.map(c => c === "all" ? "全部" : c).join("、"))}</td><td class="num">${t.ids.length}</td>
       <td>${t.due ? escapeHtml(t.due.slice(5).replace("-", "/")) + (t.due < today ? " <small>已截止</small>" : "") : "—"}</td><td><small>${escapeHtml(shortName(t.by))}<br>${escapeHtml(String(t.t).slice(5, 16))}</small></td>
-      <td style="white-space:nowrap"><button class="btn-primary" style="padding:3px 10px; font-size:.8rem" onclick='openTqResults(${JSON.stringify(t.id)})'>📊 成績</button>
+      <td style="white-space:nowrap"><button class="btn-primary" style="padding:3px 10px; font-size:.8rem" onclick='openTqResults(${JSON.stringify(t.id)}, "stu")'>📊 成績與作答</button>
+        <button class="btn-ghost" style="padding:3px 8px; font-size:.8rem" onclick='openTqResults(${JSON.stringify(t.id)}, "key")'>📄 解答</button>
         <button class="btn-ghost" style="padding:3px 8px; font-size:.8rem" onclick='reuseTq(${JSON.stringify(t.id)})'>🖨️ 再印</button>
         <button class="btn-ghost" style="padding:3px 8px; font-size:.8rem" onclick='deleteTq(${JSON.stringify(t.id)})'>🗑️</button></td></tr>`).join("")}
     </tbody></table></div>`;
 }
-async function openTqResults(id) {
-  examState.view = "results"; examState.res = null; renderBridge();
+async function openTqResults(id, tab) {
+  examState.view = "results"; examState.res = null; examState.rt = tab || "stu"; examState.open = ""; renderBridge();
   try { examState.res = await bridgeCall("tqResults", { id }); renderBridge(); } catch (e) { toast("⚠️ " + e.message); examState.view = "list"; renderBridge(); }
 }
+
 function reuseTq(id) {
   const t = (examState.tqs || []).find(x => x.id === id); if (!t) return;
   const qs = t.ids.map(findQuestion).filter(Boolean).map(q => prepareQuestion(q));
@@ -7507,25 +7521,56 @@ async function deleteTq(id) {
   if (!confirm("確定要收回這份考卷嗎？學生將看不到它（已作答的紀錄會保留）。")) return;
   try { await bridgeCall("tqDelete", { id }); examState.tqs = null; renderBridge(); } catch (e) { toast("⚠️ " + e.message); }
 }
+// 題目內容：題庫裡有就用題庫（含詳解），沒有（例如隨機生成題）就用學生作答時存下來的題目
+function tqQ(r, id) {
+  const q = findQuestion(id);
+  if (q) return { q: q.q, opts: q.opts.map(stripNum), ans: q.ans, exp: q.exp || "", subject: q.subject, unit: q.unit };
+  const x = r.qs && r.qs[id];
+  if (x) return { q: x.q, opts: x.opts, ans: x.opts.indexOf(x.right), exp: x.exp || "", subject: x.subject, unit: x.unit, right: x.right };
+  return null;
+}
+function tqPick(qi, chosen) { if (!qi || chosen == null) return -1; const c = String(chosen).split("／").pop().trim(); return qi.opts.findIndex(o => stripNum(o).trim() === c); }
 function examResultsHtml() {
   const r = examState.res;
   if (!r) return bridgeLoading();
   const done = r.people.slice().sort((a, b) => b.correct / b.total - a.correct / a.total);
   const missing = r.target.filter(n => !r.people.some(p => p.name === n));
   const avg = done.length ? Math.round(done.reduce((s, p) => s + p.correct / p.total, 0) / done.length * 100) : 0;
-  const perQ = r.tq.ids.map((id, i) => { const p = r.perQ.find(x => x.qId === id) || { n: 0, ok: 0 }; return { i, id, q: findQuestion(id), n: p.n, rate: p.n ? p.ok / p.n : null }; })
-    .sort((a, b) => (a.rate == null ? 2 : a.rate) - (b.rate == null ? 2 : b.rate));
-  return `<h3 style="margin:6px 0">📊 ${escapeHtml(r.tq.title)}</h3>
+  const Q = r.tq.ids.map((id, i) => ({ i, id, qi: tqQ(r, id) }));
+  const qText = (x, short) => x.qi ? (short ? escapeHtml(String(x.qi.q).replace(/\s+/g, " ").slice(0, 40)) + (String(x.qi.q).length > 40 ? "…" : "") : mathHtml(x.qi.q, x.qi.subject, x.qi.unit)) : escapeHtml(x.id);
+  const optsHtml = (x, counts) => x.qi ? `<div class="eq-o">${x.qi.opts.map((o, k) => `<span class="${k === x.qi.ans ? "ok" : ""}">${CIRCLED[k] || ""}${mathHtml(stripNum(o), x.qi.subject, x.qi.unit)}${counts ? ` <small class="tq-cnt">${counts[k] || 0} 人</small>` : ""}</span>`).join("")}</div>` : "";
+  const rt = examState.rt || "stu";
+  const tabs = `<div class="mk-bar" style="margin:10px 0">${[["stu", "👩‍🎓 每個孩子的作答"], ["q", "❓ 每一題的答題情形"], ["key", "📄 考卷與解答"]].map(([k, l]) => `<button class="${rt === k ? "btn-primary" : "btn-ghost"}" style="padding:5px 14px" onclick="examState.rt='${k}'; renderBridge()">${l}</button>`).join("")}</div>`;
+  let body = "";
+  if (rt === "stu") {
+    body = done.length ? `<p class="dw-note">點孩子的名字，就能看到他每一題選了什麼（只算第一次作答）。</p><div class="tq-stu">${done.map(p => {
+      const open = examState.open === p.name, score = Math.round(p.correct / r.tq.ids.length * 100);
+      return `<div class="tq-stu-row ${open ? "open" : ""}"><button class="tq-stu-head" onclick='examState.open = examState.open === ${JSON.stringify(p.name)} ? "" : ${JSON.stringify(p.name)}; renderBridge()'>
+        <b>${escapeHtml(shortName(p.name))}</b> ${orgTag(p.name, true)}<span>答對 ${p.correct}／${p.total}</span><span class="tq-score" style="color:${score < 60 ? "var(--danger)" : score < 80 ? "#b45309" : "#15803d"}">${score} 分</span>
+        <small>${escapeHtml(String(p.t).slice(5, 16))}</small><span class="tq-dots">${Q.map(x => { const a = p.ans && p.ans[x.id]; return `<i class="${!a ? "na" : a.ok ? "ok" : "no"}" title="第 ${x.i + 1} 題"></i>`; }).join("")}</span><em>${open ? "▲" : "▼"}</em></button>
+        ${open ? `<div class="tq-sheet">${Q.map(x => { const a = p.ans && p.ans[x.id], k = a ? tqPick(x.qi, a.c) : -1;
+          return `<div class="tq-line ${!a ? "na" : a.ok ? "ok" : "no"}"><span class="tq-mark">${!a ? "—" : a.ok ? "✅" : "❌"}</span><div><div><b>${x.i + 1}.</b> ${qText(x)}</div>
+            <div class="tq-ans">${a ? `他選：<b>${k >= 0 ? CIRCLED[k] : ""}${escapeHtml(stripNum(String(a.c)))}</b>` : "沒有作答"}${a && !a.ok && x.qi && x.qi.ans >= 0 ? `　正確：<b class="okc">${CIRCLED[x.qi.ans]}${escapeHtml(stripNum(x.qi.opts[x.qi.ans]))}</b>` : ""}</div>
+            ${a && !a.ok && x.qi && x.qi.exp ? `<div class="tq-exp">📝 ${escapeHtml(x.qi.exp)}</div>` : ""}</div></div>`; }).join("")}</div>` : ""}</div>`; }).join("")}</div>`
+      : `<div class="empty-note">還沒有人交卷</div>`;
+  } else if (rt === "q") {
+    body = `<p class="dw-note">答對率低的題目排在前面；每個選項後面是選它的人數，下面列出答錯的孩子和他選的答案。</p>` + Q.map(x => {
+      const who = done.map(p => ({ p, a: p.ans && p.ans[x.id] })).filter(o => o.a);
+      const counts = {}; who.forEach(o => { const k = tqPick(x.qi, o.a.c); counts[k] = (counts[k] || 0) + 1; });
+      const ok = who.filter(o => o.a.ok).length, rate = who.length ? ok / who.length : null;
+      const wrong = who.filter(o => !o.a.ok);
+      return { x, rate, html: `<div class="exam-q"><span class="eq-n">${x.i + 1}.</span><div class="eq-body"><div class="eq-q">${qText(x)}</div>${optsHtml(x, counts)}
+        ${wrong.length ? `<div class="tq-wrong">❌ 答錯：${wrong.map(o => { const k = tqPick(x.qi, o.a.c); return `${escapeHtml(shortName(o.p.name))}<small>（${k >= 0 ? CIRCLED[k] : escapeHtml(stripNum(String(o.a.c)).slice(0, 12))}）</small>`; }).join("、")}</div>` : who.length ? `<div class="tq-wrong" style="color:#15803d">🎉 全部答對</div>` : ""}</div>
+        <span class="eq-rate" style="color:${rate == null ? "inherit" : rate < 0.5 ? "var(--danger)" : rate < 0.8 ? "#b45309" : "#15803d"}">${rate == null ? "—" : Math.round(rate * 100) + "%"}<small>${who.length} 人</small></span></div>` };
+    }).sort((a, b) => (a.rate == null ? 2 : a.rate) - (b.rate == null ? 2 : b.rate)).map(o => o.html).join("");
+  } else {
+    body = `<p class="dw-note">完整考卷和解答（綠色是正確答案）。要印紙本，可以回清單按「🖨️ 再印」。</p>` + Q.map(x => `<div class="exam-q"><span class="eq-n">${x.i + 1}.</span><div class="eq-body"><div class="eq-q">${qText(x)}</div>${optsHtml(x)}
+      ${x.qi && x.qi.exp ? `<div class="tq-exp">📝 詳解：${escapeHtml(x.qi.exp)}</div>` : ""}${!x.qi ? `<div class="tq-exp">（這題的內容要等有孩子作答後才看得到）</div>` : ""}</div></div>`).join("");
+  }
+  return `<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap"><button class="btn-ghost" style="padding:4px 12px" onclick="examState.view='list'; renderBridge()">← 回考卷清單</button><h3 style="margin:6px 0">📊 ${escapeHtml(r.tq.title)}</h3></div>
     <div class="tiles bridge-kpis"><div class="tile-kpi"><b>${done.length}／${r.target.length}</b><span>已交卷</span></div><div class="tile-kpi"><b>${avg}%</b><span>平均答對率</span></div><div class="tile-kpi"><b>${r.tq.ids.length}</b><span>題數</span></div></div>
     ${missing.length ? `<div class="lore-box" style="font-size:.86rem">還沒交卷：${missing.map(n => escapeHtml(shortName(n))).join("、")}</div>` : ""}
-    <h3 style="margin:12px 0 6px">👩‍🎓 每位學生</h3>
-    ${done.length ? `<div class="dash-table-wrap"><table><thead><tr><th>學生</th><th class="num">答對</th><th class="num">分數</th><th>交卷時間</th></tr></thead><tbody>
-      ${done.map(p => `<tr><td>${escapeHtml(shortName(p.name))} ${orgTag(p.name, true)}</td><td class="num">${p.correct}／${p.total}</td><td class="num"><b>${Math.round(p.correct / r.tq.ids.length * 100)}</b></td><td>${escapeHtml(String(p.t).slice(5, 16))}</td></tr>`).join("")}</tbody></table></div>`
-      : `<div class="empty-note">還沒有人交卷</div>`}
-    <h3 style="margin:12px 0 6px">❓ 每一題的答對率（低的排前面）</h3>
-    ${perQ.map(x => `<div class="exam-q"><span class="eq-n">${x.i + 1}.</span><div class="eq-body"><div class="eq-q">${x.q ? mathHtml(x.q.q, x.q.subject, x.q.unit) : escapeHtml(x.id)}</div>
-      ${x.q ? `<div class="eq-o">${x.q.opts.map((o, k) => `<span class="${k === x.q.ans ? "ok" : ""}">${CIRCLED[k]}${mathHtml(stripNum(o), x.q.subject, x.q.unit)}</span>`).join("")}</div>` : ""}</div>
-      <span class="eq-rate" style="color:${x.rate == null ? "inherit" : x.rate < 0.5 ? "var(--danger)" : x.rate < 0.8 ? "#b45309" : "#15803d"}">${x.rate == null ? "—" : Math.round(x.rate * 100) + "%"}<small>${x.n} 人</small></span></div>`).join("")}`;
+    ${tabs}${body}`;
 }
 
 // ---- 紙本：A4／B4 列印（存成 PDF）與 Word ----
@@ -8503,16 +8548,17 @@ function demoBridge(op, d) {
   if (op === "tqTake") { const t = db.tq.find(x => x.id === d.id); if (!t) throw new Error("這份考卷已經被老師收回了"); return { tq: t }; }
   if (op === "tqResults") {
     const tq = db.tq.find(x => x.id === d.id); if (!tq) throw new Error("找不到這份考卷");
-    const tag = tqTag(tq.id), people = [], perQ = {};
+    const tag = tqTag(tq.id), people = [], perQ = {}, qs = {};
     studentsList().filter(s => !isTestAcc(s.name)).forEach(s => {
       const rows = load("508_DEMO_DATA_" + s.name, { answers: [] }).answers.filter(r => String(r.sid || "").indexOf(tag) >= 0);
       if (!rows.length) return;
-      const sid = rows[0].sid, mine = rows.filter(r => r.sid === sid);
-      people.push({ name: s.name, total: mine.length, correct: mine.filter(r => r.ok).length, t: mine[mine.length - 1].t });
+      const sid = rows[0].sid, mine = rows.filter(r => r.sid === sid), ans = {};
+      mine.forEach(r => { ans[r.qId] = { c: r.chosen, ok: r.ok }; if (!qs[r.qId]) qs[r.qId] = { q: r.q, opts: r.opts || [], right: r.correctText, exp: r.exp, subject: r.subject, unit: r.unit }; });
+      people.push({ name: s.name, total: mine.length, correct: mine.filter(r => r.ok).length, t: mine[mine.length - 1].t, ans });
       mine.forEach(r => { const q = perQ[r.qId] || (perQ[r.qId] = { qId: r.qId, n: 0, ok: 0 }); q.n++; if (r.ok) q.ok++; });
     });
     const target = studentsList().filter(s => !isTestAcc(s.name) && (tq.cls.includes("all") || tq.cls.includes(stuClass(s.name)))).map(s => s.name);
-    return { tq, people, perQ: Object.values(perQ), target };
+    return { tq, people, perQ: Object.values(perQ), target, qs };
   }
   if (op === "pulse") return { unread: db.dms.filter(m => m.to === me && !m.read).length, unlock: db.unl[session.user.name] || 0, rules: db.rules || DEFAULT_RULES,
     tq: session.user.role === "student" ? db.tq.filter(t => (!t.due || t.due >= nowStr().slice(0, 10)) && (t.cls.includes("all") || t.cls.includes(stuClass(session.user.name)))).map(t => ({ id: t.id, title: t.title, n: t.ids.length, due: t.due, show: t.show })) : undefined,
