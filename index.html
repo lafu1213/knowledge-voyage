@@ -832,6 +832,18 @@
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .bd { max-width: 980px; margin: 0 auto; color: #1e293b; }
+  .bd-head { display: flex; gap: 14px; align-items: center; background: repeating-linear-gradient(45deg, #c69c6d 0 12px, #b88a5a 12px 24px); border-radius: 18px; padding: 14px 18px; color: #fff; text-shadow: 0 2px 2px rgba(0,0,0,.35); }
+  .bd-head h2 { margin: 0; } .bd-pin { font-size: 2.6rem; }
+  .bd-nav { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; background: inherit; }
+  .bd-nav a { background: #fff; border-radius: 999px; padding: 5px 12px; font-weight: 800; color: #7c3aed; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.08); font-size: .88rem; }
+  .bd-sec { background: #fffdf5; border-radius: 16px; padding: 12px 16px; margin: 10px 0; box-shadow: 0 3px 10px rgba(0,0,0,.08); border-top: 6px solid #f59e0b; scroll-margin-top: 54px; }
+  .bd-sec h3 { margin: 4px 0 8px; } .bd-notice { font-size: 1.15rem; font-weight: 900; color: #b91c1c; background: #fef2f2; border-radius: 12px; padding: 10px 14px; } .bd-notice small { display: block; font-weight: 400; color: #64748b; font-size: .8rem; }
+  .bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; } .bd-grid > div { background: #f8fafc; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; font-size: .92rem; } .bd-grid b { font-size: .8rem; color: #64748b; }
+  .bd-places { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; } .bd-places button { text-align: left; border: 0; border-radius: 12px; padding: 10px; background: #ede9fe; cursor: pointer; font: inherit; display: flex; flex-direction: column; gap: 2px; } .bd-places small { color: #6b21a8; font-size: .76rem; }
+  .bd-how details { background: #f8fafc; border-radius: 12px; padding: 6px 12px; margin: 6px 0; } .bd-how summary { font-weight: 900; cursor: pointer; } .bd-how p { margin: 6px 0; line-height: 1.7; font-size: .92rem; }
+  .bd-prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; } .bd-prices h4 { margin: 4px 0; } .bd-prices table { width: 100%; border-collapse: collapse; font-size: .84rem; } .bd-prices td { padding: 3px 4px; border-bottom: 1px dashed #e2e8f0; white-space: normal; vertical-align: top; } .bd-prices > div { min-width: 0; } .bd-prices td:last-child { font-size: .74rem; color: #64748b; } .bd-prices td.num { white-space: nowrap; font-weight: 800; }
+  .bd-rule li { margin: 4px 0; line-height: 1.6; }
   .fish-pond { height: 120px; border-radius: 14px; background: linear-gradient(180deg, #7dd3fc, #0369a1); position: relative; margin: 8px 0; overflow: hidden; }
   .fish-pond .bob { position: absolute; left: 50%; top: 40%; font-size: 1.8rem; transform: translateX(-50%); animation: bob 1.4s ease-in-out infinite; }
   .fish-pond.bite .bob { animation: bite .25s infinite; font-size: 2.4rem; } .fish-now { background: #dc2626 !important; animation: dwPulse .3s infinite alternate; }
@@ -2439,12 +2451,12 @@ async function dwFlush() {
 function renderDream() {
   const el = document.getElementById("dream"); if (!el) return;
   const me = session.user.role, mats = dwMats(), c = me === "student" ? coinState() : null;
-  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["gear", "⚔️ 裝備店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["cards", "🃏 遊戲桌"], ["list", "🏘️ 村莊名冊"]];
+  const tabs = [["world", "🌍 異想世界"], ["castle", "🏰 老師城堡"], ...(me === "student" ? [["home", "🏠 我的家"], ["shop", "🛒 家具店"], ["gear", "⚔️ 裝備店"], ["bag", "🎒 材料與升級"]] : me === "teacher" ? [["home", "🌟 老師的示範家"]] : []), ["cards", "🃏 遊戲桌"], ["board", "📌 公佈欄"], ["list", "🏘️ 村莊名冊"]];
   el.innerHTML = `<div class="dw-top">
       <div class="dw-title">🌈 508 異想世界</div>
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
       <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">${dwRules().free ? "🎈 試玩中・不限時間" : `⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘`}</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
-      <button class="dw-help-btn" onclick="dwGuide()">❓ 怎麼玩</button><button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
+      <button class="dw-help-btn" onclick="dwTab('board')">📌 公佈欄・怎麼玩</button><button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
     <div class="notice-bar dw" id="dw-notice" hidden></div>
     <div class="dw-body ${dw.tab === "world" && !dw.view ? "world" : ""}" id="dw-body">${dwBody()}</div>`;
   noticeRender();
@@ -2484,6 +2496,7 @@ function dwBody() {
   if (dw.tab === "shop") return dwShopHtml();
   if (dw.tab === "gear") return dwGearHtml();
   if (dw.tab === "cards") return dwCardsHtml();
+  if (dw.tab === "board") return dwBoardHtml();
   if (dw.tab === "bag") return dwBagHtml();
   return "";
 }
@@ -3139,12 +3152,13 @@ function w3Create() {
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button>${session.user.role === "student" ? `<button onclick="w3FarmToggle()">🌱 種田</button><button onclick="w3PetCard()">🐾 我的寵物</button><button onclick="w3Bag()">🎒 背包</button>` : ""}<button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('board')">📌 公佈欄</button><button onclick="dwTab('cards')">🃏 遊戲桌</button>${session.user.role === "student" ? `<button onclick="w3FarmToggle()">🌱 種田</button><button onclick="w3PetCard()">🐾 我的寵物</button><button onclick="w3Bag()">🎒 背包</button>` : ""}<button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
   w3ChatSync(true);
   w3.hemi = hemi; w3.sunL = sun; w3.M = M; w3.fogBase = [40, 95];
+  w3.board = w3BoardMake(scene, world); w3BoardPaint();
   if (w3Touch() && window.innerHeight > window.innerWidth) setTimeout(() => toast("📱 把手機轉成橫的，畫面更大更好玩！", 4500), 800);
   w3OutBuild();
   w3ZombieInit();
@@ -3282,6 +3296,7 @@ function w3Enter() {
   if (d.kind === "exit") return w3Warp("castle");
   if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
   if (d.kind === "hexit") return w3LeaveRoom();
+  if (d.kind === "board") return dwTab("board");
   if (d.kind === "fac") { if (d.k === "clinic") return w3Clinic(); if (d.k === "pets") return w3PetShop(); if (d.k === "fish") return w3Fishing(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
   if (d.kind === "hedit") return dwTab("home");
   if (d.kind === "hstk") return w3StickerCard();
@@ -3338,7 +3353,7 @@ function w3Loop(now) {
   w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" || d.room ? 4 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽", pets: "🐾 進寵物店", fish: "🎣 開始釣魚" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "board" ? "📌 看公佈欄" : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽", pets: "🐾 進寵物店", fish: "🎣 開始釣魚" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -3354,7 +3369,7 @@ function w3Loop(now) {
   w3ZombieTick(dt, now);
   w3HealthTick(dt, now);
   w3PetTick(dt, now);
-  if (now - (w3.farmT || 0) > 30000) { w3.farmT = now; w3FarmBuild(); }
+  if (now - (w3.farmT || 0) > 30000) { w3.farmT = now; w3FarmBuild(); w3BoardPaint(); }
   w3PeerSync(dt, now);
   w3Env(now);
   w3WeatherTick(dt, now);
@@ -4251,6 +4266,79 @@ async function w3Cure(id) {
   dwSave(); w3Clinic(w3.houseCall); w3SickTag(); renderDreamStat();
 }
 
+
+// ════════ 📌 異想世界公佈欄：老師公告、今天的世界、開放時間、地點導覽、所有玩法、物價表 ════════
+function dwGo(where) { dw.tab = "world"; dw.view = null; renderDream(); setTimeout(() => { if (w3) w3Warp(where); }, 600); }
+function dwBoardHtml() {
+  const r = rulesNow(), R = dwRules(), n = noticeNow(), T = dwIsT();
+  const sec = (id, title, body) => `<section class="bd-sec" id="bd-${id}"><h3>${title}</h3>${body}</section>`;
+  const price = (e, name, p, tip) => `<tr><td>${e} ${escapeHtml(name)}</td><td class="num">🪙${p}</td><td>${tip || ""}</td></tr>`;
+  const places = [["castle", "🏰 老師的天空城堡", "許願池、扭蛋機、榮譽殿堂、水族館…10 個好玩的地方"], ["inside", "✨ 城堡大廳", "走進城堡裡面探險"], ["home", "🏠 我的家", "布置、蓋方塊、院子種田"], ["clinic", "🏥 508 診所", "生病受傷找王醫生"], ["pets", "🐾 毛毛寵物店", "認養寵物、買飼料"]];
+  const facs = [["🎣 釣魚碼頭", "西北邊的湖邊"], ["🥋 功夫擂台", "東北邊的紅磚高台"], ["🏐 排球場", "城堡後面的沙灘"], ["📌 公佈欄", "城堡大門左前方"]];
+  return `<div class="bd">
+    <div class="bd-head"><div class="bd-pin">📌</div><div><h2>508 異想世界公佈欄</h2><small>所有玩法、規則、物價都在這裡　·　${nowStr().slice(0, 16)}</small></div></div>
+    <nav class="bd-nav">${[["notice", "📢 公告"], ["today", "🌦️ 今天的世界"], ["map", "🗺️ 地點導覽"], ["how", "🎮 玩法說明"], ["price", "🪙 物價表"], ["rule", "📜 生活公約"]].map(([k, l]) => `<a href="#bd-${k}" onclick="event.preventDefault(); document.getElementById('bd-${k}').scrollIntoView({behavior:'smooth'})">${l}</a>`).join("")}</nav>
+    ${sec("notice", "📢 老師公告", n ? `<div class="bd-notice">${escapeHtml(n.text)}${n.until ? `<small>（公告到 ${new Date(n.until).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}）</small>` : ""}</div>` : `<p class="dw-note">目前沒有新公告。</p>`)}
+    ${sec("today", "🌦️ 今天的異想世界", `<div class="bd-grid">
+      <div><b>⏰ 開放時間</b>${escapeHtml(dwHoursText())}</div>
+      <div><b>⏳ 每天可以玩</b>${R.free ? "🎈 試玩中，不限時間" : R.min + " 分鐘"}</div>
+      <div><b>🔑 進島條件</b>${R.free ? "試玩中，不用條件" : `完成 ${R.n} 局、正確率 ${R.acc}%、錯題清零`}</div>
+      <div><b>🌦️ 天氣</b>${W3_WEATHER[r.worldWeather || "sunny"]}</div>
+      <div><b>🗺️ 地形</b>${W3_THEMES[r.worldTheme || "meadow"].name}</div>
+      <div><b>🧟 殭屍</b>${r.zombieOn !== false ? "出沒中！小心" : "休息中 🌼"}</div>
+      <div><b>🎵 音樂</b>${W3_MUSIC[r.worldMusic || "auto"]}</div>
+      <div><b>🌗 時間</b>白天、晚霞、星空跟真實時間一樣</div></div>`)}
+    ${sec("map", "🗺️ 地點導覽（按一下就傳送過去）", `<div class="bd-places">${places.map(([k, t, d]) => `<button onclick="dwGo('${k}')"><b>${t}</b><small>${d}</small></button>`).join("")}</div>
+      <p class="dw-note">其他地方：${facs.map(([t, d]) => `<b>${t}</b>（${d}）`).join("、")}。還有每天藏起來的 5 個 ❓寶箱：找天上的黃色光柱！</p>`)}
+    ${sec("how", "🎮 玩法說明", `<div class="bd-how">
+      <details open><summary>🔑 怎麼進來、怎麼走</summary><p>完成老師規定的闖關局數、正確率，錯題訂正完就能進島。電腦用 WASD／方向鍵走、空白鍵跳（空中再按一次二段跳）、拖曳滑鼠轉視角；平板用左下搖桿、右下 ⤒ 跳。走到門口或招牌前按 E（平板按畫面下方的按鈕）就能進去。</p></details>
+      <details><summary>📚 學習換材料</summary><p>回寶藏海答題：國語→🪵木材、數學→🪨石材、英語→🧵布料、自然→🌱種子、社會→🏺古物、唐詩→📜詩卷。答對 +1、訂正答對再 +1、整局全對 +3。金幣也是答題賺的，買家具、裝備、看醫生、養寵物都要用。</p></details>
+      <details><summary>🏠 我的家、蓋方塊、院子</summary><p>到「🏠 我的家」擺家具、換地板壁紙、升級房子（帳篷→小木屋→紅磚屋→洋房→城堡，要五科材料）。走進 3D 的家可以疊方塊；家門前石頭框起來的院子也能蓋（每塊用 1 個材料，拆掉會退回）。可以開放同學參觀、互送貼圖。</p></details>
+      <details><summary>🌱 開心農場</summary><p>按右邊「🌱 種田」，在院子用 🌱 材料種 ${DW_CROPS.map(c => c.e + c.n).join("、")}。澆水長得快一倍，成熟了點一下收成。菜可以吃（補愛心）、🥕＋🍅 煮蔬菜湯（治感冒擦傷）、餵寵物。</p></details>
+      <details><summary>🎣 釣魚碼頭</summary><p>買釣竿後到湖邊碼頭，拋竿、看到 ❗ 快拉！共有 ${DW_FISH.length} 種魚，有些只在晚上、下雨、下雪或櫻花季出現。每釣到一種新的魚送 2 個材料。每天可以釣 20 次（黃金釣竿 30 次）。</p></details>
+      <details><summary>🐾 寵物</summary><p>到毛毛寵物店認養（${DW_PETS.map(x => x.e + x.n).join("、")}），取個名字，牠會跟著你走。飽足、乾淨、開心會慢慢下降，要餵飼料或牠最愛的食物、洗澡、陪牠玩，不然牠會難過喔。</p></details>
+      <details><summary>🏥 生病和診所</summary><p>淋雨、下雪在外面太久會 🤧感冒（帶 ☂️ 雨傘、穿 🧥 外套就不會）；晚上 9 點後還在玩或一次玩 45 分鐘會 🤒發燒；被殭屍抓到會 🩹擦傷、被打倒會 🤕重傷。生病走路變慢、愛心變少，要到診所付金幣看醫生。不看醫生再玩 10 分鐘就會 🛌 病倒在家不能出門，只能打電話請醫生出診（多收出診費）。</p></details>
+      <details><summary>🧟 殭屍和裝備</summary><p>老師打開殭屍時，荒野會有殭屍追人（廣場、房子、院子、城堡、診所等都是安全區）。按 F 或點畫面打殭屍，打倒有機會撿到材料（每天最多 6 個）。愛心用完會昏倒、掉 1～2 個材料。到 ⚔️ 裝備店買劍、盔甲、跑鞋、補血藥水（按 H 喝）。</p></details>
+      <details><summary>🃏 遊戲桌、🥋 擂台、🏐 排球</summary><p>${Object.values(CARD_GAMES).map(g => `<b>${g.name}</b>：${g.tip}`).join("<br>")}<br>人不夠可以加 🤖 電腦玩家。</p></details>
+      <details><summary>💬 聊天和悄悄話</summary><p>3D 世界左上角是異想世界的聊天室；點同學的名字就能講 🤫 悄悄話。不友善的字和聯絡方式會被擋下，老師看得到所有紀錄。</p></details>
+      <details><summary>🏰 老師的城堡</summary><p>許願池每天送材料、扭蛋機每天免費轉一次、榮譽殿堂展示收到最多貼圖的家，還有水族館、星空塔等等，走到有名牌的地方按 E 玩。</p></details></div>`)}
+    ${sec("price", "🪙 物價表", `<div class="bd-prices">
+      <div><h4>⚔️ 裝備店</h4><table>${DW_GEAR.map(g => price(g.emoji, g.name, g.price, g.tip)).join("")}</table></div>
+      <div><h4>🏥 診所</h4><table>${Object.values(DW_CURE).map(x => price(x[0].split(" ")[0], x[0].split(" ").slice(1).join(" "), x[1], x[2])).join("")}${price("📞", "醫生出診費", 15, "病倒在家請醫生來，每一項多 15")}</table></div>
+      <div><h4>🐾 寵物店</h4><table>${DW_PETS.map(x => price(x.e, "認養" + x.n, x.price, "")).join("")}${price("🦴", "寵物飼料", 5, "一包")}</table></div>
+      <div><h4>🌱 種子（用材料）</h4><table>${DW_CROPS.map(c => `<tr><td>${c.e} ${c.n}</td><td class="num">🌱${c.cost}</td><td>${c.min >= 60 ? c.min / 60 + " 小時" : c.min + " 分鐘"}成熟</td></tr>`).join("")}</table></div></div>
+      <p class="dw-note">家具店有 130 多種家具，價錢寫在每件家具上。</p>`)}
+    ${sec("rule", "📜 異想世界生活公約", `<ol class="bd-rule"><li>先學習、再來玩：錯題要訂正完喔！</li><li>說好話：不罵人、不嘲笑、不留電話地址等聯絡方式。</li><li>尊重別人的家：沒開放的家不要硬闖，別人的院子不能亂蓋。</li><li>照顧好自己：下雨帶傘、早點睡、玩一陣子讓眼睛休息。</li><li>照顧寵物：認養了就要負責到底。</li><li>遇到問題找老師：在寶藏海按「📩 私訊」告訴老師。</li></ol>`)}
+    ${T ? `<p class="dw-note">👩‍🏫 老師：公告、開放時間、天氣地形、殭屍、音樂都在「⚓ 老師艦橋 → 🏴‍☠️ 航海規則」設定，這裡會自動更新。</p>` : ""}
+  </div>`;
+}
+// 3D 世界裡的公佈欄看板（城堡大門左前方）
+function w3BoardMake(scene, world) {
+  const gx = -7, gz = -19, b = world.hmap[gx + "," + gz] || 5;
+  const c = document.createElement("canvas"); c.width = 640; c.height = 400;
+  const tex = new THREE.CanvasTexture(c);
+  const g = new THREE.Group(), wood = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
+  [-2.7, 2.7].forEach(x => { const post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.6, 0.3), wood); post.position.set(gx + x, b + 2.8, gz); g.add(post); });
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.8, 0.25), wood); frame.position.set(gx, b + 3.4, gz - 0.05); g.add(frame);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 3.4), new THREE.MeshBasicMaterial({ map: tex })); face.position.set(gx, b + 3.4, gz + 0.09); g.add(face);
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.3, 0.8), new THREE.MeshLambertMaterial({ color: 0xdc2626 })); roof.position.set(gx, b + 5.45, gz); g.add(roof);
+  scene.add(g);
+  world.doors.push({ kind: "board", x: gx, z: gz + 1.6, y: b + 1 });
+  return { c, tex };
+}
+function w3BoardPaint() {
+  if (!w3 || !w3.board) return; const { c, tex } = w3.board, g = c.getContext("2d"), r = rulesNow(), n = noticeNow();
+  const sig = JSON.stringify([n && n.text, r.worldWeather, r.worldTheme, r.zombieOn, dwHoursText(), nowStr().slice(0, 13)]); if (sig === w3.boardSig) return; w3.boardSig = sig;
+  g.fillStyle = "#c69c6d"; g.fillRect(0, 0, 640, 400); g.fillStyle = "#fffdf5"; g.fillRect(16, 16, 608, 368);
+  g.fillStyle = "#7c3aed"; g.font = "bold 44px sans-serif"; g.textAlign = "center"; g.fillText("📌 異想世界公佈欄", 320, 70);
+  g.textAlign = "left"; g.font = "bold 26px sans-serif"; g.fillStyle = "#b91c1c";
+  const wrap = (t, x, y, w, lh, max) => { let line = "", k = 0; for (const ch of t) { if (g.measureText(line + ch).width > w) { g.fillText(line, x, y + k * lh); line = ch; if (++k >= max) return y + k * lh; } else line += ch; } g.fillText(line, x, y + k * lh); return y + (k + 1) * lh; };
+  let y = wrap(n ? "📢 " + n.text : "📢 目前沒有新公告", 40, 120, 560, 34, 2);
+  g.fillStyle = "#334155"; g.font = "24px sans-serif";
+  [`⏰ 開放：${dwHoursText()}`, `🌦️ ${W3_WEATHER[r.worldWeather || "sunny"]}　🗺️ ${W3_THEMES[r.worldTheme || "meadow"].name}`, `🧟 殭屍：${r.zombieOn !== false ? "出沒中！" : "休息中"}`].forEach(t => { g.fillText(t, 40, y + 10); y += 36; });
+  g.fillStyle = "#16a34a"; g.font = "bold 24px sans-serif"; g.textAlign = "center"; g.fillText("走過來按 E：玩法、地點、物價全都在這裡！", 320, 368);
+  tex.needsUpdate = true;
+}
 // ════════ 🎣 釣魚＋魚圖鑑 ════════
 // 稀有度：1 常見、2 少見、3 稀有、4 傳說；when：只在某些時候出現（night 晚上、rain 下雨、snow 下雪或冰雪地形、sakura 櫻花）
 const DW_FISH = [
