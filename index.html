@@ -2367,14 +2367,21 @@ function dwFree(id, home = dw.home) { return dwOwned("item", id, home) - (home.i
 
 // ── 進島條件 ──
 const DW_MIN_Q = 10;   // 進異想世界：一局至少要做幾題才算數
+const DW_FIX_N = 2;    // 進異想世界：每天還要完成幾局錯題（錯題本訂正或歷史錯題複習）
+const DW_FIX_UNITS = ["錯題本", "歷史錯題複習"];
 function dwGate() {
   if (!session || session.user.role !== "student" || dwRules().free) return { ok: true, list: [] };
   // 只算「今天」完成的局：每局至少 10 題、沒有被判亂答（扣分的局不算）、不含航行
   const R = dwRules(), today = nowStr().slice(0, 10);
-  const done = mySessions.filter(x => x.total >= DW_MIN_Q && Number(x.score || 0) >= 0 && x.subject !== "航行" && String(x.t || "").slice(0, 10) === today).length;
+  const todayOk = x => Number(x.score || 0) >= 0 && x.subject !== "航行" && String(x.t || "").slice(0, 10) === today;
+  const done = mySessions.filter(x => todayOk(x) && x.total >= DW_MIN_Q && !DW_FIX_UNITS.includes(x.unit)).length;
+  // 錯題局：錯題本訂正或歷史錯題複習；錯題很少的孩子（歷史錯題不到 5 題），做幾題都算一局；從來沒錯過的孩子免做
+  const wrongEver = new Set(myRows.filter(r => !r.ok).map(r => r.qId)).size;
+  const fixMin = Math.min(5, Math.max(1, wrongEver)), fixDone = mySessions.filter(x => todayOk(x) && DW_FIX_UNITS.includes(x.unit) && x.total >= fixMin).length;
   const acc = stats.attempts ? Math.round(stats.correct / stats.attempts * 100) : 0, pend = stats.pending.length;
   const list = [
     { label: `今天完成 ${R.n} 局闖關（每局至少 ${DW_MIN_Q} 題）`, have: `今天 ${done} 局`, ok: done >= R.n },
+    { label: `今天完成 ${DW_FIX_N} 局錯題練習（錯題本訂正或歷史錯題複習）`, have: wrongEver ? `今天 ${fixDone} 局` : "沒有錯過的題目，免做", ok: !wrongEver || fixDone >= DW_FIX_N, go: wrongEver && fixDone < DW_FIX_N ? "openMistakeBook()" : "" },
     { label: `期末正確率 ${R.acc}% 以上`, have: `${acc}%`, ok: acc >= R.acc },
     { label: "錯題全部訂正完", have: `待訂正 ${pend} 題`, ok: pend === 0, go: pend ? "openMistakeBook()" : "" }];
   return { ok: list.every(x => x.ok), list };
@@ -2476,7 +2483,7 @@ function dwGuide() {
   g.innerHTML = `<div class="dw-guide-box"><button class="dw-guide-x" onclick="document.getElementById('dw-guide').hidden=true">✕</button>
     <h2>🌈 508 異想世界怎麼玩？</h2>
     <ol>
-      <li><b>🔑 先解鎖：</b>當天完成 ${R.n} 局闖關（每局至少 ${DW_MIN_Q} 題）、期末正確率 ${R.acc}% 以上、錯題全部訂正完，才能進島（每次進島都會檢查）。每天最多玩 ${R.min} 分鐘。</li>
+      <li><b>🔑 先解鎖：</b>當天完成 ${R.n} 局闖關（每局至少 ${DW_MIN_Q} 題）和 ${DW_FIX_N} 局錯題練習、期末正確率 ${R.acc}% 以上、錯題全部訂正完，才能進島（每次進島都會檢查）。每天最多玩 ${R.min} 分鐘。</li>
       <li><b>🚶 到處走走：</b>電腦用 WASD／方向鍵走路、空白鍵跳、拖曳滑鼠轉視角；平板用左下角搖桿。右上角可以傳送到城堡或自己家。</li>
       <li><b>❓ 找寶箱：</b>每天世界裡藏了 5 個發光的問號寶箱，走過去就能拿到蓋房子的材料。</li>
       <li><b>🏰 逛老師的城堡：</b>走到金色城堡大門按 E 進去，許願池每天送材料、扭蛋機每天免費轉一次（有機會抽到🦄限定家具）。</li>
@@ -4360,7 +4367,7 @@ function dwBoardHtml() {
     ${sec("today", "🌦️ 今天的異想世界", `<div class="bd-grid">
       <div><b>⏰ 開放時間</b>${escapeHtml(dwHoursText())}</div>
       <div><b>⏳ 每天可以玩</b>${R.free ? "🎈 試玩中，不限時間" : R.min + " 分鐘"}</div>
-      <div><b>🔑 進島條件</b>${R.free ? "試玩中，不用條件" : `今天完成 ${R.n} 局（每局 ${DW_MIN_Q} 題以上）、正確率 ${R.acc}%、錯題清零`}</div>
+      <div><b>🔑 進島條件</b>${R.free ? "試玩中，不用條件" : `今天完成 ${R.n} 局（每局 ${DW_MIN_Q} 題以上）＋${DW_FIX_N} 局錯題練習、正確率 ${R.acc}%、錯題清零`}</div>
       <div><b>🌦️ 天氣</b>${W3_WEATHER[r.worldWeather || "sunny"]}</div>
       <div><b>🗺️ 地形</b>${W3_THEMES[r.worldTheme || "meadow"].name}</div>
       <div><b>🧟 殭屍</b>${r.zombieOn !== false ? "出沒中！小心" : "休息中 🌼"}</div>
@@ -8638,7 +8645,7 @@ async function renderBridge() {
         <label class="bridge-switch"><input type="checkbox" id="rule-balance" ${r.balanceOn !== false ? "checked" : ""}> <span><b>⚖️ 均衡航行</b><br><small>同一科今天連續跑滿幾局後，下一局要先去他正確率最低的科目跑一局，才能再回來（唐詩算國語、單字王算英語；錯題島訂正、老師考卷不受限）。</small>
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">每天至少完成（每局 10 題以上）<input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions ?? 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc ?? 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">每天至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions ?? 5}"> 局闖關（每局 10 題以上）＋ 2 局錯題練習；正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc ?? 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; font-size:.9rem">⏰ 開放時段：${DW_DAYS.map((d, i) => `<label style="display:inline-flex; gap:2px; align-items:center"><input type="checkbox" class="rule-world-day" value="${i}" ${(Array.isArray(r.worldDays) && r.worldDays.length ? r.worldDays.map(Number) : [0, 1, 2, 3, 4, 5, 6]).includes(i) ? "checked" : ""}>${d}</label>`).join("")}
             　<input type="time" id="rule-world-start" value="${r.worldStart || "00:00"}"> 到 <input type="time" id="rule-world-end" value="${r.worldEnd || "23:59"}">
             <button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.querySelectorAll('.rule-world-day').forEach(c=>c.checked=true); document.getElementById('rule-world-start').value='00:00'; document.getElementById('rule-world-end').value='23:59'">全天開放</button>
