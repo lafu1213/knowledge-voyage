@@ -846,6 +846,7 @@
   .bd-rule li { margin: 4px 0; line-height: 1.6; }
   .dw3d-game { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); background: rgba(15,23,42,.82); color: #fff; border-radius: 14px; padding: 6px 14px; font-weight: 800; text-align: center; min-width: 260px; z-index: 3; }
   .dw3d-game b { color: #fde047; font-size: 1.1rem; }
+  .dw3d-game.bb { top: auto; bottom: 120px; min-width: min(360px, 86vw); }
   .bb-bar { position: relative; height: 18px; background: #334155; border-radius: 9px; margin: 6px 0 4px; overflow: hidden; } .bb-bar i { position: absolute; top: 0; bottom: 0; } .bb-bar i.rim { background: #f59e0b; } .bb-bar i.ok { background: #22c55e; }
   .bb-bar b { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: #fff; box-shadow: 0 0 6px #fff; }
   .bb-msg { font-size: .85rem; } .bb-shoot { margin-top: 6px; font-size: 1.1rem; padding: 8px 26px; background: #ea580c !important; }
@@ -3365,8 +3366,8 @@ function w3Warp(where) {
   if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
   else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
   else if (where === "pets") { w3.player.position.set(-30.5, 7, -10.5); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
-  else if (where === "tag") { w3.player.position.set(24, 7, -35.5); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
-  else if (where === "bb") { w3.player.position.set(-22, 7, -43); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
+  else if (where === "tag") { w3.player.position.set(24, 7, -35.5); w3.yaw = 0; w3.player.rotation.y = Math.PI; }
+  else if (where === "bb") { w3.player.position.set(-22, 7, -43); w3.yaw = 0; w3.player.rotation.y = Math.PI; }
   else if (where === "clinic") { w3.player.position.set(21.5, 7, -12); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
   else if (where === "room") { const sp = w3.room.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.75; w3.dist = 10; w3.camD = undefined; w3.player.rotation.y = Math.PI; }
   else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === (where === "door" && w3.lastRoom ? w3.lastRoom : dwMe())); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
@@ -3425,7 +3426,8 @@ function w3Loop(now) {
   // 相機跟在後面
   const cd = w3.dist, cp = new THREE.Vector3(P.x + Math.sin(w3.yaw) * Math.cos(w3.pitch) * cd, P.y + 1.6 + Math.sin(w3.pitch) * cd, P.z + Math.cos(w3.yaw) * Math.cos(w3.pitch) * cd);
   const head = new THREE.Vector3(P.x, P.y + 1.5, P.z), dir = cp.clone().sub(head), full = dir.length(); dir.normalize();
-  let ok = full; for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
+  const peek = w3.mg && w3.mg.type !== "bb" && w3.world.hides && w3Hidden(P);   // 躲在小屋裡：相機飄到屋外看，才看得到鬼在哪
+  let ok = full; if (!peek) for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
   w3.camD = w3.camD === undefined ? ok : ok < w3.camD ? ok : w3.camD + (ok - w3.camD) * Math.min(1, dt * 3);
   cp.copy(head.addScaledVector(dir, w3.camD));
   w3.look = w3.look || new THREE.Vector3(P.x, P.y + 1.4, P.z);
@@ -4604,7 +4606,7 @@ function w3GameReward(kind, label) {
 function w3GameHud(html) { const el = w3.hud.querySelector("#dw3d-game"); if (!el) return; el.hidden = !html; if (html) el.innerHTML = html; }
 function w3GameEnd(msg) {
   const g = w3.mg; if (!g) return; (g.npcs || []).forEach(n => { w3.scene.remove(n.g); if (n.tag) w3.scene.remove(n.tag); }); if (g.ball) w3.scene.remove(g.ball);
-  w3.mg = null; w3GameHud(""); if (msg) { const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (c && p) { p.innerHTML = msg; c.hidden = false; } }
+  w3.mg = null; w3GameHud(""); const gh = w3.hud.querySelector("#dw3d-game"); if (gh) gh.classList.remove("bb"); if (w3.myTag) w3.myTag.visible = true; if (msg) { const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (c && p) { p.innerHTML = msg; c.hidden = false; } }
 }
 function w3LOS(a, b) {   // 中間有沒有被方塊擋住（看不看得到）
   const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), y = Math.round(a.y + 1);
@@ -4637,7 +4639,7 @@ function w3TagMenu() {
 function w3TagStart(type) {
   if (w3.mg) w3GameEnd(); document.getElementById("dw3d-card").hidden = true;
   const b = w3.world.hmap["24,-50"] || 5, P = w3.player.position, npcs = [];
-  P.set(24, b + 1.2, -41.5); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; w3.pitch = 0.5; w3.dist = 9; w3.camD = undefined;
+  P.set(24, b + 1.2, -41.5); w3.yaw = 0; w3.player.rotation.y = Math.PI; w3.pitch = 0.5; w3.dist = 9; w3.camD = undefined;
   if (type === "hide") {
     const g = new THREE.Sprite(w3Emoji("👻")); g.scale.set(1.9, 1.9, 1); const G = new THREE.Group(); G.add(g); g.position.y = 1.2; G.position.set(25, b + 0.5, -55); w3.scene.add(G);
     npcs.push({ g: G, ghost: true, tgt: null, wait: 0 });
@@ -4711,12 +4713,13 @@ function w3BBMenu() {
 function w3BBStart() {
   if (w3.mg) w3GameEnd(); document.getElementById("dw3d-card").hidden = true; w3HoopMake();
   w3.mg = { type: "bb", t0: performance.now(), dur: 45000, lock: true, score: 0, shots: 0, made: 0, combo: 0, spot: 0, flying: null, npcs: [] };
+  const gh = w3.hud.querySelector("#dw3d-game"); if (gh) gh.classList.add("bb"); if (w3.myTag) w3.myTag.visible = false;   // 投籃時面板放下面，才看得到籃框
   w3BBPlace(); toast("🏀 看力道條，跑到綠色區就投！", 3000);
 }
 function w3BBPlace() {
   const g = w3.mg, s = BB_SPOTS[g.spot % BB_SPOTS.length], P = w3.player.position, b = w3.hoop.b;
   P.set(s.x, b + 1.2, s.z); w3.player.rotation.y = Math.atan2(w3.hoop.x - s.x, w3.hoop.z - s.z);
-  w3.yaw = Math.atan2(w3.hoop.x - s.x, w3.hoop.z - s.z); w3.pitch = 0.18; w3.dist = 4.5; w3.camD = undefined;
+  w3.yaw = Math.atan2(s.x - w3.hoop.x, s.z - w3.hoop.z); w3.pitch = 0.18; w3.dist = 4.5; w3.camD = undefined;
   g.sweet = s.pts === 3 ? 0.74 : 0.6; g.win = s.pts === 3 ? 0.05 : 0.065;
 }
 function w3BBShoot() {
@@ -4742,8 +4745,15 @@ function w3BBTick(dt, now) {
       if (g.shots % 2 === 0) { g.spot++; w3BBPlace(); }
     }
   }
-  const bar = `<div class="bb-bar"><i style="left:${(g.sweet - g.win * 2) * 100}%; width:${g.win * 4 * 100}%" class="rim"></i><i style="left:${(g.sweet - g.win) * 100}%; width:${g.win * 2 * 100}%" class="ok"></i><b style="left:${g.pw * 100}%"></b></div>`;
-  w3GameHud(`🏀 剩 <b>${Math.ceil(left / 1000)}</b> 秒　得分 <b>${g.score}</b>　${BB_SPOTS[g.spot % BB_SPOTS.length].n}（${BB_SPOTS[g.spot % BB_SPOTS.length].pts} 分）<br>${bar}<div class="bb-msg">${g.msg || "按「🏀 投！」或空白鍵"}</div><button class="dw-btn bb-shoot" onpointerdown="event.stopPropagation(); w3BBShoot()">🏀 投！</button>`);
+  // HUD 只建一次，之後只改文字和位置（每格重畫會讓平板按不到「投！」）
+  if (!g.hudOn) { g.hudOn = 1; w3GameHud(`<span class="bb-top"></span><div class="bb-bar"><i class="rim"></i><i class="ok"></i><b></b></div><div class="bb-msg"></div><button class="dw-btn bb-shoot" onpointerdown="event.stopPropagation(); event.preventDefault(); w3BBShoot()">🏀 投！</button>`); }
+  const H = w3.hud.querySelector("#dw3d-game"), sp = BB_SPOTS[g.spot % BB_SPOTS.length];
+  if (H) {
+    const top = `🏀 剩 <b>${Math.ceil(left / 1000)}</b> 秒　得分 <b>${g.score}</b>　${sp.n}（${sp.pts} 分）`, el = H.querySelector(".bb-top"); if (el && el.innerHTML !== top) el.innerHTML = top;
+    const [rim, ok] = H.querySelectorAll(".bb-bar i"), cur = H.querySelector(".bb-bar b"), msg = H.querySelector(".bb-msg");
+    if (rim) { rim.style.left = (g.sweet - g.win * 2) * 100 + "%"; rim.style.width = g.win * 400 + "%"; ok.style.left = (g.sweet - g.win) * 100 + "%"; ok.style.width = g.win * 200 + "%"; cur.style.left = g.pw * 100 + "%"; }
+    const m = g.msg || "按「🏀 投！」或空白鍵"; if (msg && msg.textContent !== m) msg.textContent = m;
+  }
   if (!left && !g.flying) {
     dw.home.gm = dw.home.gm || {}; const best = dw.home.gm.bb || 0, nb = g.score > best; if (nb) dw.home.gm.bb = g.score; dwSave();
     const r = g.score >= 20 ? w3GameReward("bb") : "得到 20 分以上就有材料獎勵喔！";
