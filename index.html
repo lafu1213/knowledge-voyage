@@ -832,6 +832,14 @@
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .fish-pond { height: 120px; border-radius: 14px; background: linear-gradient(180deg, #7dd3fc, #0369a1); position: relative; margin: 8px 0; overflow: hidden; }
+  .fish-pond .bob { position: absolute; left: 50%; top: 40%; font-size: 1.8rem; transform: translateX(-50%); animation: bob 1.4s ease-in-out infinite; }
+  .fish-pond.bite .bob { animation: bite .25s infinite; font-size: 2.4rem; } .fish-now { background: #dc2626 !important; animation: dwPulse .3s infinite alternate; }
+  @keyframes bob { 50% { transform: translate(-50%, 6px); } } @keyframes bite { 50% { transform: translate(-50%, 14px) scale(1.2); } }
+  .fish-got { border: 3px solid; border-radius: 14px; padding: 10px; text-align: center; display: flex; flex-direction: column; gap: 2px; margin: 8px 0; } .fish-got em { color: #b45309; font-style: normal; font-weight: 800; }
+  .fish-book { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 4px; margin-top: 6px; } .fish-book span { text-align: center; font-size: 1.5rem; background: #f0f9ff; border-radius: 10px; padding: 4px 2px; } .fish-book span.no { opacity: .45; } .fish-book small { display: block; font-size: .6rem; }
+  .bag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; } .bag-row small, .dw-btn small { display: block; font-size: .65rem; font-weight: 400; }
+  .pet-bar { display: flex; align-items: center; gap: 6px; font-size: .82rem; margin: 3px 0; } .pet-bar i { flex: 1; height: 10px; background: #e2e8f0; border-radius: 6px; overflow: hidden; } .pet-bar b { display: block; height: 100%; }
   .clinic-doc { font-size: 3.2rem; text-align: center; } .clinic-opts { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
   .clinic-opts .dw-btn { text-align: left; display: flex; flex-direction: column; } .clinic-opts small { font-weight: 400; opacity: .8; font-size: .75rem; }
   .clinic-tip { font-size: .8rem; background: #ecfdf5; color: #065f46; border-radius: 10px; padding: 6px 10px; }
@@ -2459,6 +2467,8 @@ function dwGuide() {
       <li><b>🏠 布置我的家：</b>點背包裡的家具，再點地板放上去；點擺好的家具可以拿起來移動、翻面。還能取家名、換屋頂顏色、地板和壁紙。</li>
       <li><b>🏗️ 升級房子：</b>帳篷 → 小木屋 → 紅磚屋 → 洋房 → 城堡。升級要五科的材料，只練擅長的科目蓋不起來喔！升級後，3D 世界裡你的房子也會跟著變大變漂亮。</li>
       <li><b>💬 聊天：</b>3D 世界左上角是異想世界自己的聊天室（和寶藏海分開）。點同學的名字，或在「📢 大家」那裡選同學，就能講 🤫 悄悄話。不友善的字和聯絡方式一樣會被擋下，老師看得到紀錄。</li>
+      <li><b>🏥 診所：</b>淋雨下雪太久、熬夜、玩太久或被殭屍打到會生病受傷，要付金幣看醫生；不看醫生會病倒在家不能出門。</li>
+      <li><b>🎣 釣魚、🌱 種田、🐾 寵物：</b>買釣竿到湖邊碼頭釣魚收集圖鑑；用 🌱 材料在院子種菜，收成可以吃、煮湯、餵寵物；到寵物店認養寵物，要記得餵食、洗澡、陪牠玩。</li>
       <li><b>🃏 遊戲桌：</b>開一桌找同學玩牌：顏色數字接龍、抽鬼牌、大老二、心臟病，2～4 人，人不夠可以加 🤖 電腦玩家。</li>
       <li><b>🌗 日夜和音樂：</b>異想世界的白天、晚霞、星空跟真實時間一樣；背景音樂由老師挑選，按右邊的 🎵 可以自己關掉聲音。</li>
       <li><b>🚪 開放參觀：</b>在「我的家」勾選「開放同學參觀」，同學就能走進你家；參觀別人家時，每天可以送每一家一張貼圖（👍🌟😍🏆🎉）。收到最多貼圖的家會上城堡的榮譽殿堂！</li>
@@ -2912,6 +2922,19 @@ function w3World(homes) {
     for (let x = -5; x <= 5; x++) put(x, b + 3, -50, "w#f8fafc");
     doors.push({ kind: "fac", k: "volley", x: 0, z: -41.5, y: b + 1, label: "🏐 508 排球場", sub: "紅隊 VS 藍隊・組隊來比賽", col: "#2563eb", lx: 0, ly: b + 8, lz: -50 });
   });
+  fac(-30, -18, 4, 4, b => {   // 🐾 寵物店：粉紅木屋
+    for (let x = -34; x <= -26; x++) for (let z = -22; z <= -14; z++) {
+      put(x, b, z, "plank"); const edge = x === -34 || x === -26 || z === -22 || z === -14;
+      if (edge) for (let y = b + 1; y <= b + 4; y++) { const door = z === -14 && (x === -30 || x === -31) && y <= b + 3, win = y === b + 2 && (x === -32 || x === -28); if (!door) put(x, y, z, win ? "glass" : y === b + 4 ? "w#f472b6" : "w#fbcfe8"); }
+      put(x, b + 5, z, "w#f472b6");
+    }
+    doors.push({ kind: "fac", k: "pets", x: -30.5, z: -12.5, y: b + 1, label: "🐾 毛毛寵物店", sub: "認養寵物・買飼料", col: "#db2777", lx: -30.5, ly: b + 9, lz: -18 });
+  });
+  {   // 🎣 湖邊的釣魚碼頭
+    const b = ground(LAKE.x + LAKE.r + 2, LAKE.z), y = Math.max(4, b);
+    for (let x = LAKE.x + LAKE.r - 3; x <= LAKE.x + LAKE.r + 2; x++) for (let z = LAKE.z - 1; z <= LAKE.z + 1; z++) { put(x, y, z, "plank"); for (let k = y + 1; k <= y + 6; k++) del(x, k, z); claim[x + "," + z] = "#fac"; hmap[x + "," + z] = Math.max(hmap[x + "," + z] || 0, y); }
+    doors.push({ kind: "fac", k: "fish", x: LAKE.x + LAKE.r - 2, z: LAKE.z, y: y + 1, label: "🎣 釣魚碼頭", sub: "拋竿釣魚・收集魚圖鑑", col: "#0284c7", lx: LAKE.x + 2, ly: y + 7, lz: LAKE.z });
+  }
   // 樹和花（避開路、房子、湖、城堡）
   const flowers = [];
   for (let i = 0; i < 260; i++) {
@@ -3116,7 +3139,7 @@ function w3Create() {
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button>${session.user.role === "student" ? `<button onclick="w3FarmToggle()">🌱 種田</button><button onclick="w3PetCard()">🐾 我的寵物</button><button onclick="w3Bag()">🎒 背包</button>` : ""}<button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
@@ -3125,6 +3148,7 @@ function w3Create() {
   if (w3Touch() && window.innerHeight > window.innerWidth) setTimeout(() => toast("📱 把手機轉成橫的，畫面更大更好玩！", 4500), 800);
   w3OutBuild();
   w3ZombieInit();
+  w3FarmBuild(); w3PetSpawn();
   net.heartbeat();
 }
 async function w3Say(text) {
@@ -3209,7 +3233,7 @@ function w3Controls() {
   el.addEventListener("pointerdown", e => { if (w3Mus && w3Mus.ctx.state !== "running") w3Mus.ctx.resume(); drag = { x: e.clientX, y: e.clientY, id: e.pointerId, sx: e.clientX, sy: e.clientY, btn: e.button }; el.setPointerCapture(e.pointerId); });
   el.addEventListener("contextmenu", e => { if (w3 && w3.build && w3.build.on) e.preventDefault(); });
   el.addEventListener("pointermove", e => { if (!drag || drag.id !== e.pointerId) return; w3.yaw -= (e.clientX - drag.x) * 0.006; w3.pitch = Math.max(-0.2, Math.min(1.2, w3.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
-  el.addEventListener("pointerup", e => { if (drag && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) { if (w3.build && w3.build.on) w3BuildClick(e, drag.btn === 2); else w3Attack(); } drag = null; });
+  el.addEventListener("pointerup", e => { if (drag && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 7) { if (w3.build && w3.build.on) w3BuildClick(e, drag.btn === 2); else if (w3.farm) w3FarmClick(e); else w3Attack(); } drag = null; });
   el.addEventListener("wheel", e => { w3.dist = Math.max(3, Math.min(16, w3.dist + e.deltaY * 0.01)); e.preventDefault(); }, { passive: false });
   window.addEventListener("keydown", e => { if (!document.body.classList.contains("dream-open") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; w3.keys[e.code] = true; if (e.code === "KeyE") w3Enter(); if (e.code === "Space" && !e.repeat && !w3.onGround) w3Jump(); if (e.code === "KeyF" && !e.repeat) w3Attack(); if (e.code === "KeyH" && !e.repeat) w3Potion();
     if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
@@ -3245,6 +3269,7 @@ function w3Warp(where) {
   const card = document.getElementById("dw3d-card"); if (card) card.hidden = true;
   if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
   else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
+  else if (where === "pets") { w3.player.position.set(-30.5, 7, -10.5); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
   else if (where === "clinic") { w3.player.position.set(21.5, 7, -12); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
   else if (where === "room") { const sp = w3.room.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.75; w3.dist = 10; w3.camD = undefined; w3.player.rotation.y = Math.PI; }
   else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === (where === "door" && w3.lastRoom ? w3.lastRoom : dwMe())); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
@@ -3257,7 +3282,7 @@ function w3Enter() {
   if (d.kind === "exit") return w3Warp("castle");
   if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
   if (d.kind === "hexit") return w3LeaveRoom();
-  if (d.kind === "fac") { if (d.k === "clinic") return w3Clinic(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
+  if (d.kind === "fac") { if (d.k === "clinic") return w3Clinic(); if (d.k === "pets") return w3PetShop(); if (d.k === "fish") return w3Fishing(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
   if (d.kind === "hedit") return dwTab("home");
   if (d.kind === "hstk") return w3StickerCard();
   if (d.kind === "hbuild") return w3BuildToggle();
@@ -3313,7 +3338,7 @@ function w3Loop(now) {
   w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" || d.room ? 4 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽", pets: "🐾 進寵物店", fish: "🎣 開始釣魚" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -3328,6 +3353,8 @@ function w3Loop(now) {
     const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
   w3ZombieTick(dt, now);
   w3HealthTick(dt, now);
+  w3PetTick(dt, now);
+  if (now - (w3.farmT || 0) > 30000) { w3.farmT = now; w3FarmBuild(); }
   w3PeerSync(dt, now);
   w3Env(now);
   w3WeatherTick(dt, now);
@@ -3440,6 +3467,7 @@ function w3StickerCard() {
 // ── 🧱 蓋方塊 ──
 function w3BuildToggle() {
   if (w3.room ? !w3.room.mine : !dwCanEdit()) return toast("🧱 只能在自己家裡或自己的院子蓋方塊喔");
+  if (w3.farm) w3.farm = null;
   w3.build = w3.build && w3.build.on ? null : { on: true, t: (w3.build && w3.build.t) || 0, del: false };
   if (w3.build) toast(w3.room ? "🧱 點地板或方塊就能疊上去；切換到「⛏️ 拆」再點方塊就能拆掉（材料會還你）" : dwIsT() ? "🧱 老師可以在世界任何地方蓋！蓋好的東西全班都看得到" : "🧱 走到自己家門前的院子（石頭框裡面），點草地就能蓋", 4500);
   w3BuildPanel();
@@ -4222,6 +4250,190 @@ async function w3Cure(id) {
   else { dw.home.sick = null; w3GearMemo = null; w3SickTag(); toast(id === "shot" ? "💉 打完針，病全好了！好勇敢！" : "🩹 包紮好了，傷口不痛了！", 3500); w3.hp = w3Gear().max; w3HpRender(); }
   dwSave(); w3Clinic(w3.houseCall); w3SickTag(); renderDreamStat();
 }
+
+// ════════ 🎣 釣魚＋魚圖鑑 ════════
+// 稀有度：1 常見、2 少見、3 稀有、4 傳說；when：只在某些時候出現（night 晚上、rain 下雨、snow 下雪或冰雪地形、sakura 櫻花）
+const DW_FISH = [
+  { id: "carp", e: "🐟", n: "小鯽魚", r: 1 }, { id: "trop", e: "🐠", n: "熱帶魚", r: 1 }, { id: "shrimp", e: "🦐", n: "小蝦米", r: 1 }, { id: "crab", e: "🦀", n: "橫行螃蟹", r: 1 }, { id: "boot", e: "🥾", n: "舊靴子（垃圾要分類喔）", r: 1 },
+  { id: "puffer", e: "🐡", n: "氣鼓鼓河豚", r: 2 }, { id: "squid", e: "🦑", n: "小魷魚", r: 2 }, { id: "octo", e: "🐙", n: "八爪章魚", r: 2 }, { id: "turtle", e: "🐢", n: "慢吞吞海龜", r: 2 },
+  { id: "moon", e: "🌙", n: "月光魚", r: 3, when: "night" }, { id: "rainf", e: "🌧️", n: "雨滴魚", r: 3, when: "rain" }, { id: "ice", e: "❄️", n: "冰晶魚", r: 3, when: "snow" }, { id: "sakuraf", e: "🌸", n: "櫻花魚", r: 3, when: "sakura" },
+  { id: "dolphin", e: "🐬", n: "海豚寶寶", r: 3 }, { id: "shark", e: "🦈", n: "小鯊魚", r: 3 },
+  { id: "koi", e: "🐉", n: "錦鯉龍王", r: 4 }, { id: "shell", e: "🐚", n: "人魚的黃金貝殼", r: 4 }];
+const FISH_R = ["", "常見", "少見", "✨稀有", "🌟傳說"], FISH_C = ["", "#64748b", "#16a34a", "#7c3aed", "#d97706"];
+function dwFishOk(f) {
+  if (!f.when) return true; const r = rulesNow(), h = Number(nowStr().slice(11, 13));
+  return f.when === "night" ? h >= 18 || h < 6 : f.when === "rain" ? /rain|storm/.test(r.worldWeather) : f.when === "snow" ? r.worldWeather === "snow" || r.worldTheme === "winter" : f.when === "sakura" ? r.worldWeather === "sakura" || r.worldTheme === "sakura" : true;
+}
+function dwFishLeft() { const g = w3Gear(), cap = g.rod >= 2 ? 30 : 20, fd = dw.home.fd || {}; return Math.max(0, cap - (fd.d === nowStr().slice(0, 10) ? fd.n : 0)); }
+function w3Fishing(state) {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const stu = session.user.role === "student", g = w3Gear(), mine = dw.home.fish || {}, got = DW_FISH.filter(f => mine[f.id]).length;
+  let body = "";
+  if (!stu) body = `<p>學生買了釣竿就能來這裡釣魚，收集 ${DW_FISH.length} 種魚的圖鑑。有些魚只在晚上、下雨、下雪或櫻花季才出現喔！</p>`;
+  else if (!g.rod) body = `<p>🎣 要先有釣竿才能釣魚！到「⚔️ 裝備店」買一支 🎣 竹釣竿（25 金幣）吧。</p>`;
+  else if (state === "wait") body = `<div class="fish-pond"><div class="bob">🎈</div></div><p style="text-align:center">靜靜等魚上鉤……看到 ❗ 就快按！</p><button class="dw-btn" style="width:100%" onclick="w3FishHook()">拉竿！</button>`;
+  else if (state === "bite") body = `<div class="fish-pond bite"><div class="bob">❗</div></div><button class="dw-btn fish-now" style="width:100%" onclick="w3FishHook()">❗ 咬鉤了！快拉！</button>`;
+  else if (state && state.f) { const f = state.f; body = `<div class="fish-got" style="border-color:${FISH_C[f.r]}"><div style="font-size:3.2rem">${f.e}</div><b>${f.n}</b><small style="color:${FISH_C[f.r]}">${FISH_R[f.r]}</small>${state.isNew ? `<em>📖 圖鑑新收錄！${state.mat ? `獎勵 ${state.mat.icon}${state.mat.name}×2` : ""}</em>` : `<small>已經有 ${mine[f.id]} 隻</small>`}</div>`; }
+  else if (state === "miss") body = `<p style="text-align:center">💨 魚跑掉了……${dw.fishEarly ? "太早拉竿了！" : "下次快一點！"}</p>`;
+  if (stu && g.rod && state !== "wait" && state !== "bite") body += `<button class="dw-btn" style="width:100%" ${dwFishLeft() ? "" : "disabled"} onclick="w3FishCast()">🎣 拋竿（今天還能釣 ${dwFishLeft()} 次）</button>`;
+  p.innerHTML = `<b>🎣 釣魚碼頭</b>${body}<details style="margin-top:8px"><summary>📖 魚圖鑑 ${got}／${DW_FISH.length}</summary><div class="fish-book">${DW_FISH.map(f => `<span class="${mine[f.id] ? "" : "no"}" title="${mine[f.id] ? f.n : "還沒釣到"}">${mine[f.id] ? f.e : "❔"}<small>${mine[f.id] ? f.n.split("（")[0] : FISH_R[f.r]}${!mine[f.id] && f.when ? "・" + { night: "晚上", rain: "下雨", snow: "下雪", sakura: "櫻花" }[f.when] : ""}</small></span>`).join("")}</div></details>`;
+  c.hidden = false;
+}
+function w3FishCast() {
+  if (!dwFishLeft()) return toast("🎣 今天釣夠多了，明天再來！");
+  dw.fishSt = "wait"; dw.fishEarly = false; w3Fishing("wait");
+  clearTimeout(dw.fishT); dw.fishT = setTimeout(() => { dw.fishSt = "bite"; dw.biteAt = Date.now(); w3Fishing("bite"); dwNote && dwNote(880); dw.fishT = setTimeout(() => { if (dw.fishSt === "bite") { dw.fishSt = ""; w3FishUse(); w3Fishing("miss"); } }, 1300); }, 1500 + Math.random() * 3500);
+}
+function w3FishUse() { const d = nowStr().slice(0, 10), fd = dw.home.fd || {}; dw.home.fd = { d, n: (fd.d === d ? fd.n : 0) + 1 }; dwSave(); }
+function w3FishHook() {
+  if (dw.fishSt === "wait") { clearTimeout(dw.fishT); dw.fishSt = ""; dw.fishEarly = true; w3FishUse(); return w3Fishing("miss"); }
+  if (dw.fishSt !== "bite") return;
+  clearTimeout(dw.fishT); dw.fishSt = ""; w3FishUse();
+  const g = w3Gear(), pool = DW_FISH.filter(dwFishOk), wt = f => [0, 60, 25, g.rod >= 2 ? 14 : 8, g.rod >= 2 ? 3 : 1.2][f.r] * (f.when ? 2 : 1);
+  let t = Math.random() * pool.reduce((s, f) => s + wt(f), 0), f = pool[0]; for (const x of pool) { t -= wt(x); if (t <= 0) { f = x; break; } }
+  dw.home.fish = dw.home.fish || {}; const isNew = !dw.home.fish[f.id]; dw.home.fish[f.id] = (dw.home.fish[f.id] || 0) + 1;
+  let mat = null; if (isNew && f.id !== "boot") { mat = DW_MATS[Math.floor(Math.random() * DW_MATS.length)]; dw.home.gift.mats[mat.k] = (dw.home.gift.mats[mat.k] || 0) + 2; }
+  dwSave(); renderDreamStat(); w3Fishing({ f, isNew, mat });
+  if (f.id === "boot") toast("🥾 釣到舊靴子……垃圾不要丟進湖裡喔！", 3000);
+}
+
+// ════════ 🌱 開心農場（在自己的院子種菜） ════════
+const DW_CROPS = [
+  { id: "carrot", e: "🥕", n: "紅蘿蔔", cost: 1, min: 20, hp: 1 }, { id: "tomato", e: "🍅", n: "番茄", cost: 1, min: 40, hp: 1 },
+  { id: "corn", e: "🌽", n: "玉米", cost: 2, min: 60, hp: 2 }, { id: "straw", e: "🍓", n: "草莓", cost: 2, min: 90, hp: 2 },
+  { id: "pump", e: "🎃", n: "大南瓜", cost: 3, min: 180, hp: 3 }, { id: "melon", e: "🍉", n: "大西瓜", cost: 3, min: 240, hp: 3 }];
+function dwCrop(i) { return DW_CROPS[i] || DW_CROPS[0]; }
+function dwCropPct(c) { const C = dwCrop(c[2]), need = C.min * 60000 * (c[4] ? 0.5 : 1); return Math.min(1, (Date.now() - c[3]) / need); }
+function w3FarmToggle() {
+  if (session.user.role !== "student") return toast("🌱 開心農場是學生在自己院子種的");
+  w3.farm = w3.farm ? null : { t: 0 }; if (w3.build) { w3.build = null; w3BuildPanel(); }
+  if (w3.farm) toast("🌱 走到自己家門前的院子，點草地就能種菜；再點一下澆水（長得快一倍），成熟了點一下收成！", 5000);
+  w3FarmPanel();
+}
+function w3FarmPanel() {
+  const el = w3.hud.querySelector("#dw3d-build"); if (!el) return;
+  if (!w3.farm) { if (!w3.build) el.hidden = true; return; }
+  const m = dwMats(), list = dw.home.farm || [], crop = dw.home.crop || {};
+  el.hidden = false;
+  el.innerHTML = `<div class="dw3d-build-head"><b>🌱 開心農場</b><span>${list.length}/20 格</span><button onclick="w3FarmToggle()">✕ 收起</button></div>
+    <div class="dw3d-build-pal" style="grid-template-columns:repeat(3,1fr)">${DW_CROPS.map((C, i) => `<button class="${w3.farm.t === i ? "on" : ""}" onclick="w3.farm.t=${i}; w3FarmPanel()"><span style="font-size:1.3rem">${C.e}</span><small>${C.n}・🌱${C.cost}・${C.min >= 60 ? C.min / 60 + "時" : C.min + "分"}</small></button>`).join("")}</div>
+    <div class="dw3d-build-tip">種子用 🌱 材料（練習自然科換來的）：你有 🌱${m.seed}。澆水的菜長得快一倍。<br>收成的：${DW_CROPS.map(C => crop[C.id] ? `${C.e}×${crop[C.id]}` : "").join(" ") || "還沒有"}　<button class="dw-btn" style="padding:2px 8px" onclick="w3Bag()">🎒 背包</button></div>`;
+}
+function w3FarmClick(e) {
+  const { hit } = w3Ray(e); if (!hit) return;
+  const me = dwMe(), Y = w3.world.yards[me]; if (!Y) return toast("🌱 找不到你的院子");
+  const uvE = Object.entries(Y.uv).find(([, c]) => c[0] === hit[0] && c[1] === hit[2]); if (!uvE) return toast("🌱 只能種在自己家門前的院子（石頭框裡面）", 3000);
+  const [u, v] = uvE[0].split(",").map(Number), list = dw.home.farm = dw.home.farm || [];
+  const i = list.findIndex(c => c[0] === u && c[1] === v);
+  if (i >= 0) {
+    const c = list[i], C = dwCrop(c[2]), pct = dwCropPct(c);
+    if (pct >= 1) { list.splice(i, 1); dw.home.crop = dw.home.crop || {}; dw.home.crop[C.id] = (dw.home.crop[C.id] || 0) + 1; toast(`🧺 收成了 ${C.e} ${C.n}！`, 2500); }
+    else if (!c[4]) { c[4] = 1; toast(`💧 澆水了！${C.n}會長得快一倍`, 2500); }
+    else return toast(`${C.e} ${C.n}還要大約 ${Math.ceil((1 - pct) * C.min * 0.5)} 分鐘才成熟`, 2500);
+  } else {
+    if ((dw.home.yd || []).some(q => q[0] === u && q[2] === v)) return toast("🌱 這格蓋了方塊，換一格種吧");
+    if (list.length >= 20) return toast("🌱 農場最多 20 格");
+    const C = DW_CROPS[w3.farm.t];
+    if ((dwMats().seed || 0) < C.cost) return toast(`🌱 種子材料不夠！種${C.n}要 🌱${C.cost}，去練習自然科就能換到`, 4000);
+    dw.home.spent.seed = (dw.home.spent.seed || 0) + C.cost; list.push([u, v, w3.farm.t, Date.now(), 0]); toast(`🌱 種下了${C.n}！`, 2000);
+  }
+  dwSave(); w3FarmBuild(); w3FarmPanel(); renderDreamStat();
+}
+function w3FarmBuild() {
+  if (!w3) return; if (w3.farmG) w3.scene.remove(w3.farmG);
+  const g = new THREE.Group(), soil = new THREE.MeshLambertMaterial({ color: 0x6b4423 }), geo = new THREE.BoxGeometry(0.9, 0.08, 0.9);
+  (dw.village || []).forEach(v => {
+    if (v.teacher) return; const list = v.name === dwMe() && dwCanEdit() ? dw.home.farm : v.farm, Y = w3.world.yards[v.name]; if (!Y || !list) return;
+    list.forEach(c => { const xz = Y.uv[c[0] + "," + c[1]]; if (!xz) return; const pct = dwCropPct(c), C = dwCrop(c[2]);
+      const m = new THREE.Mesh(geo, soil); m.position.set(xz[0], Y.base + 0.54, xz[1]); g.add(m);
+      const sp = new THREE.Sprite(w3Emoji(pct >= 1 ? C.e : pct >= 0.5 ? "🌿" : "🌱")); const sz = pct >= 1 ? 0.9 : 0.4 + pct * 0.5; sp.scale.set(sz, sz, 1); sp.position.set(xz[0], Y.base + 0.6 + sz / 2, xz[1]); g.add(sp);
+      if (c[4] && pct < 1) { const d = new THREE.Sprite(w3Emoji("💧")); d.scale.set(0.25, 0.25, 1); d.position.set(xz[0] + 0.3, Y.base + 1.2, xz[1]); g.add(d); } });
+  });
+  w3.scene.add(g); w3.farmG = g;
+}
+// 🎒 背包：收成的菜、釣到的魚可以吃（補愛心）、煮湯（治感冒擦傷）、餵寵物
+function w3Bag() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const crop = dw.home.crop || {}, fish = dw.home.fish || {}, pet = dw.home.pet;
+  const can = crop.carrot && crop.tomato;
+  p.innerHTML = `<b>🎒 我的背包</b>
+    <p style="font-size:.85rem">🥬 收成的菜：</p><div class="bag-row">${DW_CROPS.map(C => crop[C.id] ? `<button class="dw-btn ghost" onclick="w3Eat('${C.id}')">${C.e}×${crop[C.id]}<small>吃掉 ❤️+${C.hp}</small></button>` : "").join("") || "<small>還沒有，去院子種菜吧！</small>"}</div>
+    <button class="dw-btn" ${can ? "" : "disabled"} onclick="w3Soup()">🍲 煮蔬菜湯（🥕＋🍅）<small>喝了感冒、擦傷都會好</small></button>
+    <p style="font-size:.85rem">🐟 魚：${DW_FISH.filter(f => fish[f.id]).map(f => `${f.e}×${fish[f.id]}`).join(" ") || "還沒有"}</p>
+    ${pet ? `<p style="font-size:.85rem">🐾 可以拿菜或魚去餵 ${escapeHtml(pet.nm)}（在「🐾 我的寵物」裡）</p>` : ""}`;
+  c.hidden = false;
+}
+function w3Eat(id) { const C = DW_CROPS.find(x => x.id === id); if (!(dw.home.crop || {})[id]) return; dw.home.crop[id]--; w3.hp = Math.min(w3Gear().max, (w3.hp || 0) + C.hp); w3HpRender(); dwSave(); toast(`😋 好吃的${C.n}！❤️+${C.hp}`, 2000); w3Bag(); }
+function w3Soup() { const cr = dw.home.crop || {}; if (!cr.carrot || !cr.tomato) return; cr.carrot--; cr.tomato--; const k = dwSick(); if (k === "cold" || k === "hurt") { dw.home.sick = null; w3GearMemo = null; w3SickTag(); toast("🍲 熱騰騰的蔬菜湯！喝完病就好了", 3500); } else { w3.hp = w3Gear().max; toast("🍲 好喝的蔬菜湯！愛心補滿了", 3000); } w3HpRender(); dwSave(); w3Bag(); }
+
+// ════════ 🐾 認養寵物 ════════
+const DW_PETS = [
+  { id: "dog", e: "🐶", n: "小狗", price: 80, like: "carrot" }, { id: "cat", e: "🐱", n: "小貓", price: 80, like: "fish" },
+  { id: "rabbit", e: "🐰", n: "兔子", price: 60, like: "carrot" }, { id: "hamster", e: "🐹", n: "倉鼠", price: 50, like: "corn" },
+  { id: "parrot", e: "🦜", n: "鸚鵡", price: 100, like: "corn" }, { id: "turtle", e: "🐢", n: "烏龜", price: 70, like: "straw" }];
+function dwPetStat(pet) {
+  const h = t => (Date.now() - (t || pet.t)) / 3600000;
+  const v = { food: Math.max(0, Math.round(100 - h(pet.fed) * 6)), clean: Math.max(0, Math.round(100 - h(pet.bath) * 3)), joy: Math.max(0, Math.round(100 - h(pet.play) * 5)) };
+  v.sad = v.food < 25 || v.clean < 25 || v.joy < 25; return v;
+}
+function w3PetShop() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const stu = session.user.role === "student", pet = dw.home.pet;
+  p.innerHTML = `<b>🐾 毛毛寵物店</b><p style="font-size:.85rem">寵物是家人，要每天餵食、洗澡、陪牠玩喔！</p>
+    ${!stu ? "<p>學生可以在這裡用金幣認養一隻寵物，牠會一直跟著主人走。</p>" : pet ? `<p>你已經有 ${DW_PETS.find(x => x.id === pet.k).e} <b>${escapeHtml(pet.nm)}</b> 了，要好好照顧牠！</p>
+      <button class="dw-btn" onclick="w3PetBuy('food')">🦴 買寵物飼料・🪙5<small>現在有 ${pet.food || 0} 包</small></button><button class="dw-btn ghost" onclick="w3PetCard()">🐾 看看我的寵物</button>`
+    : `<div class="clinic-opts">${DW_PETS.map(x => `<button class="dw-btn" onclick="w3PetBuy('${x.id}')">${x.e} 認養${x.n}・🪙${x.price}<small>最喜歡吃 ${(DW_CROPS.find(c => c.id === x.like) || { e: "🐟" }).e}</small></button>`).join("")}</div>`}`;
+  c.hidden = false;
+}
+async function w3PetBuy(id) {
+  const x = DW_PETS.find(q => q.id === id), price = id === "food" ? 5 : x.price;
+  if (coinState().wallet < price) return toast("🪙 錢袋的金幣不夠，先去寶庫領，或多答題賺金幣！", 4000);
+  let nm = "";
+  if (x) { nm = (prompt(`幫你的${x.n}取個名字吧（最多 6 個字）`, x.n === "小狗" ? "小白" : x.n === "小貓" ? "咪咪" : "小" + x.n.slice(-1)) || "").trim().slice(0, 6); if (!nm) return; }
+  try { await coinOp("spend", price, "寵物:" + id); } catch (e) { return toast("⚠️ " + e.message, 4000); }
+  const now = Date.now();
+  if (x) { dw.home.pet = { k: id, nm: nm.replace(/[<>]/g, ""), t: now, fed: now, bath: now, play: now, food: 2 }; toast(`🎉 ${x.e} ${nm} 成為你的家人了！牠會跟著你走喔`, 5000); w3PetSpawn(); }
+  else { dw.home.pet.food = (dw.home.pet.food || 0) + 1; toast("🦴 買了一包飼料", 2000); }
+  dwSave(); w3PetShop(); renderDreamStat();
+}
+function w3PetCard() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const pet = dw.home.pet; if (!pet) { p.innerHTML = `<b>🐾 我的寵物</b><p>你還沒有寵物，到 🐾 毛毛寵物店認養一隻吧！</p><button class="dw-btn" onclick="w3Warp('pets')">🚀 傳送到寵物店</button>`; c.hidden = false; return; }
+  const P = DW_PETS.find(x => x.id === pet.k), st = dwPetStat(pet), crop = dw.home.crop || {}, fish = dw.home.fish || {};
+  const bar = (l, v) => `<div class="pet-bar"><span>${l}</span><i><b style="width:${v}%; background:${v < 25 ? "#ef4444" : v < 60 ? "#f59e0b" : "#22c55e"}"></b></i><small>${v}</small></div>`;
+  const like = P.like === "fish" ? Object.keys(fish).some(k => fish[k] > 0 && k !== "boot") : crop[P.like] > 0;
+  p.innerHTML = `<b>🐾 ${escapeHtml(pet.nm)}</b><div class="clinic-doc">${P.e}${st.sad ? "💧" : "💕"}</div>
+    <p style="text-align:center;font-size:.85rem">${st.sad ? `${escapeHtml(pet.nm)} 看起來有點難過，快照顧牠！` : `${escapeHtml(pet.nm)} 很開心，一直跟著你！`}　陪你 ${Math.max(1, Math.ceil((Date.now() - pet.t) / 86400000))} 天了</p>
+    ${bar("🍖 飽足", st.food)}${bar("🛁 乾淨", st.clean)}${bar("🎾 開心", st.joy)}
+    <div class="bag-row"><button class="dw-btn" ${pet.food ? "" : "disabled"} onclick="w3PetDo('feed')">🦴 餵飼料（${pet.food || 0}）</button>
+      <button class="dw-btn" ${like ? "" : "disabled"} onclick="w3PetDo('treat')">${P.like === "fish" ? "🐟 餵魚" : (DW_CROPS.find(c => c.id === P.like) || {}).e + " 餵最愛"}</button>
+      <button class="dw-btn" onclick="w3PetDo('bath')">🛁 洗澡</button><button class="dw-btn" onclick="w3PetDo('play')">🎾 陪牠玩</button></div>
+    <small>飼料到 🐾 寵物店買（5 金幣）；自己種的菜、釣的魚也可以餵。</small>`;
+  c.hidden = false;
+}
+function w3PetDo(a) {
+  const pet = dw.home.pet; if (!pet) return; const now = Date.now(), P = DW_PETS.find(x => x.id === pet.k);
+  if (a === "feed") { if (!pet.food) return; pet.food--; pet.fed = now; toast(`🦴 ${pet.nm} 吃得好開心！`, 2000); }
+  if (a === "treat") { if (P.like === "fish") { const k = Object.keys(dw.home.fish || {}).find(k => dw.home.fish[k] > 0 && k !== "boot"); if (!k) return; dw.home.fish[k]--; } else { if (!(dw.home.crop || {})[P.like]) return; dw.home.crop[P.like]--; } pet.fed = now; pet.play = Math.max(pet.play || 0, now - 3600000); toast(`😍 ${pet.nm} 最愛吃這個了！`, 2000); }
+  if (a === "bath") { pet.bath = now; toast(`🫧 ${pet.nm} 洗得香噴噴！`, 2000); }
+  if (a === "play") { pet.play = now; toast(`🎾 ${pet.nm} 跳來跳去，玩得好開心！`, 2000); if (w3.petS) w3.petS.userData.jump = 1.2; }
+  dwSave(); w3PetCard(); w3PetSpawn();
+}
+function w3PetSpawn() {
+  if (!w3) return; if (w3.petS) { w3.scene.remove(w3.petS); w3.petS = null; }
+  const pet = dw.home && dw.home.pet; if (!pet || !dwCanEdit()) return;
+  const P = DW_PETS.find(x => x.id === pet.k), s = new THREE.Sprite(w3Emoji(P.e)); s.scale.set(0.9, 0.9, 1);
+  const pp = w3.player.position; s.position.set(pp.x - 1, pp.y + 0.45, pp.z - 1); s.userData = { jump: 0 }; w3.scene.add(s); w3.petS = s;
+  const st = dwPetStat(pet); if (st.sad && !w3.petTold) { w3.petTold = 1; setTimeout(() => toast(`🐾 ${pet.nm} ${st.food < 25 ? "肚子餓了" : st.clean < 25 ? "髒兮兮的" : "好無聊"}……快打開「🐾 我的寵物」照顧牠！`, 5000), 3000); }
+}
+function w3PetTick(dt, now) {
+  const s = w3.petS; if (!s) return; const P = w3.player.position, ry = w3.player.rotation.y;
+  const tx = P.x - Math.sin(ry) * 1.3 + Math.cos(ry) * 0.6, tz = P.z - Math.cos(ry) * 1.3 - Math.sin(ry) * 0.6;
+  s.position.x += (tx - s.position.x) * Math.min(1, dt * 4); s.position.z += (tz - s.position.z) * Math.min(1, dt * 4);
+  if (Math.hypot(tx - s.position.x, tz - s.position.z) > 12) { s.position.x = tx; s.position.z = tz; }
+  const j = s.userData.jump > 0 ? Math.abs(Math.sin(now / 120)) * 0.6 : 0; if (s.userData.jump > 0) s.userData.jump -= dt;
+  s.position.y += ((P.y + 0.45 + Math.abs(Math.sin(now / 180)) * 0.12 + j) - s.position.y) * Math.min(1, dt * 8);
+}
 // ── 🧟 殭屍＋⚔️ 裝備 ──
 // 裝備用金幣買（記在金幣紀錄「裝備:代號」）；藥水喝掉的數量記在 spent["eq:potion"]
 const DW_GEAR = [
@@ -4232,6 +4444,8 @@ const DW_GEAR = [
   { id: "iarmor", k: "armor", name: "鐵甲", emoji: "🛡️", price: 150, v: 4, tip: "多 4 顆愛心" },
   { id: "garmor", k: "armor", name: "黃金甲", emoji: "🏅", price: 350, v: 6, tip: "多 6 顆愛心" },
   { id: "boots", k: "boots", name: "飛毛腿跑鞋", emoji: "👟", price: 80, v: 1.3, tip: "跑得快 30%，殭屍追不上" },
+  { id: "rod", k: "rod", name: "竹釣竿", emoji: "🎣", price: 25, v: 1, tip: "到湖邊的釣魚碼頭就能釣魚" },
+  { id: "grod", k: "rod", name: "黃金釣竿", emoji: "✨", price: 120, v: 2, tip: "比較容易釣到稀有的魚，每天多 10 次" },
   { id: "umbrella", k: "umbrella", name: "大雨傘", emoji: "☂️", price: 30, v: 1, tip: "下雨、雷雨天在外面不會淋濕感冒" },
   { id: "coat", k: "coat", name: "保暖外套", emoji: "🧥", price: 40, v: 1, tip: "下雪天在外面不會凍到感冒" },
   { id: "potion", k: "potion", name: "補血藥水", emoji: "🧪", price: 15, v: 0, tip: "按 H 喝，愛心全部補滿（用完要再買）" }];
@@ -4250,7 +4464,7 @@ function w3Gear() {
 function w3GearCalc() {
   const best = k => DW_GEAR.filter(g => g.k === k && dwGearHave(g.id) > 0).sort((a, b) => b.v - a.v)[0] || null;
   const sw = best("sword"), ar = best("armor"), bo = best("boots"), sk = DW_SICK[dwSick() || ""] || { spd: 1, hp: 0 };
-  return { sw, ar, dmg: sw ? sw.v : 1, max: Math.max(2, 5 + (ar ? ar.v : 0) - sk.hp), spd: (bo ? bo.v : 1) * sk.spd, pot: dwGearHave("potion"), umb: !!best("umbrella"), coat: !!best("coat") };
+  return { sw, ar, dmg: sw ? sw.v : 1, max: Math.max(2, 5 + (ar ? ar.v : 0) - sk.hp), spd: (bo ? bo.v : 1) * sk.spd, pot: dwGearHave("potion"), umb: !!best("umbrella"), coat: !!best("coat"), rod: best("rod") ? best("rod").v : 0 };
 }
 function dwGearHtml() {
   const c = coinState(), g = w3Gear();
@@ -8966,7 +9180,7 @@ function demoBridge(op, d) {
   db.tq = db.tq || [];
   db.homes = db.homes || { "508示範同學二": { nm: "海豚小屋", lv: 2, fl: "blue", wl: "ocean", rf: "#2563eb", open: true, it: [["dolphin", 1, 1, 0], ["fish", 3, 1, 0], ["bed", 6, 1, 0], ["plant", 1, 5, 0], ["couch", 4, 4, 0], ["tv", 4, 2, 0], ["shell", 6, 6, 0]] } };
   db.stk = db.stk || [];
-  const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st, yd: h.yd || [], ob: h.ob || [] }; };
+  const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st, yd: h.yd || [], ob: h.ob || [], farm: h.farm || [], pet: h.pet ? { k: h.pet.k, nm: h.pet.nm } : null }; };
   if (op === "homeGet") { const who = d.who, h = db.homes[who] || null; if (who !== session.user.name && session.user.role === "student" && h && !h.open && !/老師$/.test(who)) throw new Error("主人還沒開放參觀"); return { home: h }; }
   if (op === "homeSave") { db.homes[session.user.name] = d.home; save(); return { ok: true }; }
   if (op === "homeVillage") return { homes: [...DEMO_ROSTER.filter(a => a.role === "student").map(a => Object.assign(homeSum(a.name), { seat: a.seat })), Object.assign(homeSum("508老師"), { teacher: true, open: true }), homeSum("__teacher")] };
