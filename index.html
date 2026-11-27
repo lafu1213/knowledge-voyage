@@ -844,6 +844,25 @@
   .bd-how details { background: #f8fafc; border-radius: 12px; padding: 6px 12px; margin: 6px 0; } .bd-how summary { font-weight: 900; cursor: pointer; } .bd-how p { margin: 6px 0; line-height: 1.7; font-size: .92rem; }
   .bd-prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; } .bd-prices h4 { margin: 4px 0; } .bd-prices table { width: 100%; border-collapse: collapse; font-size: .84rem; } .bd-prices td { padding: 3px 4px; border-bottom: 1px dashed #e2e8f0; white-space: normal; vertical-align: top; } .bd-prices > div { min-width: 0; } .bd-prices td:last-child { font-size: .74rem; color: #64748b; } .bd-prices td.num { white-space: nowrap; font-weight: 800; }
   .bd-rule li { margin: 4px 0; line-height: 1.6; }
+  .dw3d-game { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); background: rgba(15,23,42,.82); color: #fff; border-radius: 14px; padding: 6px 14px; font-weight: 800; text-align: center; min-width: 260px; z-index: 3; }
+  .dw3d-game b { color: #fde047; font-size: 1.1rem; }
+  .dw3d-game.bb { top: auto; bottom: 120px; min-width: min(360px, 86vw); }
+  .bb-bar { position: relative; height: 18px; background: #334155; border-radius: 9px; margin: 6px 0 4px; overflow: hidden; } .bb-bar i { position: absolute; top: 0; bottom: 0; } .bb-bar i.rim { background: #f59e0b; } .bb-bar i.ok { background: #22c55e; }
+  .bb-bar b { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: #fff; box-shadow: 0 0 6px #fff; }
+  .bb-msg { font-size: .85rem; } .bb-shoot { margin-top: 6px; font-size: 1.1rem; padding: 8px 26px; background: #ea580c !important; }
+  .bb-board { background: #fff7ed; border-radius: 12px; padding: 8px 10px; } .bb-board div { display: flex; justify-content: space-between; font-size: .88rem; }
+  .dk-info { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font-weight: 700; font-size: .9rem; margin: 4px 0; }
+  .dk-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; background: #b45309; padding: 6px; border-radius: 12px; max-width: 520px; margin: 6px auto; }
+  .dk-c { aspect-ratio: 1; background: #fde68a; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .dk-c.last { background: #fef08a; box-shadow: inset 0 0 0 3px #22c55e; } .dk-c.from { box-shadow: inset 0 0 0 2px #86efac; } .dk-c.sel { box-shadow: inset 0 0 0 3px #2563eb; background: #bfdbfe; }
+  .dk-p { width: 86%; aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: clamp(.95rem, 4.2vw, 1.6rem); background: #fffbeb; border: 3px solid currentColor; box-shadow: 0 2px 0 #92400e; font-family: "KaiTi", "BiauKai", serif; }
+  .dk-p.r { color: #dc2626; } .dk-p.b { color: #111827; } .dk-p.hid { background: radial-gradient(circle at 35% 30%, #d97706, #92400e); border-color: #78350f; }
+  .dk-p.sm { width: 26px; height: 26px; font-size: .8rem; border-width: 2px; display: inline-flex; margin: 1px; box-shadow: none; }
+  .dk-capt { display: flex; flex-direction: column; gap: 2px; font-size: .82rem; max-width: 520px; margin: 0 auto; }
+  .gm-board { display: grid; grid-template-columns: repeat(var(--n), 1fr); max-width: 470px; margin: 6px auto; background: #e9b86b; padding: 8px; border-radius: 10px; box-shadow: 0 3px 0 #92400e; }
+  .gm-c { aspect-ratio: 1; position: relative; cursor: pointer; background: linear-gradient(#7c4a12, #7c4a12) center / 100% 1.5px no-repeat, linear-gradient(#7c4a12, #7c4a12) center / 1.5px 100% no-repeat; }
+  .gm-s { position: absolute; inset: 7%; border-radius: 50%; } .gm-s.b { background: radial-gradient(circle at 35% 30%, #6b7280, #000); } .gm-s.w { background: radial-gradient(circle at 35% 30%, #fff, #d1d5db); border: 1px solid #9ca3af; }
+  .gm-s.ghost { opacity: 0; } .gm-c:hover .gm-s.ghost { opacity: .35; } .gm-c.last .gm-s::after { content: ""; position: absolute; inset: 36%; border-radius: 50%; background: #ef4444; }
   .fish-pond { height: 120px; border-radius: 14px; background: linear-gradient(180deg, #7dd3fc, #0369a1); position: relative; margin: 8px 0; overflow: hidden; }
   .fish-pond .bob { position: absolute; left: 50%; top: 40%; font-size: 1.8rem; transform: translateX(-50%); animation: bob 1.4s ease-in-out infinite; }
   .fish-pond.bite .bob { animation: bite .25s infinite; font-size: 2.4rem; } .fish-now { background: #dc2626 !important; animation: dwPulse .3s infinite alternate; }
@@ -2974,6 +2993,33 @@ function w3World(homes) {
     doors.push({ kind: "fac", k: "pets", x: -30.5, z: -12.5, y: b + 1, label: "🐾 毛毛寵物店", sub: "可愛動物等你認養！", col: "#db2777", lx: -30, ly: b + H + 7, lz: -18,
       deco: [["🐾", -30.5, b + H + 3.6, Z1 + 0.6, 2.2], ["🐶", -33, b + 1.6, Z1 + 1.5, 1.3], ["🐱", -27.5, b + 1.6, Z1 + 1.5, 1.3], ["🐰", -35.5, b + 1.5, Z1 + 1, 1.1], ["🐹", -25, b + 1.4, Z1 + 1, 1], ["🐕", -23, b + 1.6, -14.6, 1.3], ["🦴", -21.5, b + 1.3, -15, 0.8], ["🦜", -34, b + H + 2.2, Z1, 1], ["💕", -30.5, b + 6.4, Z1 + 0.6, 0.9]] });
   });
+  const hides = [];
+  fac(24, -50, 10, 10, b => {   // 👻 鬼抓人遊樂場：小屋、草叢、稻草堆、木桶、隧道，可以好好躲
+    for (let x = 14; x <= 34; x++) for (let z = -60; z <= -40; z++) put(x, b, z, (x === 14 || x === 34 || z === -60 || z === -40) ? "w#a78bfa" : ((x * 3 + z * 7) % 11 === 0 ? "w#86efac" : "grass"));
+    const hut = (cx, cz, mat, roof, open) => {   // 3×3 小屋，中間可以躲，open：開口方向
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        if (!dx && !dz) continue;
+        const isOpen = (open === "s" && dx === 0 && dz === 1) || (open === "n" && dx === 0 && dz === -1) || (open === "e" && dx === 1 && dz === 0) || (open === "w" && dx === -1 && dz === 0);
+        if (!isOpen) { put(cx + dx, b + 1, cz + dz, mat); put(cx + dx, b + 2, cz + dz, mat); }
+      }
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) put(cx + dx, b + 3, cz + dz, roof);
+      hides.push({ x: cx, z: cz, y: b + 1 });
+    };
+    hut(17, -57, "leaves", "leaves", "e"); hut(23, -57, "w#facc15", "w#eab308", "s"); hut(31, -57, "log", "plank", "w");
+    hut(17, -50, "w#f472b6", "w#db2777", "e"); hut(31, -50, "leaves", "w#16a34a", "w"); hut(24, -46, "plank", "w#dc2626", "n");
+    hut(17, -43, "w#60a5fa", "w#2563eb", "n"); hut(31, -43, "w#facc15", "w#ca8a04", "n");
+    for (let x = 20; x <= 28; x++) { put(x, b + 1, -53, "leaves"); put(x, b + 2, -53, "leaves"); if (x === 24) { del(x, b + 1, -53); del(x, b + 2, -53); } }   // 草叢牆
+    for (let z = -55; z <= -47; z++) if (z !== -51) { put(20, b + 1, z, "leaves"); put(28, b + 1, z, "leaves"); }
+    [[26, -58], [21, -44], [27, -43], [15, -46], [33, -46]].forEach(([x, z]) => { put(x, b + 1, z, "w#facc15"); put(x, b + 2, z, "w#facc15"); });   // 稻草堆
+    for (let z = -51; z <= -48; z++) { put(23, b + 1, z, "stone"); put(25, b + 1, z, "stone"); put(23, b + 2, z, "stone"); put(25, b + 2, z, "stone"); put(24, b + 3, z, "stone"); put(23, b + 3, z, "stone"); put(25, b + 3, z, "stone"); }   // 小隧道
+    doors.push({ kind: "fac", k: "tag", x: 24, z: -38.5, y: b + 1, label: "👻 鬼抓人遊樂場", sub: "躲起來別被鬼抓到！", col: "#7c3aed", lx: 24, ly: b + 8, lz: -40,
+      deco: [["👻", 24, b + 5.5, -50, 1.6], ["🌳", 15, b + 2, -40.5, 1.6], ["🎈", 33, b + 3, -40.5, 1.2]] });
+  });
+  fac(-22, -53, 7, 6, b => {   // 🏀 投籃場：木地板、罰球線、三分線、籃框
+    for (let x = -29; x <= -15; x++) for (let z = -59; z <= -47; z++) put(x, b, z, Math.abs(x + 22) <= 6 && (z === -56 || z === -53) && Math.abs(x + 22) <= (z === -56 ? 2 : 5) ? "w#ffffff" : (x + z) % 2 ? "w#f59e0b" : "w#fbbf24");
+    for (let y = b + 1; y <= b + 4; y++) put(-22, y, -61, "w#475569");
+    doors.push({ kind: "fac", k: "bb", x: -22, z: -46, y: b + 1, label: "🏀 投籃機", sub: "45 秒，看誰投得最準！", col: "#ea580c", lx: -22, ly: b + 8, lz: -60, deco: [["🏀", -26, b + 1.5, -47.5, 0.9], ["🏆", -18, b + 1.5, -47.5, 0.9]] });
+  });
   {   // 🎣 湖邊的釣魚碼頭
     const b = ground(LAKE.x + LAKE.r + 2, LAKE.z), y = Math.max(4, b);
     for (let x = LAKE.x + LAKE.r - 3; x <= LAKE.x + LAKE.r + 2; x++) for (let z = LAKE.z - 1; z <= LAKE.z + 1; z++) { put(x, y, z, "plank"); for (let k = y + 1; k <= y + 6; k++) del(x, k, z); claim[x + "," + z] = "#fac"; hmap[x + "," + z] = Math.max(hmap[x + "," + z] || 0, y); }
@@ -3001,13 +3047,13 @@ function w3World(homes) {
   });
   const MR = seeded("mush");
   for (let i = 0; i < 7; i++) {
-    const a = MR() * Math.PI * 2, r = 57 + MR() * 3, mx = Math.round(Math.cos(a) * r), mz = Math.round(Math.sin(a) * r), b = hmap[mx + "," + mz]; if (!b || Math.abs(mx) > S - 4 || Math.abs(mz) > S - 4 || plots.some(q => Math.abs(q.x - mx) <= 13 && Math.abs(q.z - mz) <= 13) || Math.hypot(mx - LAKE.x, mz - LAKE.z) < LAKE.r + 4) continue;
+    const a = MR() * Math.PI * 2, r = 57 + MR() * 3, mx = Math.round(Math.cos(a) * r), mz = Math.round(Math.sin(a) * r), b = hmap[mx + "," + mz]; if (!b || Math.abs(mx) > S - 4 || Math.abs(mz) > S - 4 || plots.some(q => Math.abs(q.x - mx) <= 13 && Math.abs(q.z - mz) <= 13) || Math.hypot(mx - LAKE.x, mz - LAKE.z) < LAKE.r + 4 || [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]].some(([a, c]) => claim[(mx + a) + "," + (mz + c)])) continue;
     const st = 4 + ((MR() * 3) | 0); for (let y = 1; y <= st; y++) put(mx, b + y, mz, "quartz");
     for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) { const d = Math.hypot(x, z); if (d <= 3.2) put(mx + x, b + st + 1, mz + z, (x * 7 + z * 3) % 4 === 0 ? "w#ffffff" : "w#dc2626"); if (d <= 2) put(mx + x, b + st + 2, mz + z, (x + z) % 3 === 0 ? "w#ffffff" : "w#dc2626"); }
   }
   [[10, -9], [-10, -9], [11, 8], [-11, 8]].forEach(([cx, cz], i) => { const c = ["w#a78bfa", "w#60a5fa", "w#f472b6", "w#22c55e"][i]; for (let y = 1; y <= 5 - (i % 2); y++) put(cx, 5 + y, cz, c); put(cx, 11 - (i % 2), cz, "gold"); });
   const IN = w3Interior(put, hmap, doors, flowers);
-  return { G, hmap, doors, flowers, S, C, IN, yards, claim };
+  return { G, hmap, doors, flowers, S, C, IN, yards, claim, hides };
 }
 const W3_IN = { x: 130, z: 0, y: 30, hw: 13, hd: 10 };
 function w3Interior(put, hmap, doors, flowers) {
@@ -3183,7 +3229,7 @@ function w3Create() {
       <form class="dw3d-chat-form" onsubmit="event.preventDefault(); w3Say(this.t.value); this.t.value='';"><select id="dw3d-to" title="要對誰說" onchange="w3.chatTo=this.value"><option value="">📢 大家</option></select><input name="t" maxlength="40" placeholder="說點什麼…（Enter 送出）" autocomplete="off"><button>送出</button></form></div>` : ""}
     <div class="dw3d-card" id="dw3d-card" hidden><button class="dw3d-card-x" onclick="document.getElementById('dw3d-card').hidden=true">✕</button><div id="dw-castle-panel"></div></div>
     <div class="dw3d-build" id="dw3d-build" hidden></div>
-    <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
+    <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-game" id="dw3d-game" hidden></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
     <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('board')">📌 公佈欄</button><button onclick="dwTab('cards')">🃏 遊戲桌</button>${session.user.role === "student" ? `<button onclick="w3FarmToggle()">🌱 種田</button><button onclick="w3PetCard()">🐾 我的寵物</button><button onclick="w3Bag()">🎒 背包</button>` : ""}<button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
@@ -3301,6 +3347,7 @@ function w3Controls() {
 // 跳：地上跳約 2.5 格高，空中再按一次可以二段跳
 function w3Jump() {
   if (!w3) return;
+  if (w3.mg && w3.mg.type === "bb") return w3BBShoot();
   if (w3.onGround) { w3.vel.y = 10.5; w3.onGround = false; w3.air = 1; }
   else if (w3.air > 0) { w3.vel.y = 9.5; w3.air--; }
 }
@@ -3312,12 +3359,15 @@ function w3Resize() {
   const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
   if (!w3) return;
+  if (w3.mg) w3GameEnd();
   if (dwDown() && where !== "room") return toast("🛌 病倒了不能出門！先在家裡請醫生來看診", 3500);
   if (w3.room && where !== "room") w3RoomClear();
   const card = document.getElementById("dw3d-card"); if (card) card.hidden = true;
   if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
   else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
   else if (where === "pets") { w3.player.position.set(-30.5, 7, -10.5); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
+  else if (where === "tag") { w3.player.position.set(24, 7, -35.5); w3.yaw = 0; w3.player.rotation.y = Math.PI; }
+  else if (where === "bb") { w3.player.position.set(-22, 7, -43); w3.yaw = 0; w3.player.rotation.y = Math.PI; }
   else if (where === "clinic") { w3.player.position.set(21.5, 7, -12); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
   else if (where === "room") { const sp = w3.room.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.75; w3.dist = 10; w3.camD = undefined; w3.player.rotation.y = Math.PI; }
   else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === (where === "door" && w3.lastRoom ? w3.lastRoom : dwMe())); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
@@ -3331,7 +3381,7 @@ function w3Enter() {
   if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
   if (d.kind === "hexit") return w3LeaveRoom();
   if (d.kind === "board") return dwTab("board");
-  if (d.kind === "fac") { if (d.k === "clinic") return w3Clinic(); if (d.k === "pets") return w3PetShop(); if (d.k === "fish") return w3Fishing(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
+  if (d.kind === "fac") { if (d.k === "tag") return w3TagMenu(); if (d.k === "bb") return w3BBMenu(); if (d.k === "clinic") return w3Clinic(); if (d.k === "pets") return w3PetShop(); if (d.k === "fish") return w3Fishing(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
   if (d.kind === "hedit") return dwTab("home");
   if (d.kind === "hstk") return w3StickerCard();
   if (d.kind === "hbuild") return w3BuildToggle();
@@ -3347,7 +3397,7 @@ function w3Loop(now) {
   const k = w3.keys, P = w3.player.position;
   let fx = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0) - w3.joy.y, sx = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0) + w3.joy.x;
   const len = Math.hypot(fx, sx); if (len > 1) { fx /= len; sx /= len; }
-  const speed = 5.2 * w3Gear().spd, fwd = new THREE.Vector3(-Math.sin(w3.yaw), 0, -Math.cos(w3.yaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
+  const speed = (w3.mg && w3.mg.lock ? 0 : 5.2) * w3Gear().spd, fwd = new THREE.Vector3(-Math.sin(w3.yaw), 0, -Math.cos(w3.yaw)), right = new THREE.Vector3(-fwd.z, 0, fwd.x);
   const move = fwd.multiplyScalar(fx * speed * dt).add(right.multiplyScalar(sx * speed * dt));
   const moving = len > 0.05;
   if (moving) w3.player.rotation.y = Math.atan2(move.x, move.z);
@@ -3376,7 +3426,8 @@ function w3Loop(now) {
   // 相機跟在後面
   const cd = w3.dist, cp = new THREE.Vector3(P.x + Math.sin(w3.yaw) * Math.cos(w3.pitch) * cd, P.y + 1.6 + Math.sin(w3.pitch) * cd, P.z + Math.cos(w3.yaw) * Math.cos(w3.pitch) * cd);
   const head = new THREE.Vector3(P.x, P.y + 1.5, P.z), dir = cp.clone().sub(head), full = dir.length(); dir.normalize();
-  let ok = full; for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
+  const peek = w3.mg && w3.mg.type !== "bb" && w3.world.hides && w3Hidden(P);   // 躲在小屋裡：相機飄到屋外看，才看得到鬼在哪
+  let ok = full; if (!peek) for (let t = 0.6; t < full; t += 0.3) { const q = head.clone().addScaledVector(dir, t); if (w3Solid(q.x, q.y, q.z)) { ok = Math.max(0.5, t - 0.4); break; } }
   w3.camD = w3.camD === undefined ? ok : ok < w3.camD ? ok : w3.camD + (ok - w3.camD) * Math.min(1, dt * 3);
   cp.copy(head.addScaledVector(dir, w3.camD));
   w3.look = w3.look || new THREE.Vector3(P.x, P.y + 1.4, P.z);
@@ -3387,7 +3438,7 @@ function w3Loop(now) {
   w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" || d.room ? 4 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "board" ? "📌 看公佈欄" : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽", pets: "🐾 進寵物店", fish: "🎣 開始釣魚" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "board" ? "📌 看公佈欄" : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽", pets: "🐾 進寵物店", fish: "🎣 開始釣魚", tag: "👻 玩鬼抓人", bb: "🏀 玩投籃機" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -3403,6 +3454,7 @@ function w3Loop(now) {
   w3ZombieTick(dt, now);
   w3HealthTick(dt, now);
   w3PetTick(dt, now);
+  w3GameTick(dt, now);
   if (now - (w3.farmT || 0) > 30000) { w3.farmT = now; w3FarmBuild(); w3BoardPaint(); }
   w3PeerSync(dt, now);
   w3Env(now);
@@ -3796,7 +3848,9 @@ const CARD_GAMES = {
   big2: { name: "🂡 大老二", min: 2, max: 4, turnMs: 45000, tip: "單張、對子、三條、五張牌型（順子＜同花＜葫蘆＜鐵支＜同花順）。2 最大、♠＞♥＞♦＞♣。拿到最小牌的人先出，先出完的人贏！" },
   kungfu: { name: "🥋 功夫擂台", min: 2, max: 2, turnMs: 15000, tip: "兩人同時出招：👊拳 贏 🌀摔、🌀摔 贏 🛡️擋、🛡️擋 贏 👊拳（還會反擊）。集氣可以放 🦵旋風踢（2 氣）和 ⚡必殺技（4 氣，擋不住）。先把對手打到 0 的人贏！" },
   volley: { name: "🏐 排球場", min: 2, max: 6, turnMs: 15000, tip: "單數座位是紅隊、雙數座位是藍隊，輪流上場。進攻的人選往 ⬅️左／⬆️中／➡️右 扣球或吊球，防守的人猜位置撲救：猜中就接起來換對方攻，猜錯對方得分。先拿 11 分的隊伍贏！" },
-  heart: { name: "💓 心臟病", min: 2, max: 4, turnMs: 9000, tip: "輪流翻牌並喊 A、2、3…K。翻出的牌和喊的數字一樣就快拍！最慢拍（或沒拍）的人把整疊牌收回去。亂拍也要收牌！先把牌出完的人贏！" }
+  heart: { name: "💓 心臟病", min: 2, max: 4, turnMs: 9000, tip: "輪流翻牌並喊 A、2、3…K。翻出的牌和喊的數字一樣就快拍！最慢拍（或沒拍）的人把整疊牌收回去。亂拍也要收牌！先把牌出完的人贏！" },
+  dark: { name: "♟️ 暗棋", min: 2, max: 2, turnMs: 45000, tip: "32 顆棋子全部蓋著。每次可以翻開一顆，或走一格（上下左右）。第一個翻棋的人，翻到什麼顏色就是那一邊。大吃小：帥將＞仕士＞相象＞俥車＞傌馬＞炮包＞兵卒，但兵卒可以吃帥將、帥將不能吃兵卒。炮包要隔一顆棋「跳過去」才能吃。把對方的棋吃光（或讓他沒棋可走）就贏！" },
+  gomoku: { name: "⚫ 五子棋", min: 2, max: 2, turnMs: 40000, tip: "黑子先下，兩人輪流在 13×13 的棋盤上放棋子。橫、直、斜任何一個方向，先連成 5 顆的人贏！記得也要擋住對方喔。" }
 };
 const CARD_BOTS = ["🤖小幫手一號", "🤖小幫手二號", "🤖小幫手三號", "🤖小幫手四號", "🤖小幫手五號"];
 function cardIsBot(n) { return CARD_BOTS.indexOf(n) >= 0; }
@@ -3866,6 +3920,61 @@ function vbResolve(tb, now) {
   const [r, b] = s.score; if (r >= 11 || b >= 11) return cardEnd(tb, `🏆 ${r > b ? "🔴 紅隊" : "🔵 藍隊"} ${Math.max(r, b)}：${Math.min(r, b)} 獲勝！`);
   s.until = now + CARD_GAMES.volley.turnMs;
 }
+// ── ♟️ 暗棋：4×8 棋盤，k：0帥將 1仕士 2相象 3俥車 4傌馬 5炮包 6兵卒 ──
+const DK_NAME = { r: ["帥", "仕", "相", "俥", "傌", "炮", "兵"], b: ["將", "士", "象", "車", "馬", "包", "卒"] };
+const DK_VAL = [60, 30, 18, 14, 9, 13, 5];
+function dkNew() { const a = []; ["r", "b"].forEach(c => [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 6, 6].forEach(k => a.push({ c, k, up: false }))); return cardShuffle(a); }
+function dkEats(a, b) { if (a.k === 5) return false; if (a.k === 0 && b.k === 6) return false; if (a.k === 6 && b.k === 0) return true; return a.k <= b.k; }
+function dkMoves(B, col) {
+  const out = [];
+  B.forEach((p, i) => {
+    if (!p || !p.up || p.c !== col) return; const r = Math.floor(i / 8), c = i % 8;
+    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dr, dc]) => {
+      const nr = r + dr, nc = c + dc; if (nr < 0 || nr > 3 || nc < 0 || nc > 7) return; const j = nr * 8 + nc, q = B[j];
+      if (!q) out.push({ from: i, to: j }); else if (q.up && q.c !== col && dkEats(p, q)) out.push({ from: i, to: j, cap: q.k });
+      if (p.k === 5) { let rr = nr, cc = nc, jumped = false; while (rr >= 0 && rr <= 3 && cc >= 0 && cc <= 7) { const t = B[rr * 8 + cc]; if (t) { if (!jumped) jumped = true; else { if (t.up && t.c !== col) out.push({ from: i, to: rr * 8 + cc, cap: t.k }); break; } } rr += dr; cc += dc; } }
+    });
+  });
+  return out;
+}
+function dkBot(s, me) {
+  const col = s.col[me], B = s.board, hid = B.map((p, i) => p && !p.up ? i : -1).filter(i => i >= 0);
+  if (!col) return { a: "flip", i: hid[Math.floor(Math.random() * hid.length)] };
+  const opp = col === "r" ? "b" : "r", mv = dkMoves(B, col);
+  const danger = (Bx, j) => dkMoves(Bx, opp).some(m => m.to === j);
+  const sim = m => { const C = B.slice(); C[m.to] = C[m.from]; C[m.from] = null; return C; };
+  const caps = mv.filter(m => m.cap !== undefined).map(m => ({ m, v: DK_VAL[m.cap] - (danger(sim(m), m.to) ? DK_VAL[B[m.from].k] * 0.8 : 0) })).sort((a, b) => b.v - a.v);
+  if (caps.length && caps[0].v > 0) return { a: "move", from: caps[0].m.from, to: caps[0].m.to };
+  const threatened = B.map((p, i) => p && p.up && p.c === col && danger(B, i) ? i : -1).filter(i => i >= 0).sort((a, b) => DK_VAL[B[b].k] - DK_VAL[B[a].k]);
+  for (const t of threatened) { const esc = mv.filter(m => m.from === t && !danger(sim(m), m.to)); if (esc.length) return { a: "move", from: esc[0].from, to: esc[0].to }; }
+  const safe = mv.filter(m => !danger(sim(m), m.to)), dist = (i, j) => Math.abs(Math.floor(i / 8) - Math.floor(j / 8)) + Math.abs(i % 8 - j % 8);
+  const prey = B.map((p, i) => p && p.up && p.c === opp ? i : -1).filter(i => i >= 0);
+  const hunt = safe.map(m => { const me2 = B[m.from], tg = prey.filter(j => me2.k !== 5 && dkEats(me2, B[j])); if (!tg.length) return null; const d0 = Math.min(...tg.map(j => dist(m.from, j))), d1 = Math.min(...tg.map(j => dist(m.to, j))); return d1 < d0 ? { m, g: d0 - d1 + DK_VAL[me2.k] / 100 } : null; }).filter(Boolean).sort((a, b) => b.g - a.g);
+  if (hunt.length && Math.random() < 0.6) return { a: "move", from: hunt[0].m.from, to: hunt[0].m.to };
+  if (hid.length && Math.random() < 0.7) return { a: "flip", i: hid[Math.floor(Math.random() * hid.length)] };
+  const pool = safe.length ? safe : mv;
+  if (pool.length) { const m = pool[Math.floor(Math.random() * pool.length)]; return { a: "move", from: m.from, to: m.to }; }
+  return hid.length ? { a: "flip", i: hid[0] } : null;
+}
+// ── ⚫ 五子棋：13×13 ──
+const GM_N = 13;
+function gmLine(g, i, who, dr, dc) {   // 這條線上連續幾顆、兩端開不開
+  const N = GM_N, r0 = Math.floor(i / N), c0 = i % N; let n = 1, open = 0;
+  for (const sg of [1, -1]) { let r = r0 + dr * sg, c = c0 + dc * sg; while (r >= 0 && r < N && c >= 0 && c < N && g[r * N + c] === who) { n++; r += dr * sg; c += dc * sg; } if (r >= 0 && r < N && c >= 0 && c < N && !g[r * N + c]) open++; }
+  return [n, open];
+}
+function gmWin(g, i, who) { return [[0, 1], [1, 0], [1, 1], [1, -1]].some(([dr, dc]) => gmLine(g, i, who, dr, dc)[0] >= 5); }
+function gmBot(g, who) {
+  const N = GM_N, opp = 3 - who; if (!g.some(x => x)) return Math.floor(N * N / 2);
+  const sc = (i, w) => [[0, 1], [1, 0], [1, 1], [1, -1]].reduce((t, [dr, dc]) => { const [n, o] = gmLine(g, i, w, dr, dc); return t + (n >= 5 ? 100000 : n === 4 ? (o === 2 ? 10000 : o ? 1200 : 0) : n === 3 ? (o === 2 ? 1000 : o ? 120 : 0) : n === 2 ? (o === 2 ? 100 : o ? 15 : 0) : o); }, 0);
+  let best = -1, bi = -1;
+  for (let i = 0; i < N * N; i++) {
+    if (g[i]) continue; const r = Math.floor(i / N), c = i % N; let near = false;
+    for (let dr = -2; dr <= 2 && !near; dr++) for (let dc = -2; dc <= 2; dc++) { const rr = r + dr, cc = c + dc; if (rr >= 0 && rr < N && cc >= 0 && cc < N && g[rr * N + cc]) { near = true; break; } }
+    if (!near) continue; const v = sc(i, who) * 1.1 + sc(i, opp) + Math.random() * 3; if (v > best) { best = v; bi = i; }
+  }
+  return bi;
+}
 function cardNew(game, host, now) {
   if (!CARD_GAMES[game]) throw new Error("沒有這種遊戲");
   return { id: Date.now().toString(36) + Math.floor(Math.random() * 1000), game, host, seats: [host], phase: "wait", ver: 1, t: now || Date.now(), msg: "等大家坐好，桌長按「開始」", s: null };
@@ -3898,6 +4007,10 @@ function cardStart(tb, now) {
   } else if (tb.game === "heart") {
     const d = cardShuffle(cardDeck52()); const per = Math.floor(52 / n); for (let i = 0; i < per * n; i++) s.hands[tb.seats[i % n]].push(d[i]);
     s.pile = []; s.count = 1; s.slap = null; s.turn = Math.floor(Math.random() * n);
+  } else if (tb.game === "dark") {
+    s.board = dkNew(); s.col = {}; s.idle = 0; s.last = null; s.capt = { r: [], b: [] }; s.turn = Math.floor(Math.random() * 2);
+  } else if (tb.game === "gomoku") {
+    s.g = Array(GM_N * GM_N).fill(0); s.turn = Math.floor(Math.random() * 2); s.black = tb.seats[s.turn]; s.last = -1;
   }
   tb.s = s; tb.phase = "play"; tb.msg = "遊戲開始！"; tb.ver++;
 }
@@ -3979,6 +4092,34 @@ function cardAct(tb, who, mv, now) {
     else if (!/^[lcr]$/.test(String(mv.m))) throw new Error("請選要撲救的位置");
     s.pick[who] = String(mv.m); tb.msg = `${who} 準備好了！`;
     if (s.pick[att] && s.pick[def]) { vbResolve(tb, now); tb.ver++; tb.t = now; return; }
+  } else if (tb.game === "dark") {
+    if (!myTurn) throw new Error("還沒輪到你");
+    const B = s.board, other = tb.seats[1 - me];
+    if (mv.a === "flip") {
+      const i = Number(mv.i), p = B[i]; if (!p || p.up) throw new Error("這裡沒有蓋著的棋");
+      p.up = true; s.idle = 0;
+      if (!s.col[who]) { s.col[who] = p.c; s.col[other] = p.c === "r" ? "b" : "r"; tb.msg = `${who} 翻到${p.c === "r" ? "🔴紅" : "⚫黑"}棋，拿${p.c === "r" ? "紅" : "黑"}色！`; }
+      else tb.msg = `${who} 翻開了${p.c === "r" ? "紅" : "黑"}${DK_NAME[p.c][p.k]}`;
+      s.last = { a: "flip", i };
+    } else if (mv.a === "move") {
+      const col = s.col[who]; if (!col) throw new Error("先翻一顆棋");
+      const m = dkMoves(B, col).find(x => x.from === Number(mv.from) && x.to === Number(mv.to)); if (!m) throw new Error("這步不能走");
+      const q = B[m.to]; if (q) s.capt[q.c].push(q.k);
+      tb.msg = q ? `${who} 的${DK_NAME[col][B[m.from].k]}吃掉了${DK_NAME[q.c][q.k]}！` : `${who} 走了${DK_NAME[col][B[m.from].k]}`;
+      B[m.to] = B[m.from]; B[m.from] = null; s.idle = q ? 0 : s.idle + 1; s.last = { a: "move", from: m.from, to: m.to, cap: !!q };
+    } else throw new Error("看不懂的動作");
+    const oc = s.col[other];
+    if (oc && !B.some(p => p && p.c === oc)) return cardEnd(tb, `🎉 ${who} 把對方的棋全部吃光，贏了！`);
+    if (oc && !B.some(p => p && !p.up) && !dkMoves(B, oc).length) return cardEnd(tb, `🎉 ${other} 沒有棋可以走了，${who} 贏了！`);
+    if (s.idle >= 50) return cardEnd(tb, "🤝 連續 50 步都沒有人吃棋，平手！");
+    advance(1 - me);
+  } else if (tb.game === "gomoku") {
+    if (!myTurn) throw new Error("還沒輪到你");
+    const i = Number(mv.i); if (!(i >= 0 && i < GM_N * GM_N) || s.g[i]) throw new Error("這裡不能下");
+    const v = who === s.black ? 1 : 2; s.g[i] = v; s.last = i; tb.msg = `${who} 下了${v === 1 ? "⚫" : "⚪"}`;
+    if (gmWin(s.g, i, v)) return cardEnd(tb, `🎉 ${who} 連成五顆，贏了！`);
+    if (!s.g.includes(0)) return cardEnd(tb, "🤝 棋盤下滿了，平手！");
+    advance(1 - me);
   } else if (tb.game === "heart") {
     if (mv.a === "flip") {
       if (!myTurn) throw new Error("還沒輪到你翻牌");
@@ -4047,6 +4188,8 @@ function cardTick(tb, now) {
       else if (s.last.combo.t === 2) { for (let i = 0; i < h.length - 1 && !play; i++) for (let j = i + 1; j < h.length; j++) if (cardRank(h[i]) === cardRank(h[j]) && b2Beats(b2Combo([h[i], h[j]]), s.last.combo)) { play = [h[i], h[j]]; break; } }
       if (play) cardAct(tb, cur, { a: "play", cards: play }, now); else cardAct(tb, cur, { a: "pass" }, now);
     } else if (tb.game === "heart") cardAct(tb, cur, { a: "flip" }, now);
+    else if (tb.game === "dark") { const m = dkBot(s, cur); if (m) cardAct(tb, cur, m, now); else { cardEnd(tb, `🎉 ${cur} 沒有棋可以走了，${tb.seats[1 - s.turn]} 贏了！`); } }
+    else if (tb.game === "gomoku") cardAct(tb, cur, { i: gmBot(s.g, cur === s.black ? 1 : 2) }, now);
     changed = true;
   } catch (e) { s.turn = cardNext(tb, s.turn); s.until = now + CARD_GAMES[tb.game].turnMs; tb.ver++; changed = true; }
   return changed;
@@ -4064,6 +4207,8 @@ function cardView(tb, who, now) {
   if (tb.game === "big2") { v.last = s.last ? { by: s.last.by, cards: s.last.cards, name: s.last.combo.name } : null; v.must = s.must; }
   if (tb.game === "kungfu") { v.f = s.f; v.round = s.round; v.last = s.last; v.picked = Object.keys(s.pick); v.turn = null; }
   if (tb.game === "volley") { const r = vbRoles(tb); v.score = s.score; v.att = s.att; v.roles = r; v.last = s.last; v.picked = Object.keys(s.pick); v.turn = null; v.teams = vbTeams(tb); }
+  if (tb.game === "dark") { v.board = s.board.map(p => !p ? "" : p.up ? p.c + p.k : "?"); v.col = s.col; v.last = s.last; v.capt = s.capt; v.idle = s.idle; }
+  if (tb.game === "gomoku") { v.g = s.g; v.black = s.black; v.last = s.last; }
   if (tb.game === "heart") { v.pile = s.pile.length; v.top = s.pile[s.pile.length - 1] || null; v.count = s.count; v.lastFlip = s.lastFlip || null; v.slap = s.slap ? { left: Math.max(0, s.slap.until - now), who: Object.keys(s.slap.who) } : null; }
   return v;
 }
@@ -4147,7 +4292,7 @@ function dwCardsPaint() {
     return;
   }
   const G = CARD_GAMES[T.game], seated = T.seats.indexOf(me) >= 0, myTurn = T.turn === me && T.phase === "play", host = T.host === me;
-  const seats = T.seats.map(n => `<div class="dwc-seat ${T.turn === n && T.phase === "play" ? "turn" : ""} ${n === me ? "me" : ""}"><b>${cardIsBot(n) ? "" : "🧑‍✈️"}${escapeHtml(shortName(n))}</b><small>${T.game === "volley" ? (T.seats.indexOf(n) % 2 ? "🔵 藍隊" : "🔴 紅隊") : T.game === "kungfu" ? (KF_FIGHTERS[(T.fpick || {})[n]] || KF_FIGHTERS.panda).name : T.counts ? `🂠×${T.counts[n]}` : n === T.host ? "👑 桌長" : "準備好了"}</small>${T.phase === "wait" && host && cardIsBot(n) ? `<button onclick="cardsCall({op:'kick', id:'${T.id}', name:'${n}'})">✕</button>` : ""}</div>`).join("");
+  const seats = T.seats.map(n => `<div class="dwc-seat ${T.turn === n && T.phase === "play" ? "turn" : ""} ${n === me ? "me" : ""}"><b>${cardIsBot(n) ? "" : "🧑‍✈️"}${escapeHtml(shortName(n))}</b><small>${T.game === "volley" ? (T.seats.indexOf(n) % 2 ? "🔵 藍隊" : "🔴 紅隊") : T.game === "kungfu" ? (KF_FIGHTERS[(T.fpick || {})[n]] || KF_FIGHTERS.panda).name : T.game === "dark" ? (T.col && T.col[n] ? (T.col[n] === "r" ? "🔴 紅棋" : "⚫ 黑棋") : "♟️") : T.game === "gomoku" ? (T.black ? (T.black === n ? "⚫ 黑子" : "⚪ 白子") : "⚫⚪") : T.counts ? `🂠×${T.counts[n]}` : n === T.host ? "👑 桌長" : "準備好了"}</small>${T.phase === "wait" && host && cardIsBot(n) ? `<button onclick="cardsCall({op:'kick', id:'${T.id}', name:'${n}'})">✕</button>` : ""}</div>`).join("");
   let mid = "", mine = "", btns = "";
   if (T.phase === "wait" || (T.phase === "end" && !T.hand)) {
     mid = `<p class="dw-note">${escapeHtml(T.msg)}</p><p class="dw-note">${G.tip}</p>`;
@@ -4170,7 +4315,24 @@ function dwCardsPaint() {
       : ["l", "c", "r"].map(d => `<button class="dw-btn" onclick="cardsAct({m:'${d}'})">🧤 撲${nm[d]}</button>`).join("");
     else if (T.phase === "play") btns = `<span class="dw-note">${T.picked.includes(me) ? "選好了，等對方…" : "這一球不是你上場，幫隊友加油！📣"}（剩 ${T.left} 秒）</span>`;
   }
-  if (T.phase !== "wait" && T.hand !== undefined) {
+  if (T.game === "dark" && T.board) {
+    const myCol = T.col[me], sel = dwc.dsel, L = T.last || {};
+    const cell = (x, i) => {
+      const cls = ["dk-c"]; if (L.to === i || L.i === i) cls.push("last"); if (L.from === i) cls.push("from"); if (sel === i) cls.push("sel");
+      const inner = !x ? "" : x === "?" ? `<span class="dk-p hid"></span>` : `<span class="dk-p ${x[0]}">${DK_NAME[x[0]][Number(x[1])]}</span>`;
+      return `<div class="${cls.join(" ")}" ${myTurn && seated ? `onclick="dwcDark(${i})"` : ""}>${inner}</div>`;
+    };
+    const capt = c => (T.capt[c] || []).map(k => `<span class="dk-p sm ${c}">${DK_NAME[c][k]}</span>`).join("");
+    mid = `<div class="dk-info">${T.seats.map(n => `<span>${escapeHtml(shortName(n))}：${T.col[n] ? (T.col[n] === "r" ? "🔴 紅棋" : "⚫ 黑棋") : "還沒決定"}</span>`).join("")}</div>
+      <div class="dk-board">${T.board.map(cell).join("")}</div>
+      <div class="dk-capt"><div>被吃掉的紅棋：${capt("r") || "—"}</div><div>被吃掉的黑棋：${capt("b") || "—"}</div></div>
+      ${T.phase === "play" ? `<p class="dw-note">${myTurn ? (myCol ? (sel !== undefined && sel !== null ? "👉 選好了，點要走去的格子（再點一次取消）" : "👉 點蓋著的棋翻開，或點你的棋再點要去的格子") : "👉 先翻一顆棋，翻到的顏色就是你的！") : seated ? "等對手…" : ""}　${T.idle ? `（${T.idle}/50 步沒吃棋）` : ""}</p>` : ""}`;
+  } else if (T.game === "gomoku" && T.g) {
+    const myV = T.black === me ? 1 : 2;
+    mid = `<div class="dk-info">${T.seats.map(n => `<span>${n === T.black ? "⚫" : "⚪"} ${escapeHtml(shortName(n))}</span>`).join("")}</div>
+      <div class="gm-board" style="--n:${GM_N}">${T.g.map((v, i) => `<div class="gm-c ${T.last === i ? "last" : ""}" ${myTurn && !v ? `onclick="cardsAct({i:${i}})"` : ""}>${v ? `<i class="gm-s ${v === 1 ? "b" : "w"}"></i>` : myTurn ? `<i class="gm-s ghost ${myV === 1 ? "b" : "w"}"></i>` : ""}</div>`).join("")}</div>
+      ${T.phase === "play" && seated ? `<p class="dw-note">${myTurn ? `👉 輪到你下 ${myV === 1 ? "⚫ 黑子" : "⚪ 白子"}，點交叉點` : "等對手下…"}</p>` : ""}`;
+  } else if (T.phase !== "wait" && T.hand !== undefined) {
     const hand = T.hand || [];
     if (T.game === "uno") {
       mid = `<div class="dwc-mid"><div>${cardFace(T.top, { cls: "big" })}<small>現在的顏色：<i class="dot u-${T.color}"></i></small></div><div>${cardFace("back", { cls: "big" })}<small>牌堆 ${T.deck} 張</small></div></div>`;
@@ -4193,7 +4355,7 @@ function dwCardsPaint() {
       if (seated && T.phase === "play") btns = `${myTurn && !T.slap ? `<button class="dw-btn" onclick="cardsAct({a:'flip'})">🂠 翻牌</button>` : ""}<button class="dw-btn slap" onclick="cardsAct({a:'slap'})">🖐️ 拍！</button>`;
     }
   }
-  const endHands = T.phase === "end" && T.hands ? `<div class="dwc-end">${T.seats.map(n => `<div><b>${escapeHtml(shortName(n))}</b>：${(T.hands[n] || []).length ? (T.game === "heart" ? `🂠×${T.hands[n].length}` : T.hands[n].slice(0, 13).map(c => cardFace(c, { cls: "sm" })).join("")) : "✨ 出完了"}</div>`).join("")}</div>` : "";
+  const endHands = T.phase === "end" && T.hands && T.game !== "dark" && T.game !== "gomoku" ? `<div class="dwc-end">${T.seats.map(n => `<div><b>${escapeHtml(shortName(n))}</b>：${(T.hands[n] || []).length ? (T.game === "heart" ? `🂠×${T.hands[n].length}` : T.hands[n].slice(0, 13).map(c => cardFace(c, { cls: "sm" })).join("")) : "✨ 出完了"}</div>`).join("")}</div>` : "";
   el.innerHTML = `<div class="dwc-head"><b>${G.name}</b><span>${T.phase === "play" ? (T.turn ? `輪到 <b>${escapeHtml(shortName(T.turn))}</b>${T.turn === me ? "（你）" : ""}・剩 ${T.left} 秒` : "") : T.phase === "end" ? "🏁 這局結束" : "🪑 等人中"}</span>
       ${seated ? `<button class="dw-btn ghost" onclick="cardsCall({op:'leave', id:'${T.id}'})">離開桌子</button>` : `<button class="dw-btn ghost" onclick="dwc.watch=''; cardsCall({op:'view'})">← 回大廳</button>`}</div>
     <div class="dwc-msg">${escapeHtml(T.msg || "")}</div>
@@ -4201,6 +4363,12 @@ function dwCardsPaint() {
     ${mid}${endHands}
     ${mine ? `<div class="dwc-mine"><small>我的牌</small><div class="dwc-hand">${mine}</div></div>` : ""}
     <div class="dwc-btns">${btns}${host && T.phase !== "play" ? `${T.seats.length < G.max ? `<button class="dw-btn ghost" onclick="cardsCall({op:'bot', id:'${T.id}'})">🤖 加入電腦玩家</button>` : ""}<button class="dw-btn" onclick="cardsCall({op:'start', id:'${T.id}'})">${T.phase === "end" ? "🔄 再來一局" : "▶️ 開始"}</button>` : ""}</div>`;
+}
+function dwcDark(i) {
+  const T = dwc.table, me = session.user.name, x = T.board[i], col = T.col[me];
+  if (x === "?") { dwc.dsel = null; return cardsAct({ a: "flip", i }); }
+  if (x && x[0] === col) { dwc.dsel = dwc.dsel === i ? null : i; return dwCardsPaint(); }
+  if (dwc.dsel !== null && dwc.dsel !== undefined) { const f = dwc.dsel; dwc.dsel = null; return cardsAct({ a: "move", from: f, to: i }); }
 }
 function dwcUno(c) { if (c[0] === "w" && !/^[SHDC]/.test(c)) { dwc.wild = c; dwCardsPaint(); return; } cardsAct({ a: "play", c }); }
 function dwcSel(c) { const i = dwc.sel.indexOf(c); if (i >= 0) dwc.sel.splice(i, 1); else dwc.sel.push(c); dwCardsPaint(); }
@@ -4358,8 +4526,8 @@ function dwBoardHtml() {
   const r = rulesNow(), R = dwRules(), n = noticeNow(), T = dwIsT();
   const sec = (id, title, body) => `<section class="bd-sec" id="bd-${id}"><h3>${title}</h3>${body}</section>`;
   const price = (e, name, p, tip) => `<tr><td>${e} ${escapeHtml(name)}</td><td class="num">🪙${p}</td><td>${tip || ""}</td></tr>`;
-  const places = [["castle", "🏰 老師的天空城堡", "許願池、扭蛋機、榮譽殿堂、水族館…10 個好玩的地方"], ["inside", "✨ 城堡大廳", "走進城堡裡面探險"], ["home", "🏠 我的家", "布置、蓋方塊、院子種田"], ["clinic", "🏥 508 診所", "生病受傷找王醫生"], ["pets", "🐾 毛毛寵物店", "認養寵物、買飼料"]];
-  const facs = [["🎣 釣魚碼頭", "西北邊的湖邊"], ["🥋 功夫擂台", "東北邊的紅磚高台"], ["🏐 排球場", "城堡後面的沙灘"], ["📌 公佈欄", "城堡大門左前方"]];
+  const places = [["castle", "🏰 老師的天空城堡", "許願池、扭蛋機、榮譽殿堂、水族館…10 個好玩的地方"], ["inside", "✨ 城堡大廳", "走進城堡裡面探險"], ["home", "🏠 我的家", "布置、蓋方塊、院子種田"], ["clinic", "🏥 508 診所", "生病受傷找王醫生"], ["pets", "🐾 毛毛寵物店", "認養寵物、買飼料"], ["tag", "👻 鬼抓人遊樂場", "8 間小屋、草叢、隧道，躲貓貓"], ["bb", "🏀 投籃機", "45 秒投籃，挑戰班上排行榜"]];
+  const facs = [["🎣 釣魚碼頭", "西北邊的湖邊"], ["🥋 功夫擂台", "東北邊的紅磚高台"], ["🏐 排球場", "城堡後面的沙灘"], ["👻 鬼抓人遊樂場", "排球場東邊"], ["🏀 投籃機", "排球場西邊"], ["📌 公佈欄", "城堡大門左前方"]];
   return `<div class="bd">
     <div class="bd-head"><div class="bd-pin">📌</div><div><h2>508 異想世界公佈欄</h2><small>所有玩法、規則、物價都在這裡　·　${nowStr().slice(0, 16)}</small></div></div>
     <nav class="bd-nav">${[["notice", "📢 公告"], ["today", "🌦️ 今天的世界"], ["map", "🗺️ 地點導覽"], ["how", "🎮 玩法說明"], ["price", "🪙 物價表"], ["rule", "📜 生活公約"]].map(([k, l]) => `<a href="#bd-${k}" onclick="event.preventDefault(); document.getElementById('bd-${k}').scrollIntoView({behavior:'smooth'})">${l}</a>`).join("")}</nav>
@@ -4384,7 +4552,9 @@ function dwBoardHtml() {
       <details><summary>🐾 寵物</summary><p>到毛毛寵物店認養（${DW_PETS.map(x => x.e + x.n).join("、")}），取個名字，牠會跟著你走。飽足、乾淨、開心會慢慢下降，要餵飼料或牠最愛的食物、洗澡、陪牠玩，不然牠會難過喔。</p></details>
       <details><summary>🏥 生病和診所</summary><p>淋雨、下雪在外面太久會 🤧感冒（帶 ☂️ 雨傘、穿 🧥 外套就不會）；晚上 9 點後還在玩或一次玩 45 分鐘會 🤒發燒；被殭屍抓到會 🩹擦傷、被打倒會 🤕重傷。生病走路變慢、愛心變少，要到診所付金幣看醫生。不看醫生再玩 10 分鐘就會 🛌 病倒在家不能出門，只能打電話請醫生出診（多收出診費）。</p></details>
       <details><summary>🧟 殭屍和裝備</summary><p>老師打開殭屍時，荒野會有殭屍追人（廣場、房子、院子、城堡、診所等都是安全區）。按 F 或點畫面打殭屍，打倒有機會撿到材料（每天最多 6 個）。愛心用完會昏倒、掉 1～2 個材料。到 ⚔️ 裝備店買劍、盔甲、跑鞋、補血藥水（按 H 喝）。</p></details>
-      <details><summary>🃏 遊戲桌、🥋 擂台、🏐 排球</summary><p>${Object.values(CARD_GAMES).map(g => `<b>${g.name}</b>：${g.tip}`).join("<br>")}<br>人不夠可以加 🤖 電腦玩家。</p></details>
+      <details><summary>👻 鬼抓人遊樂場</summary><p>在排球場東邊。裡面有 8 間小屋（草叢屋、稻草屋、木桶屋、粉紅屋、藍色屋…）、草叢牆、稻草堆和石頭小隧道。<b>🙈 我來躲</b>：小幽靈當鬼，躲進小屋正中間牠就看不到你，但牠會到處檢查小屋，撐 60 秒就贏。<b>👻 我當鬼</b>：90 秒內找出 5 個小朋友（3 個躲在小屋裡、2 個會逃跑）。跑出遊樂場 5 秒這局就不算。贏了送材料（每種每天 3 次）。</p></details>
+      <details><summary>🏀 投籃機</summary><p>在排球場西邊。45 秒內，力道條跑到 <b>綠色區</b> 按「🏀 投！」（電腦按空白鍵）：綠色是空心球、黃色可能擦板進也可能彈出。罰球線 2 分、三分線 3 分，連進 3 球以上每球再 +1。得到 20 分以上送材料（每天 3 次），最高分會上班上排行榜！</p></details>
+      <details><summary>🃏 遊戲桌、♟️ 暗棋、⚫ 五子棋、🥋 擂台、🏐 排球</summary><p>${Object.values(CARD_GAMES).map(g => `<b>${g.name}</b>：${g.tip}`).join("<br>")}<br>人不夠可以加 🤖 電腦玩家。</p></details>
       <details><summary>💬 聊天和悄悄話</summary><p>3D 世界左上角是異想世界的聊天室；點同學的名字就能講 🤫 悄悄話。不友善的字和聯絡方式會被擋下，老師看得到所有紀錄。</p></details>
       <details><summary>🏰 老師的城堡</summary><p>許願池每天送材料、扭蛋機每天免費轉一次、榮譽殿堂展示收到最多貼圖的家，還有水族館、星空塔等等，走到有名牌的地方按 E 玩。</p></details></div>`)}
     ${sec("price", "🪙 物價表", `<div class="bd-prices">
@@ -4424,6 +4594,173 @@ function w3BoardPaint() {
   g.fillStyle = "#16a34a"; g.font = "bold 24px sans-serif"; g.textAlign = "center"; g.fillText("走過來按 E：玩法、地點、物價全都在這裡！", 320, 368);
   tex.needsUpdate = true;
 }
+
+// ════════ 小遊戲共用 ════════
+function w3GameReward(kind, label) {
+  if (session.user.role !== "student") return "";
+  const key = "508_MG_" + kind + "_" + session.user.name, d = nowStr().slice(0, 10), t = load(key, null), n = t && t.d === d ? t.n : 0;
+  if (n >= 3) return "（今天的獎勵拿完了，明天再來！）";
+  const m = DW_MATS[Math.floor(Math.random() * DW_MATS.length)]; dw.home.gift.mats[m.k] = (dw.home.gift.mats[m.k] || 0) + 1; store(key, { d, n: n + 1 }); dwSave(); renderDreamStat();
+  return `獎勵 ${m.icon}${m.name}×1（今天還能拿 ${2 - n} 次）`;
+}
+function w3GameHud(html) { const el = w3.hud.querySelector("#dw3d-game"); if (!el) return; el.hidden = !html; if (html) el.innerHTML = html; }
+function w3GameEnd(msg) {
+  const g = w3.mg; if (!g) return; (g.npcs || []).forEach(n => { w3.scene.remove(n.g); if (n.tag) w3.scene.remove(n.tag); }); if (g.ball) w3.scene.remove(g.ball);
+  w3.mg = null; w3GameHud(""); const gh = w3.hud.querySelector("#dw3d-game"); if (gh) gh.classList.remove("bb"); if (w3.myTag) w3.myTag.visible = true; if (msg) { const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (c && p) { p.innerHTML = msg; c.hidden = false; } }
+}
+function w3LOS(a, b) {   // 中間有沒有被方塊擋住（看不看得到）
+  const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz), y = Math.round(a.y + 1);
+  for (let t = 0.6; t < d - 0.4; t += 0.4) if (w3.world.G[Math.round(a.x + dx * t / d) + "," + y + "," + Math.round(a.z + dz * t / d)]) return false;
+  return true;
+}
+function w3NpcStep(n, tx, tz, spd, dt) {
+  const P = n.g.position, dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); if (d < 0.05) return true;
+  const st = Math.min(d, spd * dt), nx = P.x + dx / d * st, nz = P.z + dz / d * st, y = Math.round(P.y - 0.5);
+  if (!w3.world.G[Math.round(nx) + "," + (y + 1) + "," + Math.round(nz)]) { P.x = nx; P.z = nz; }
+  else if (!w3.world.G[Math.round(nx) + "," + (y + 1) + "," + Math.round(P.z)]) P.x = nx;
+  else if (!w3.world.G[Math.round(P.x) + "," + (y + 1) + "," + Math.round(nz)]) P.z = nz;
+  else return true;
+  n.g.rotation.y = Math.atan2(dx, dz); const u = n.g.userData; if (u && u.ll) { const sw = Math.sin(performance.now() / 120) * 0.6; u.ll.rotation.x = sw; u.rl.rotation.x = -sw; }
+  return false;
+}
+function w3InTag(p) { return p.x >= 14.5 && p.x <= 33.5 && p.z >= -59.5 && p.z <= -40.5; }
+function w3Hidden(p) { return w3.world.hides.some(h => Math.abs(p.x - h.x) < 0.7 && Math.abs(p.z - h.z) < 0.7); }
+
+// ════════ 👻 鬼抓人 ════════
+function w3TagMenu() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const gm = (dw.home && dw.home.gm) || {};
+  p.innerHTML = `<b>👻 鬼抓人遊樂場</b><p style="font-size:.85rem">遊樂場裡有 8 間小屋（草叢屋、稻草屋、木桶屋、粉紅屋…）、草叢牆、稻草堆和小隧道，躲進小屋正中間，鬼就看不到你！</p>
+    <div class="clinic-opts"><button class="dw-btn" onclick="w3TagStart('hide')">🙈 我來躲<small>小幽靈當鬼，躲 60 秒不被抓到就贏！躲在小屋裡最安全，但鬼會到處檢查，要記得換地方。</small></button>
+    <button class="dw-btn" onclick="w3TagStart('seek')">👻 我當鬼<small>5 個小朋友躲起來了，90 秒內把他們全部找出來！有 2 個會到處跑，追上去碰到他就抓到了。</small></button></div>
+    <small>戰績：躲貓貓贏 ${gm.hide || 0} 次、當鬼贏 ${gm.seek || 0} 次。贏了有材料獎勵（每種每天 3 次）。</small>`;
+  c.hidden = false;
+}
+function w3TagStart(type) {
+  if (w3.mg) w3GameEnd(); document.getElementById("dw3d-card").hidden = true;
+  const b = w3.world.hmap["24,-50"] || 5, P = w3.player.position, npcs = [];
+  P.set(24, b + 1.2, -41.5); w3.yaw = 0; w3.player.rotation.y = Math.PI; w3.pitch = 0.5; w3.dist = 9; w3.camD = undefined;
+  if (type === "hide") {
+    const g = new THREE.Sprite(w3Emoji("👻")); g.scale.set(1.9, 1.9, 1); const G = new THREE.Group(); G.add(g); g.position.y = 1.2; G.position.set(25, b + 0.5, -55); w3.scene.add(G);
+    npcs.push({ g: G, ghost: true, tgt: null, wait: 0 });
+    w3.mg = { type, t0: performance.now(), dur: 60000, npcs, b, grace: performance.now() + 4000 };
+    toast("🙈 快躲起來！小幽靈數到 3 就出發囉！", 3500);
+  } else {
+    const hs = shuffle(w3.world.hides.slice()), cols = ["#16a34a", "#db2777", "#f59e0b", "#0d9488", "#9333ea"], names = ["小明", "小美", "阿寶", "小花", "大雄"];
+    for (let i = 0; i < 5; i++) {
+      const g = w3Avatar(), shirt = new THREE.MeshLambertMaterial({ color: cols[i] }); g.children.forEach(m => { if (m.material && m.material.color && m.material.color.getHexString() === "2563eb") m.material = shirt; });
+      const run = i >= 3, h = hs[i]; g.position.set(run ? 20 + i * 3 : h.x, b + 0.5, run ? -48 : h.z); g.scale.setScalar(0.85); w3.scene.add(g);
+      const tag = w3Label(names[i], "", run ? "#f59e0b" : "#7c3aed"); tag.scale.multiplyScalar(0.3); w3.scene.add(tag);
+      npcs.push({ g, tag, run, name: names[i], found: false, tgt: null });
+    }
+    w3.mg = { type, t0: performance.now(), dur: 90000, npcs, b };
+    toast("👻 你是鬼！把 5 個小朋友找出來（3 個躲在小屋裡，2 個到處跑）", 4500);
+  }
+}
+function w3TagTick(dt, now) {
+  const g = w3.mg, P = w3.player.position, left = Math.max(0, g.dur - (now - g.t0));
+  if (!w3InTag(P)) { g.out = (g.out || 0) + dt; if (g.out > 5) return w3GameEnd(`<b>👻 鬼抓人</b><p>你跑出遊樂場太久，這局不算囉！</p>`); } else g.out = 0;
+  if (g.type === "hide") {
+    const gh = g.npcs[0], GP = gh.g.position; gh.g.children[0].position.y = 1.2 + Math.sin(now / 300) * 0.2;
+    const hidden = w3Hidden(P), d = Math.hypot(GP.x - P.x, GP.z - P.z), sees = now > g.grace && !hidden && d < 10 && w3LOS(GP, P);
+    if (now > g.grace) {
+      if (sees) { gh.tgt = { x: P.x, z: P.z }; gh.chase = 1; }
+      else if (!gh.tgt || gh.wait > 0) { gh.wait -= dt; if (gh.wait <= 0) { const h = w3.world.hides[Math.floor(Math.random() * w3.world.hides.length)]; gh.tgt = Math.random() < 0.6 ? { x: h.x, z: h.z, check: 1 } : { x: 15 + Math.random() * 18, z: -59 + Math.random() * 18 }; gh.chase = 0; gh.wait = 0; } }
+      if (gh.tgt) { const arrived = w3NpcStep(gh, gh.tgt.x, gh.tgt.z, gh.chase ? 4.3 : 2.6, dt); if (arrived) { gh.tgt = null; gh.wait = 0.8 + Math.random(); } }
+      if (d < 0.9 || (hidden && d < 1.1)) return w3GameEnd(`<b>👻 被抓到了！</b><p>小幽靈在第 ${Math.round((now - g.t0) / 1000)} 秒找到你了。躲在小屋裡也要小心鬼來檢查，試試多換幾個地方！</p><button class="dw-btn" onclick="w3TagStart('hide')">🔁 再玩一次</button>`);
+    }
+    w3GameHud(`🙈 躲貓貓・剩 <b>${Math.ceil(left / 1000)}</b> 秒　${now < g.grace ? "鬼數 1、2、3…快躲！" : sees ? "😱 鬼看到你了！快跑！" : hidden ? "🤫 躲好了，鬼看不到你" : "👀 鬼在找你…"}`);
+    if (!left) { dw.home.gm = dw.home.gm || {}; dw.home.gm.hide = (dw.home.gm.hide || 0) + 1; const r = w3GameReward("hide"); return w3GameEnd(`<b>🎉 躲貓貓成功！</b><p>撐了 60 秒都沒被抓到，太厲害了！${r}</p><button class="dw-btn" onclick="w3TagStart('hide')">🔁 再玩一次</button>`); }
+  } else {
+    let found = 0;
+    g.npcs.forEach(n => {
+      const NP = n.g.position; n.tag.position.set(NP.x, NP.y + 2.4, NP.z);
+      if (n.found) { found++; return; }
+      const d = Math.hypot(NP.x - P.x, NP.z - P.z);
+      if (n.run) {
+        if (d < 7) { const ax = NP.x - P.x, az = NP.z - P.z, k = d || 1; if (w3NpcStep(n, Math.max(15, Math.min(33, NP.x + ax / k * 3)), Math.max(-59, Math.min(-41, NP.z + az / k * 3)), 3.7, dt)) n.tgt = null; }
+        else { if (!n.tgt) n.tgt = { x: 15 + Math.random() * 18, z: -59 + Math.random() * 18 }; if (w3NpcStep(n, n.tgt.x, n.tgt.z, 1.6, dt)) n.tgt = null; }
+      }
+      if (d < (n.run ? 1.0 : 1.4)) { n.found = true; found++; n.tag.material.opacity = 0.4; n.g.position.y += 0; toast(`🎯 找到 ${n.name} 了！`, 1500); n.g.rotation.y += Math.PI; }
+    });
+    w3GameHud(`👻 我是鬼・剩 <b>${Math.ceil(left / 1000)}</b> 秒　找到 <b>${found}</b>／5`);
+    if (found === 5) { dw.home.gm = dw.home.gm || {}; dw.home.gm.seek = (dw.home.gm.seek || 0) + 1; const r = w3GameReward("seek"); return w3GameEnd(`<b>🎉 全部找到了！</b><p>只花了 ${Math.round((now - g.t0) / 1000)} 秒就把大家都抓到，好厲害的鬼！${r}</p><button class="dw-btn" onclick="w3TagStart('seek')">🔁 再玩一次</button>`); }
+    if (!left) return w3GameEnd(`<b>⏰ 時間到！</b><p>找到 ${found} 個小朋友。下次試試先去小屋裡找，再追跑來跑去的！</p><button class="dw-btn" onclick="w3TagStart('seek')">🔁 再玩一次</button>`);
+  }
+}
+
+// ════════ 🏀 投籃機 ════════
+const BB_SPOTS = [{ x: -22, z: -56, pts: 2, n: "罰球線" }, { x: -25, z: -55.5, pts: 2, n: "左邊" }, { x: -19, z: -55.5, pts: 2, n: "右邊" }, { x: -22, z: -53, pts: 3, n: "三分線" }, { x: -26.5, z: -54, pts: 3, n: "左三分" }, { x: -17.5, z: -54, pts: 3, n: "右三分" }];
+function w3HoopMake() {
+  if (w3.hoop) return; const b = w3.world.hmap["-22,-60"] || 5, g = new THREE.Group();
+  const board = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.7, 0.12), new THREE.MeshLambertMaterial({ color: 0xffffff })); board.position.set(-22, b + 5.3, -60.6); g.add(board);
+  const sq = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.13), new THREE.MeshLambertMaterial({ color: 0xdc2626 })); sq.position.set(-22, b + 5.0, -60.58); g.add(sq);
+  const sq2 = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.14), new THREE.MeshLambertMaterial({ color: 0xffffff })); sq2.position.set(-22, b + 5.0, -60.57); g.add(sq2);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.05, 8, 24), new THREE.MeshLambertMaterial({ color: 0xea580c })); rim.rotation.x = Math.PI / 2; rim.position.set(-22, b + 4.6, -60.05); g.add(rim);
+  const net = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.26, 0.55, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true })); net.position.set(-22, b + 4.3, -60.05); g.add(net);
+  w3.scene.add(g); w3.hoop = { x: -22, y: b + 4.6, z: -60.05, b };
+}
+function w3BBMenu() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const best = (dw.home && dw.home.gm && dw.home.gm.bb) || 0;
+  const board = (dw.village || []).filter(v => v.gm && v.gm.bb).map(v => ({ n: v.name, s: v.name === dwMe() ? Math.max(best, v.gm.bb) : v.gm.bb })).concat(best && !(dw.village || []).some(v => v.name === dwMe() && v.gm && v.gm.bb) && session.user.role === "student" ? [{ n: dwMe(), s: best }] : []).sort((a, b) => b.s - a.s).slice(0, 5);
+  p.innerHTML = `<b>🏀 投籃機</b><p style="font-size:.85rem">45 秒內投越多越好！下面的力道條會一直跑，跑到 <b style="color:#16a34a">綠色區</b> 時按「🏀 投！」（電腦按空白鍵）。站的位置會一直換，三分線投進得 3 分，連續投進還有加分！</p>
+    <button class="dw-btn" style="width:100%" onclick="w3BBStart()">🏀 開始投籃</button>
+    <p style="font-size:.85rem; margin-top:8px">我的最高分：<b>${best}</b> 分</p>
+    ${board.length ? `<div class="bb-board"><b>🏆 班上前 5 名</b>${board.map((x, i) => `<div><span>${["🥇", "🥈", "🥉", "4.", "5."][i]} ${escapeHtml(shortName(x.n))}</span><b>${x.s}</b></div>`).join("")}</div>` : ""}`;
+  c.hidden = false;
+}
+function w3BBStart() {
+  if (w3.mg) w3GameEnd(); document.getElementById("dw3d-card").hidden = true; w3HoopMake();
+  w3.mg = { type: "bb", t0: performance.now(), dur: 45000, lock: true, score: 0, shots: 0, made: 0, combo: 0, spot: 0, flying: null, npcs: [] };
+  const gh = w3.hud.querySelector("#dw3d-game"); if (gh) gh.classList.add("bb"); if (w3.myTag) w3.myTag.visible = false;   // 投籃時面板放下面，才看得到籃框
+  w3BBPlace(); toast("🏀 看力道條，跑到綠色區就投！", 3000);
+}
+function w3BBPlace() {
+  const g = w3.mg, s = BB_SPOTS[g.spot % BB_SPOTS.length], P = w3.player.position, b = w3.hoop.b;
+  P.set(s.x, b + 1.2, s.z); w3.player.rotation.y = Math.atan2(w3.hoop.x - s.x, w3.hoop.z - s.z);
+  w3.yaw = Math.atan2(s.x - w3.hoop.x, s.z - w3.hoop.z); w3.pitch = 0.18; w3.dist = 4.5; w3.camD = undefined;
+  g.sweet = s.pts === 3 ? 0.74 : 0.6; g.win = s.pts === 3 ? 0.05 : 0.065;
+}
+function w3BBShoot() {
+  const g = w3.mg; if (!g || g.flying) return;
+  const pw = g.pw, err = pw - g.sweet, s = BB_SPOTS[g.spot % BB_SPOTS.length], H = w3.hoop, P = w3.player.position;
+  const res = Math.abs(err) <= g.win ? "swish" : Math.abs(err) <= g.win * 2 ? (Math.random() < 0.5 ? "rimin" : "rimout") : err < 0 ? "short" : "long";
+  const end = res === "short" ? { x: P.x + (H.x - P.x) * 0.75, y: H.b + 0.6, z: P.z + (H.z - P.z) * 0.75 } : res === "long" ? { x: H.x, y: H.y + 0.9, z: H.z - 0.45 } : res === "rimout" ? { x: H.x + 0.45, y: H.y + 0.05, z: H.z } : { x: H.x, y: H.y - 0.5, z: H.z };
+  if (!g.ball) { const tex = w3Tex((c) => { c.fillStyle = "#ea580c"; c.fillRect(0, 0, 16, 16); c.fillStyle = "#431407"; c.fillRect(7, 0, 2, 16); c.fillRect(0, 7, 16, 2); }); g.ball = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), new THREE.MeshLambertMaterial({ map: tex })); w3.scene.add(g.ball); }
+  g.flying = { t: 0, dur: 0.95, from: { x: P.x, y: P.y + 1.8, z: P.z }, end, res, pts: s.pts }; g.shots++;
+  w3.player.userData.ra.rotation.x = -2.6; w3.player.userData.la.rotation.x = -2.6;
+}
+function w3BBTick(dt, now) {
+  const g = w3.mg, left = Math.max(0, g.dur - (now - g.t0));
+  g.pw = (Math.sin((now - g.t0) / 1000 * Math.PI * 1.15 - Math.PI / 2) + 1) / 2;
+  if (g.flying) {
+    const f = g.flying; f.t += dt; const k = Math.min(1, f.t / f.dur), A = f.from, B = f.end;
+    g.ball.position.set(A.x + (B.x - A.x) * k, A.y + (B.y - A.y) * k + Math.sin(k * Math.PI) * 2.6, A.z + (B.z - A.z) * k); g.ball.rotation.x += dt * 8;
+    if (k >= 1) {
+      const inn = f.res === "swish" || f.res === "rimin";
+      if (inn) { g.combo++; const add = f.pts + (g.combo >= 3 ? 1 : 0); g.score += add; g.made++; g.msg = `${f.res === "swish" ? "🎯 空心進球！" : "🏀 擦板進球！"} +${add}${g.combo >= 3 ? "（連進加分）" : ""}`; }
+      else { g.combo = 0; g.msg = { short: "😅 太輕了，沒碰到框", long: "💨 太大力，打板彈出去", rimout: "😫 打到框彈出來" }[f.res]; }
+      g.flying = null; w3.player.userData.ra.rotation.x = 0; w3.player.userData.la.rotation.x = 0;
+      if (g.shots % 2 === 0) { g.spot++; w3BBPlace(); }
+    }
+  }
+  // HUD 只建一次，之後只改文字和位置（每格重畫會讓平板按不到「投！」）
+  if (!g.hudOn) { g.hudOn = 1; w3GameHud(`<span class="bb-top"></span><div class="bb-bar"><i class="rim"></i><i class="ok"></i><b></b></div><div class="bb-msg"></div><button class="dw-btn bb-shoot" onpointerdown="event.stopPropagation(); event.preventDefault(); w3BBShoot()">🏀 投！</button>`); }
+  const H = w3.hud.querySelector("#dw3d-game"), sp = BB_SPOTS[g.spot % BB_SPOTS.length];
+  if (H) {
+    const top = `🏀 剩 <b>${Math.ceil(left / 1000)}</b> 秒　得分 <b>${g.score}</b>　${sp.n}（${sp.pts} 分）`, el = H.querySelector(".bb-top"); if (el && el.innerHTML !== top) el.innerHTML = top;
+    const [rim, ok] = H.querySelectorAll(".bb-bar i"), cur = H.querySelector(".bb-bar b"), msg = H.querySelector(".bb-msg");
+    if (rim) { rim.style.left = (g.sweet - g.win * 2) * 100 + "%"; rim.style.width = g.win * 400 + "%"; ok.style.left = (g.sweet - g.win) * 100 + "%"; ok.style.width = g.win * 200 + "%"; cur.style.left = g.pw * 100 + "%"; }
+    const m = g.msg || "按「🏀 投！」或空白鍵"; if (msg && msg.textContent !== m) msg.textContent = m;
+  }
+  if (!left && !g.flying) {
+    dw.home.gm = dw.home.gm || {}; const best = dw.home.gm.bb || 0, nb = g.score > best; if (nb) dw.home.gm.bb = g.score; dwSave();
+    const r = g.score >= 20 ? w3GameReward("bb") : "得到 20 分以上就有材料獎勵喔！";
+    w3GameEnd(`<b>🏀 時間到！</b><p>投了 ${g.shots} 球、進了 ${g.made} 球，得到 <b>${g.score}</b> 分！${nb ? "🎉 刷新自己的最高分！" : `（最高分 ${best}）`}<br>${r}</p><button class="dw-btn" onclick="w3BBStart()">🔁 再玩一次</button> <button class="dw-btn ghost" onclick="w3BBMenu()">🏆 排行榜</button>`);
+  }
+}
+function w3GameTick(dt, now) { if (!w3.mg) return; if (w3.mg.type === "bb") w3BBTick(dt, now); else w3TagTick(dt, now); }
 // ════════ 🎣 釣魚＋魚圖鑑 ════════
 // 稀有度：1 常見、2 少見、3 稀有、4 傳說；when：只在某些時候出現（night 晚上、rain 下雨、snow 下雪或冰雪地形、sakura 櫻花）
 const DW_FISH = [
@@ -9353,7 +9690,7 @@ function demoBridge(op, d) {
   db.tq = db.tq || [];
   db.homes = db.homes || { "508示範同學二": { nm: "海豚小屋", lv: 2, fl: "blue", wl: "ocean", rf: "#2563eb", open: true, it: [["dolphin", 1, 1, 0], ["fish", 3, 1, 0], ["bed", 6, 1, 0], ["plant", 1, 5, 0], ["couch", 4, 4, 0], ["tv", 4, 2, 0], ["shell", 6, 6, 0]] } };
   db.stk = db.stk || [];
-  const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st, yd: h.yd || [], ob: h.ob || [], farm: h.farm || [], pet: h.pet ? { k: h.pet.k, nm: h.pet.nm } : null }; };
+  const homeSum = n => { const h = db.homes[n] || {}, st = {}; db.stk.filter(x => x.to === n).forEach(x => { st[x.s] = (st[x.s] || 0) + 1; }); return { name: n, nm: h.nm || "", lv: h.lv || 0, rf: h.rf || "", open: !!h.open, st, yd: h.yd || [], ob: h.ob || [], farm: h.farm || [], pet: h.pet ? { k: h.pet.k, nm: h.pet.nm } : null, gm: h.gm || {} }; };
   if (op === "homeGet") { const who = d.who, h = db.homes[who] || null; if (who !== session.user.name && session.user.role === "student" && h && !h.open && !/老師$/.test(who)) throw new Error("主人還沒開放參觀"); return { home: h }; }
   if (op === "homeSave") { db.homes[session.user.name] = d.home; save(); return { ok: true }; }
   if (op === "homeVillage") return { homes: [...DEMO_ROSTER.filter(a => a.role === "student").map(a => Object.assign(homeSum(a.name), { seat: a.seat })), Object.assign(homeSum("508老師"), { teacher: true, open: true }), homeSum("__teacher")] };
