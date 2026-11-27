@@ -832,6 +832,28 @@
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .clinic-doc { font-size: 3.2rem; text-align: center; } .clinic-opts { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+  .clinic-opts .dw-btn { text-align: left; display: flex; flex-direction: column; } .clinic-opts small { font-weight: 400; opacity: .8; font-size: .75rem; }
+  .clinic-tip { font-size: .8rem; background: #ecfdf5; color: #065f46; border-radius: 10px; padding: 6px 10px; }
+  .sick-chip { margin-left: 6px; background: #fee2e2; color: #b91c1c; border-radius: 10px; padding: 0 8px; font-size: .78rem; cursor: pointer; }
+  .dwc-game.want { outline: 4px solid #f59e0b; }
+  .kf-pick { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; align-items: center; margin: 8px 0; } .kf-pick small { display: block; font-weight: 400; font-size: .7rem; }
+  .kf-stage { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 34px 18px 18px; border-radius: 18px; margin: 10px 0; background: linear-gradient(180deg, #fb923c, #7c2d12 70%, #451a03); color: #fff; min-height: 230px; overflow: hidden; }
+  .kf-round { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-weight: 900; letter-spacing: 4px; text-shadow: 0 2px 0 #000; }
+  .kf-f { flex: 1; text-align: center; position: relative; } .kf-f.r .kf-body { transform: scaleX(-1); }
+  .kf-name { font-weight: 900; text-shadow: 0 2px 0 #000; } .kf-bar { height: 12px; background: #450a0a; border: 2px solid #fde68a; border-radius: 6px; overflow: hidden; margin: 4px 0; } .kf-bar i { display: block; height: 100%; background: linear-gradient(90deg, #facc15, #22c55e); transition: width .5s; }
+  .kf-body { font-size: 5rem; line-height: 1.1; animation: kfIdle 1s ease-in-out infinite alternate; } .kf-f.hit .kf-body { animation: kfHit .5s; filter: drop-shadow(0 0 12px #ef4444); }
+  .kf-move { position: absolute; top: 30%; left: 0; right: 0; font-size: 1.3rem; font-weight: 900; text-shadow: 0 2px 4px #000; } .kf-move em { display: block; color: #fecaca; font-style: normal; font-size: 1.6rem; }
+  .kf-vs { font-size: 2rem; font-weight: 900; color: #fde68a; text-shadow: 0 3px 0 #000; align-self: center; }
+  .kf-btn { font-size: 1rem; } .kf-btn small { display: block; font-size: .65rem; font-weight: 400; }
+  @keyframes kfIdle { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+  @keyframes kfHit { 0%, 100% { translate: 0; } 25% { translate: -12px; } 50% { translate: 10px; } 75% { translate: -6px; } }
+  .vb-teams { display: flex; gap: 10px; justify-content: center; margin: 8px 0; } .vb-teams > div { padding: 8px 14px; border-radius: 12px; color: #fff; } .vb-teams .red, .vb-half.red { background: #ef4444; } .vb-teams .blue, .vb-half.blue { background: #3b82f6; }
+  .vb-court { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: stretch; background: #fde68a; border-radius: 16px; padding: 40px 10px 10px; position: relative; margin: 10px 0; }
+  .vb-score { position: absolute; top: 6px; left: 0; right: 0; text-align: center; font-size: 1.5rem; font-weight: 900; } .vb-score .red { color: #dc2626; } .vb-score .blue { color: #2563eb; }
+  .vb-half { border-radius: 12px; padding: 10px; color: #fff; display: flex; flex-direction: column; gap: 4px; min-height: 110px; opacity: .85; } .vb-half.att { opacity: 1; box-shadow: 0 0 0 4px #f59e0b; }
+  .vb-half span { background: rgba(255,255,255,.2); border-radius: 8px; padding: 2px 6px; } .vb-half span.on { background: #fff; color: #111; font-weight: 900; }
+  .vb-net { writing-mode: vertical-rl; display: flex; align-items: center; font-size: 1.6rem; border-left: 4px dashed #fff; padding-left: 4px; }
   .notice-bar { overflow: hidden; background: linear-gradient(90deg, #f59e0b, #ef4444); color: #fff; font-weight: 900; font-size: .95rem; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.2); position: relative; z-index: 5; }
   .notice-bar.dw { font-size: .85rem; }
   .notice-track { display: inline-flex; gap: 120px; padding: 6px 0; padding-left: 100%; animation: noticeRun 22s linear infinite; }
@@ -2864,6 +2886,32 @@ function w3World(homes) {
     cells.forEach(([x, z, u, v]) => { for (let y = base + 1; y <= base + 14; y++) del(x, y, z); for (let y = base; y > base - 3; y--) put(x, y, z, y === base ? ((u === 0 || u === 7 || v === 6) && !(v === 0 && (u === 3 || u === 4)) ? "cobble" : "grass") : "dirt"); hmap[x + "," + z] = base; });
     yards[p.h.name] = { base, uv, f, pp };
   });
+  // 🏥 診所、🥋 功夫擂台、🏐 排球場（整地、蓋好，殭屍不會進來）
+  const fac = (cx, cz, hw, hd, build) => {
+    const base = 5;
+    for (let x = cx - hw - 1; x <= cx + hw + 1; x++) for (let z = cz - hd - 1; z <= cz + hd + 1; z++) { for (let y = base + 1; y <= base + 16; y++) del(x, y, z); for (let y = base; y > base - 3; y--) put(x, y, z, y === base ? "grass" : "dirt"); hmap[x + "," + z] = base; claim[x + "," + z] = "#fac"; }
+    build(base);
+  };
+  fac(22, -20, 5, 4, b => {   // 🏥 診所：白牆、紅十字、玻璃窗
+    for (let x = 17; x <= 27; x++) for (let z = -24; z <= -16; z++) {
+      put(x, b, z, "quartz"); const edge = x === 17 || x === 27 || z === -24 || z === -16;
+      if (edge) for (let y = b + 1; y <= b + 5; y++) { const door = z === -16 && (x === 22 || x === 21) && y <= b + 3, win = y >= b + 2 && y <= b + 3 && (x === 19 || x === 25 || ((z === -20 || z === -21) && (x === 17 || x === 27))); if (!door) put(x, y, z, win ? "glass" : y === b + 5 ? "w#dc2626" : "quartz"); }
+      put(x, b + 6, z, "w#ffffff");
+    }
+    [[22, 9], [21, 8], [22, 8], [23, 8], [22, 7]].forEach(([x, dy]) => put(x, b + dy - 1, -15, "w#dc2626"));   // 紅十字招牌
+    doors.push({ kind: "fac", k: "clinic", x: 21.5, z: -14.5, y: b + 1, label: "🏥 508 診所", sub: "王醫生看診中・生病受傷來這裡", col: "#dc2626", lx: 21.5, ly: b + 11, lz: -15 });
+  });
+  fac(38, -30, 5, 5, b => {   // 🥋 功夫擂台：紅磚高台＋四角柱子
+    for (let x = 34; x <= 42; x++) for (let z = -34; z <= -26; z++) { put(x, b + 1, z, (x + z) % 2 ? "brick" : "w#fde68a"); }
+    [[34, -34], [42, -34], [34, -26], [42, -26]].forEach(([x, z]) => { for (let y = b + 2; y <= b + 4; y++) put(x, y, z, "w#dc2626"); put(x, b + 5, z, "gold"); });
+    doors.push({ kind: "fac", k: "arena", x: 38, z: -25, y: b + 1, label: "🥋 功夫擂台", sub: "找同學一對一過招！", col: "#b45309", lx: 38, ly: b + 8, lz: -30 });
+  });
+  fac(0, -50, 6, 8, b => {   // 🏐 排球場：沙地＋白線＋球網
+    for (let x = -5; x <= 5; x++) for (let z = -57; z <= -43; z++) put(x, b, z, x === -5 || x === 5 || z === -57 || z === -43 || z === -50 ? "w#ffffff" : "sand");
+    for (let y = b + 1; y <= b + 4; y++) { put(-6, y, -50, "w#475569"); put(6, y, -50, "w#475569"); }
+    for (let x = -5; x <= 5; x++) put(x, b + 3, -50, "w#f8fafc");
+    doors.push({ kind: "fac", k: "volley", x: 0, z: -41.5, y: b + 1, label: "🏐 508 排球場", sub: "紅隊 VS 藍隊・組隊來比賽", col: "#2563eb", lx: 0, ly: b + 8, lz: -50 });
+  });
   // 樹和花（避開路、房子、湖、城堡）
   const flowers = [];
   for (let i = 0; i < 260; i++) {
@@ -3028,6 +3076,7 @@ function w3Create() {
   const labels = [];
   world.doors.forEach(d => {
     if (d.kind === "hot" || d.kind === "exit") return;
+    if (d.kind === "fac") { const s = w3Label(d.label, d.sub, d.col); s.position.set(d.lx, d.ly, d.lz); s.scale.multiplyScalar(1.15); scene.add(s); labels.push(s); return; }
     const s = d.kind === "castle" ? w3Label("🏰 老師的天空城堡", "人人都可以進來玩！", "#7c3aed") : d.teacher ? w3Label(d.label, "老師的家・歡迎參觀", "#f59e0b") : w3Label(d.label, `${shortName(d.name)}${d.open ? "・🚪 歡迎參觀" : "・🔒"}`, d.open ? "#16a34a" : "#64748b");
     if (d.kind === "castle") { s.position.set(0, world.C.y + 10.5, world.C.z1 + 3); s.scale.multiplyScalar(1.4); } else s.position.set(d.cx, d.top + 1.6, d.cz);
     scene.add(s); labels.push(s);
@@ -3191,10 +3240,12 @@ function w3Resize() {
   const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
   if (!w3) return;
+  if (dwDown() && where !== "room") return toast("🛌 病倒了不能出門！先在家裡請醫生來看診", 3500);
   if (w3.room && where !== "room") w3RoomClear();
   const card = document.getElementById("dw3d-card"); if (card) card.hidden = true;
   if (where === "castle") { w3.player.position.set(0, 7, w3.world.C.z1 + 4); w3.yaw = Math.PI; w3.player.rotation.y = 0; }
   else if (where === "inside") { const sp = w3.world.IN.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.85; w3.dist = 11; w3.player.rotation.y = Math.PI; toast("🏰 歡迎來到船長老師的天空城堡！走到有名牌的地方按 E 就能玩", 4000); }
+  else if (where === "clinic") { w3.player.position.set(21.5, 7, -12); w3.yaw = Math.PI; w3.player.rotation.y = Math.PI; }
   else if (where === "room") { const sp = w3.room.spawn; w3.player.position.set(sp[0], sp[1], sp[2]); w3.yaw = 0; w3.pitch = 0.75; w3.dist = 10; w3.camD = undefined; w3.player.rotation.y = Math.PI; }
   else { const d = w3.world.doors.find(x => x.kind === "home" && x.name === (where === "door" && w3.lastRoom ? w3.lastRoom : dwMe())); if (d) { w3.player.position.set(d.x, d.y + 1, d.z); w3.yaw = Math.atan2(d.cx - d.x, d.cz - d.z) + Math.PI; } }
   w3.vel.set(0, 0, 0);
@@ -3206,9 +3257,11 @@ function w3Enter() {
   if (d.kind === "exit") return w3Warp("castle");
   if (d.kind === "hot") { const c = document.getElementById("dw3d-card"); if (c) c.hidden = false; return dwHot(d.k); }
   if (d.kind === "hexit") return w3LeaveRoom();
+  if (d.kind === "fac") { if (d.k === "clinic") return w3Clinic(); dwc.want = d.k === "arena" ? "kungfu" : "volley"; return dwTab("cards"); }
   if (d.kind === "hedit") return dwTab("home");
   if (d.kind === "hstk") return w3StickerCard();
   if (d.kind === "hbuild") return w3BuildToggle();
+  if (d.kind === "hcall") return w3Clinic(true);
   if (d.name === dwMe() && dwCanEdit()) return w3EnterRoom(d.name, dw.home);
   if (!d.open && session.user.role !== "teacher" && d.name !== dwMe()) return toast(`🔒 ${shortName(d.name)}還沒開放參觀`);
   w3EnterRoom(d.name, null);
@@ -3260,7 +3313,7 @@ function w3Loop(now) {
   w3.world.doors.forEach(d => { const dd = (d.x - P.x) ** 2 + (d.z - P.z) ** 2; if (dd < (d.kind === "hot" || d.room ? 4 : 9) && dd < best && Math.abs(d.y - P.y) < 3) { best = dd; near = d; } });
   if (near !== w3.near) {
     w3.near = near; const pr = document.getElementById("dw3d-prompt");
-    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
+    if (pr) { pr.hidden = !near; if (near) pr.innerHTML = `<button onclick="w3Enter()">${near.btn ? near.btn : near.kind === "fac" ? { clinic: "🏥 進診所看病", arena: "🥋 上擂台比武", volley: "🏐 去排球場比賽" }[near.k] : near.kind === "hot" ? `✨ 使用 ${escapeHtml(near.label)}` : near.kind === "exit" ? "🚪 回到外面的世界" : near.kind === "castle" ? "🚪 進入老師的天空城堡" : near.name === dwMe() && dwCanEdit() ? "🚪 走進我的家" : near.open || session.user.role === "teacher" ? `🚪 參觀 ${escapeHtml(near.label)}` : `${escapeHtml(shortName(near.name))}的家還沒開放 🔒`}</button><small>（按 E 或點這裡）</small>`; }
   }
   // 寶箱
   w3.chests.forEach(c => { if (!c.m.visible) return; c.m.rotation.y += dt * 1.5; c.m.position.y += Math.sin(now / 300) * 0.004;
@@ -3274,6 +3327,7 @@ function w3Loop(now) {
       if (h && h >= 4 && Math.abs(nx) < S - 2 && Math.abs(nz) < S - 2 && !w3Solid(nx, h + 1, nz)) { o.a.position.x = nx; o.a.position.z = nz; o.a.rotation.y = o.dir; } else o.dir += Math.PI; }
     const h = w3.world.hmap[Math.round(o.a.position.x) + "," + Math.round(o.a.position.z)] || 5; o.a.position.y = h + 0.5; });
   w3ZombieTick(dt, now);
+  w3HealthTick(dt, now);
   w3PeerSync(dt, now);
   w3Env(now);
   w3WeatherTick(dt, now);
@@ -3331,7 +3385,9 @@ function w3RoomClear() {
   const b = document.getElementById("dw3d-build"); if (b) b.hidden = true;
   const o = document.getElementById("dw3d-out"); if (o) o.hidden = true;
 }
-function w3LeaveRoom() { if (!w3 || !w3.room) return; w3Warp("door"); net.heartbeat(); }
+function w3LeaveRoom() {
+  if (!w3 || !w3.room) return;
+  if (dwDown()) { const r = w3.room; w3.player.position.z = Math.min(w3.player.position.z, r.z1 - 0.5); return toast("🛌 病倒了不能出門！走到「📞 叫醫生」請醫生來家裡看診", 3500); } w3Warp("door"); net.heartbeat(); }
 function w3RoomBuild(name, h) {
   const keepBuild = w3.room && w3.room.name === name && w3.build;
   const prev = w3.room ? { spawn: w3.room.spawn } : null;
@@ -3365,6 +3421,7 @@ function w3RoomBuild(name, h) {
   if (mine) {
     doors.push({ kind: "hbuild", room: 1, x: x0 + 1, z: z1 - 1, y: Y + 1, label: "🧱 蓋方塊", btn: "🧱 開始／停止蓋方塊" });
     doors.push({ kind: "hedit", room: 1, x: x1 - 1, z: z1 - 1, y: Y + 1, label: "🛋️ 擺家具", btn: "🛋️ 去擺家具（換地板、壁紙）" });
+    if (session.user.role === "student") doors.push({ kind: "hcall", room: 1, x: X - 0.5, z: z0 + 1, y: Y + 1, label: "📞 叫醫生", btn: "📞 打電話請醫生來家裡看診" });
   } else if (session.user.role === "student") doors.push({ kind: "hstk", room: 1, x: x1 - 1, z: z1 - 1, y: Y + 1, label: "💌 送貼圖", btn: "💌 送主人一張貼圖" });
   doors.forEach(d => { w3.world.doors.push(d); const s = w3Label(d.label, "", d.kind === "hexit" ? "#7c3aed" : "#f59e0b"); s.scale.multiplyScalar(0.5); s.position.set(d.x, Y + (d.kind === "hexit" ? 4.6 : 3.2), d.z - (d.kind === "hexit" ? -1 : 0.6)); group.add(s); });
   const title = w3Label(h.nm || (shortName(name) + "的家"), `${DW_LEVELS[h.lv || 0].icon} ${DW_LEVELS[h.lv || 0].name}`, mine ? "#f59e0b" : "#16a34a"); title.position.set(X - 0.5, Y + H + 2.2, z0 - 1); title.scale.multiplyScalar(1.1); group.add(title);
@@ -3659,9 +3716,11 @@ const CARD_GAMES = {
   uno: { name: "🌈 顏色數字接龍", min: 2, max: 4, turnMs: 30000, tip: "出同顏色或同數字的牌；⛔跳過、🔁迴轉、+2、🌈變色、+4。先出完的人贏！" },
   maid: { name: "👻 抽鬼牌", min: 2, max: 4, turnMs: 25000, tip: "輪流抽下一家的一張牌，湊成一對就丟掉。牌先出完的人安全，最後拿著鬼牌的人輸！" },
   big2: { name: "🂡 大老二", min: 2, max: 4, turnMs: 45000, tip: "單張、對子、三條、五張牌型（順子＜同花＜葫蘆＜鐵支＜同花順）。2 最大、♠＞♥＞♦＞♣。拿到最小牌的人先出，先出完的人贏！" },
+  kungfu: { name: "🥋 功夫擂台", min: 2, max: 2, turnMs: 15000, tip: "兩人同時出招：👊拳 贏 🌀摔、🌀摔 贏 🛡️擋、🛡️擋 贏 👊拳（還會反擊）。集氣可以放 🦵旋風踢（2 氣）和 ⚡必殺技（4 氣，擋不住）。先把對手打到 0 的人贏！" },
+  volley: { name: "🏐 排球場", min: 2, max: 6, turnMs: 15000, tip: "單數座位是紅隊、雙數座位是藍隊，輪流上場。進攻的人選往 ⬅️左／⬆️中／➡️右 扣球或吊球，防守的人猜位置撲救：猜中就接起來換對方攻，猜錯對方得分。先拿 11 分的隊伍贏！" },
   heart: { name: "💓 心臟病", min: 2, max: 4, turnMs: 9000, tip: "輪流翻牌並喊 A、2、3…K。翻出的牌和喊的數字一樣就快拍！最慢拍（或沒拍）的人把整疊牌收回去。亂拍也要收牌！先把牌出完的人贏！" }
 };
-const CARD_BOTS = ["🤖小幫手一號", "🤖小幫手二號", "🤖小幫手三號"];
+const CARD_BOTS = ["🤖小幫手一號", "🤖小幫手二號", "🤖小幫手三號", "🤖小幫手四號", "🤖小幫手五號"];
 function cardIsBot(n) { return CARD_BOTS.indexOf(n) >= 0; }
 function cardShuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 function cardDeck52() { const d = []; "SHDC".split("").forEach(s => { for (let r = 1; r <= 13; r++) d.push(s + r); }); return d; }
@@ -3691,6 +3750,44 @@ function unoDeck() { const d = []; "rygb".split("").forEach(c => { for (let i = 
 function unoOk(c, s) { if (c[0] === "w") return true; return c[0] === s.color || c.slice(1) === s.top.slice(1); }
 function unoDraw(s, who, n) { for (let i = 0; i < n; i++) { if (!s.draw.length) { s.draw = cardShuffle(s.used); s.used = []; } if (!s.draw.length) break; s.hands[who].push(s.draw.pop()); } }
 
+// 🥋 擂台角色（原創）：血量、起始氣、攻擊倍率、擋反擊倍率
+const KF_FIGHTERS = {
+  panda: { name: "🐼 熊貓師父", hp: 115, en0: 0, atk: 0.9, ctr: 1 },
+  monkey: { name: "🐒 猴拳小子", hp: 100, en0: 1, atk: 1, ctr: 1 },
+  crane: { name: "🦢 白鶴女俠", hp: 100, en0: 0, atk: 0.95, ctr: 1.6 },
+  tiger: { name: "🐯 猛虎拳王", hp: 90, en0: 0, atk: 1.15, ctr: 1 }
+};
+const KF_MOVES = { punch: "👊 拳", throw: "🌀 摔", block: "🛡️ 擋", kick: "🦵 旋風踢", ult: "⚡ 必殺技" };
+function kfResolve(tb, now) {
+  const s = tb.s, [a, b] = tb.seats, A = s.f[a], B = s.f[b], ma = s.pick[a], mb = s.pick[b];
+  const beat = { punch: "throw", throw: "block", block: "punch" }, base = { punch: 12, throw: 15, block: 8, kick: 22, ult: 30 };
+  const dmg = { [a]: 0, [b]: 0 }, F = n => KF_FIGHTERS[s.f[n].k];
+  const hit = (from, to, mv) => { dmg[to] += Math.round(base[mv] * F(from).atk * (mv === "block" ? F(from).ctr : 1)); };
+  [[a, ma, b, mb], [b, mb, a, ma]].forEach(([me, m, op, om]) => {
+    if (m === "ult") hit(me, op, "ult");
+    else if (m === "kick") { if (om === "block") dmg[op] += 4; else if (om !== "ult") hit(me, op, "kick"); }
+    else if (om !== "kick" && om !== "ult") { if (beat[m] === om) hit(me, op, m); else if (m === om && m !== "block") dmg[op] += 5; }
+  });
+  [a, b].forEach(n => { const P = s.f[n], m = s.pick[n]; if (m === "kick") P.en -= 2; if (m === "ult") P.en -= 4; P.hp = Math.max(0, P.hp - dmg[n]); P.en = Math.min(6, P.en + 1 + (dmg[n] >= 12 ? 1 : 0)); });
+  s.last = { m: { [a]: ma, [b]: mb }, d: dmg, at: now };
+  tb.msg = `${a}：${KF_MOVES[ma]}　VS　${b}：${KF_MOVES[mb]}　→　${dmg[b] ? `${b} -${dmg[b]}` : ""}${dmg[a] && dmg[b] ? "、" : ""}${dmg[a] ? `${a} -${dmg[a]}` : ""}${!dmg[a] && !dmg[b] ? "互相擋下！" : ""}`;
+  s.pick = {}; s.round++;
+  if (!A.hp || !B.hp) { const w = !A.hp && !B.hp ? null : A.hp ? a : b; return cardEnd(tb, w ? `🏆 K.O.！${w} 贏了！` : "💥 雙雙倒地，平手！"); }
+  s.until = now + CARD_GAMES.kungfu.turnMs;
+}
+function vbTeams(tb) { return [tb.seats.filter((_, i) => i % 2 === 0), tb.seats.filter((_, i) => i % 2 === 1)]; }
+function vbRoles(tb) { const s = tb.s, T = vbTeams(tb), att = T[s.att][s.rot[s.att] % T[s.att].length], def = T[1 - s.att][s.rot[1 - s.att] % T[1 - s.att].length]; return { att, def }; }
+function vbResolve(tb, now) {
+  const s = tb.s, { att, def } = vbRoles(tb), A = s.pick[att], D = s.pick[def];
+  const saved = A.split(":")[0] === D || (A.split(":")[1] === "tip" && D === "c");
+  const name = { l: "左邊", c: "中間", r: "右邊" };
+  s.last = { att, def, a: A, d: D, saved, side: s.att, at: now };
+  if (saved) { tb.msg = `🏐 ${att} 往${name[A[0]]}${A.endsWith("tip") ? "吊球" : "扣殺"}，${def} 漂亮撲救！換${s.att ? "紅" : "藍"}隊進攻`; s.rot[1 - s.att]++; s.att = 1 - s.att; }
+  else { s.score[s.att]++; tb.msg = `💥 ${att} 往${name[A[0]]}${A.endsWith("tip") ? "吊球" : "扣殺"}得分！（${def} 撲向${name[D]}）`; s.rot[s.att]++; }
+  s.pick = {};
+  const [r, b] = s.score; if (r >= 11 || b >= 11) return cardEnd(tb, `🏆 ${r > b ? "🔴 紅隊" : "🔵 藍隊"} ${Math.max(r, b)}：${Math.min(r, b)} 獲勝！`);
+  s.until = now + CARD_GAMES.volley.turnMs;
+}
 function cardNew(game, host, now) {
   if (!CARD_GAMES[game]) throw new Error("沒有這種遊戲");
   return { id: Date.now().toString(36) + Math.floor(Math.random() * 1000), game, host, seats: [host], phase: "wait", ver: 1, t: now || Date.now(), msg: "等大家坐好，桌長按「開始」", s: null };
@@ -3715,6 +3812,11 @@ function cardStart(tb, now) {
     tb.seats.forEach(p => s.hands[p].sort((a, b) => b2Val(a) - b2Val(b)));
     let lo = null, who = 0; tb.seats.forEach((p, i) => { const c = s.hands[p][0]; if (!lo || b2Val(c) < b2Val(lo)) { lo = c; who = i; } });
     s.turn = who; s.must = lo; s.last = null; s.passes = 0;
+  } else if (tb.game === "kungfu") {
+    s.f = {}; tb.seats.forEach(p => { const f = KF_FIGHTERS[(tb.pick && tb.pick[p]) || "panda"] ? (tb.pick && tb.pick[p]) || "panda" : "panda"; const F = KF_FIGHTERS[f]; s.f[p] = { k: f, hp: F.hp, max: F.hp, en: F.en0 }; });
+    s.pick = {}; s.round = 1; s.last = null;
+  } else if (tb.game === "volley") {
+    s.score = [0, 0]; s.att = Math.floor(Math.random() * 2); s.rot = [0, 0]; s.pick = {}; s.last = null;
   } else if (tb.game === "heart") {
     const d = cardShuffle(cardDeck52()); const per = Math.floor(52 / n); for (let i = 0; i < per * n; i++) s.hands[tb.seats[i % n]].push(d[i]);
     s.pile = []; s.count = 1; s.slap = null; s.turn = Math.floor(Math.random() * n);
@@ -3783,6 +3885,22 @@ function cardAct(tb, who, mv, now) {
       if (!hand.length) return cardEnd(tb, `🎉 ${who} 先出完牌，贏了！`);
       advance(cardNext(tb, me));
     } else throw new Error("看不懂的動作");
+  } else if (tb.game === "kungfu") {
+    const P = s.f[who], m = String(mv.m || "");
+    if (!KF_MOVES[m]) throw new Error("看不懂的招式");
+    if (s.pick[who]) throw new Error("這回合已經出招了");
+    if (m === "kick" && P.en < 2) throw new Error("氣不夠（旋風踢要 2 氣）");
+    if (m === "ult" && P.en < 4) throw new Error("氣不夠（必殺技要 4 氣）");
+    s.pick[who] = m; tb.msg = `${who} 出招了！`;
+    if (tb.seats.every(p => s.pick[p])) { kfResolve(tb, now); tb.ver++; tb.t = now; return; }
+  } else if (tb.game === "volley") {
+    const { att, def } = vbRoles(tb);
+    if (who !== att && who !== def) throw new Error("這一球不是你上場");
+    if (s.pick[who]) throw new Error("已經選好了");
+    if (who === att) { if (!/^[lcr]:(spike|tip)$/.test(String(mv.m))) throw new Error("請選方向和扣球／吊球"); }
+    else if (!/^[lcr]$/.test(String(mv.m))) throw new Error("請選要撲救的位置");
+    s.pick[who] = String(mv.m); tb.msg = `${who} 準備好了！`;
+    if (s.pick[att] && s.pick[def]) { vbResolve(tb, now); tb.ver++; tb.t = now; return; }
   } else if (tb.game === "heart") {
     if (mv.a === "flip") {
       if (!myTurn) throw new Error("還沒輪到你翻牌");
@@ -3821,6 +3939,20 @@ function cardTick(tb, now) {
     }
     return false;
   }
+  if (tb.game === "kungfu" || tb.game === "volley") {   // 同時出招：電腦 1.5 秒後出、真人超時自動出
+    const need = tb.game === "kungfu" ? tb.seats : (() => { const r = vbRoles(tb); return [r.att, r.def]; })();
+    let moved = false;
+    need.forEach(p => {
+      if (s.pick[p]) return;
+      const bot = cardIsBot(p) && now > s.until - CARD_GAMES[tb.game].turnMs + 1500;
+      if (!bot && now < s.until) return;
+      let m;
+      if (tb.game === "kungfu") { const en = s.f[p].en, opts = ["punch", "throw", "block"]; if (en >= 2) opts.push("kick"); if (en >= 4) opts.push("ult", "ult"); m = cardIsBot(p) ? opts[Math.floor(Math.random() * opts.length)] : "block"; }
+      else m = p === vbRoles(tb).att ? "lcr"[Math.floor(Math.random() * 3)] + (Math.random() < 0.3 ? ":tip" : ":spike") : "lcr"[Math.floor(Math.random() * 3)];
+      try { cardAct(tb, p, { m }, now); moved = true; } catch (e) {}
+    });
+    return moved;
+  }
   const botWait = cardIsBot(cur) && now > s.until - CARD_GAMES[tb.game].turnMs + 1500;
   if (now < s.until && !botWait) return false;
   try {
@@ -3843,7 +3975,7 @@ function cardTick(tb, now) {
 }
 function cardView(tb, who, now) {
   now = now || Date.now();
-  const s = tb.s, v = { id: tb.id, game: tb.game, host: tb.host, seats: tb.seats, phase: tb.phase, ver: tb.ver, msg: tb.msg };
+  const s = tb.s, v = { id: tb.id, game: tb.game, host: tb.host, seats: tb.seats, phase: tb.phase, ver: tb.ver, msg: tb.msg, fpick: tb.pick || {} };
   if (!s) return v;
   v.turn = tb.seats[s.turn]; v.left = Math.max(0, Math.round((s.until - now) / 1000));
   v.counts = {}; tb.seats.forEach(p => v.counts[p] = s.hands[p].length);
@@ -3852,6 +3984,8 @@ function cardView(tb, who, now) {
   if (tb.game === "uno") { v.top = s.top; v.color = s.color; v.drew = s.turn === tb.seats.indexOf(who) ? s.drew : null; v.dir = s.dir; v.deck = s.draw.length; }
   if (tb.game === "maid") { v.done = s.done; v.lastPick = s.lastPick || null; if (tb.seats.indexOf(who) >= 0) { const alive = x => s.hands[x].length > 0; v.target = s.turn === tb.seats.indexOf(who) ? tb.seats[cardNext(tb, s.turn, alive)] : null; } }
   if (tb.game === "big2") { v.last = s.last ? { by: s.last.by, cards: s.last.cards, name: s.last.combo.name } : null; v.must = s.must; }
+  if (tb.game === "kungfu") { v.f = s.f; v.round = s.round; v.last = s.last; v.picked = Object.keys(s.pick); v.turn = null; }
+  if (tb.game === "volley") { const r = vbRoles(tb); v.score = s.score; v.att = s.att; v.roles = r; v.last = s.last; v.picked = Object.keys(s.pick); v.turn = null; v.teams = vbTeams(tb); }
   if (tb.game === "heart") { v.pile = s.pile.length; v.top = s.pile[s.pile.length - 1] || null; v.count = s.count; v.lastFlip = s.lastFlip || null; v.slap = s.slap ? { left: Math.max(0, s.slap.until - now), who: Object.keys(s.slap.who) } : null; }
   return v;
 }
@@ -3878,10 +4012,12 @@ function cardOp(tables, who, req, now) {
   } else if (req.op === "bot") {
     const t = find(); if (t.host !== who) throw new Error("只有桌長可以加電腦玩家"); if (t.phase === "play") throw new Error("遊戲進行中");
     if (t.seats.length >= CARD_GAMES[t.game].max) throw new Error("這桌坐滿了");
-    const b = CARD_BOTS.find(x => t.seats.indexOf(x) < 0); t.seats.push(b); t.ver++; t.t = now;
+    const b = CARD_BOTS.find(x => t.seats.indexOf(x) < 0); if (!b) throw new Error("電腦玩家用完了"); t.seats.push(b); t.pick = t.pick || {}; t.pick[b] = Object.keys(KF_FIGHTERS)[Math.floor(Math.random() * 4)]; t.ver++; t.t = now;
   } else if (req.op === "kick") {
     const t = find(); if (t.host !== who || t.phase === "play") throw new Error("只有桌長在開始前可以請電腦離開");
     const i = t.seats.indexOf(req.name); if (i > 0 && cardIsBot(req.name)) { t.seats.splice(i, 1); t.ver++; }
+  } else if (req.op === "fighter") {
+    const t = find(); if (!KF_FIGHTERS[req.k]) throw new Error("沒有這個角色"); t.pick = t.pick || {}; t.pick[who] = req.k; t.ver++;
   } else if (req.op === "start") {
     const t = find(); if (t.host !== who) throw new Error("只有桌長可以開始"); if (t.phase === "play") throw new Error("已經開始了");
     cardStart(t, now); t.t = now;
@@ -3899,7 +4035,7 @@ async function cardsCall(req) {
     const r = await (DEMO ? demo.cards(req) : api("cards", req));
     dwc.list = r.list || []; dwc.table = r.table || null;
     if (dwc.table && !dwc.table.hand) dwc.sel = [];
-    const sig = JSON.stringify([dwc.list, dwc.table && dwc.table.ver, dwc.table && dwc.table.left, dwc.table && dwc.table.slap]);
+    const sig = JSON.stringify([dwc.list, dwc.table && dwc.table.ver, dwc.table && dwc.table.left, dwc.table && dwc.table.slap, dwc.table && dwc.table.last && Date.now() - (dwc.table.last.at || 0) < 3000]);
     if (sig !== dwc.sig) { dwc.sig = sig; dwCardsPaint(); }
   } catch (e) { toast("⚠️ " + e.message, 3500); }
 }
@@ -3925,7 +4061,8 @@ function dwCardsPaint() {
   const me = session.user.name, T = dwc.table;
   if (!T) {
     el.innerHTML = `<p class="dw-note">🃏 找同學一起玩牌！開一張桌子，等同學加入（不夠人可以加 🤖 電腦玩家）。每桌 2～4 人。</p>
-      <div class="dwc-games">${session.user.role === "parent" ? "" : Object.entries(CARD_GAMES).map(([k, g]) => `<div class="dwc-game"><b>${g.name}</b><small>${g.tip}</small><button class="dw-btn" onclick="cardsCall({op:'create', game:'${k}'})">開一桌</button></div>`).join("")}</div>
+      ${dwc.want ? `<p class="dw-note">👉 你剛剛走到 <b>${CARD_GAMES[dwc.want].name}</b>，按下面的「開一桌」或加入同學的桌子吧！</p>` : ""}
+      <div class="dwc-games">${session.user.role === "parent" ? "" : Object.entries(CARD_GAMES).sort((a, b) => (b[0] === dwc.want) - (a[0] === dwc.want)).map(([k, g]) => `<div class="dwc-game ${k === dwc.want ? "want" : ""}"><b>${g.name}</b><small>${g.tip}</small><button class="dw-btn" onclick="cardsCall({op:'create', game:'${k}'})">開一桌</button></div>`).join("")}</div>
       <h3>🪑 現在的桌子</h3>
       ${dwc.list.length ? dwc.list.map(t => `<div class="dwc-row"><b>${CARD_GAMES[t.game].name}</b><span>${t.seats.map(n => escapeHtml(shortName(n))).join("、")}（${t.seats.length}/${CARD_GAMES[t.game].max}）</span><i>${t.phase === "play" ? "進行中" : t.phase === "end" ? "剛結束" : "等人中"}</i>
         ${t.phase !== "play" && t.seats.length < CARD_GAMES[t.game].max && session.user.role !== "parent" ? `<button class="dw-btn" onclick="cardsCall({op:'join', id:'${t.id}'})">加入</button>` : ""}<button class="dw-btn ghost" onclick="dwc.watch='${t.id}'; cardsCall({op:'view', watch:'${t.id}'})">👀 看</button></div>`).join("") : `<p class="dw-note">還沒有人開桌，你來開第一桌吧！</p>`}`;
@@ -3936,6 +4073,27 @@ function dwCardsPaint() {
   let mid = "", mine = "", btns = "";
   if (T.phase === "wait" || (T.phase === "end" && !T.hand)) {
     mid = `<p class="dw-note">${escapeHtml(T.msg)}</p><p class="dw-note">${G.tip}</p>`;
+    if (T.game === "kungfu" && T.phase === "wait") mid += `<div class="kf-pick"><b>選你的角色：</b>${Object.entries(KF_FIGHTERS).map(([k, f]) => `<button class="dw-btn ${T.fpick[me] === k ? "" : "ghost"}" ${seated ? "" : "disabled"} onclick="cardsCall({op:'fighter', id:'${T.id}', k:'${k}'})">${f.name}<small>❤️${f.hp}${f.en0 ? "・起始 1 氣" : ""}${f.atk > 1 ? "・攻擊強" : f.atk < 1 ? "・皮厚" : ""}${f.ctr > 1 ? "・反擊強" : ""}</small></button>`).join("")}</div>`;
+    if (T.game === "volley") { const tm = [T.seats.filter((_, i) => i % 2 === 0), T.seats.filter((_, i) => i % 2 === 1)]; mid += `<div class="vb-teams"><div class="red"><b>🔴 紅隊</b>${tm[0].map(n => escapeHtml(shortName(n))).join("、") || "—"}</div><div class="blue"><b>🔵 藍隊</b>${tm[1].map(n => escapeHtml(shortName(n))).join("、") || "—"}</div></div><p class="dw-note">照入座順序分隊：第 1、3、5 位紅隊，第 2、4、6 位藍隊。</p>`; }
+  }
+  if (T.game === "kungfu" && T.f && T.phase !== "wait") {
+    const [a, b] = T.seats.indexOf(me) === 1 ? [T.seats[1], T.seats[0]] : T.seats, L = T.last, fresh = L && L.at && Date.now() - L.at < 2500;
+    const fighter = (n, side) => { const F = T.f[n], K = KF_FIGHTERS[F.k]; return `<div class="kf-f ${side} ${fresh && L.d[n] ? "hit" : ""}"><div class="kf-name">${escapeHtml(shortName(n))}${n === me ? "（你）" : ""}</div><div class="kf-bar"><i style="width:${F.hp / F.max * 100}%"></i></div><small>❤️ ${F.hp}/${F.max}　${"⚡".repeat(F.en)}${"·".repeat(6 - F.en)}</small><div class="kf-body">${K.name.split(" ")[0]}</div>${fresh ? `<div class="kf-move">${KF_MOVES[L.m[n]]}${L.d[n] ? `<em>-${L.d[n]}</em>` : ""}</div>` : T.picked.includes(n) && T.phase === "play" ? `<div class="kf-move">✅ 出招了</div>` : ""}</div>`; };
+    mid = `<div class="kf-stage"><div class="kf-round">ROUND ${T.round}</div>${fighter(a, "l")}<div class="kf-vs">VS</div>${fighter(b, "r")}</div>`;
+    if (seated && T.phase === "play" && !T.picked.includes(me)) { const en = T.f[me].en; btns = Object.entries(KF_MOVES).map(([k, l]) => `<button class="dw-btn kf-btn" ${(k === "kick" && en < 2) || (k === "ult" && en < 4) ? "disabled" : ""} onclick="cardsAct({m:'${k}'})">${l}${k === "kick" ? "<small>2 氣</small>" : k === "ult" ? "<small>4 氣</small>" : ""}</button>`).join(""); }
+    else if (seated && T.phase === "play") btns = `<span class="dw-note">等對手出招…（剩 ${T.left} 秒）</span>`;
+  }
+  if (T.game === "volley" && T.score && T.phase !== "wait") {
+    const R = T.roles, L = T.last, fresh = L && Date.now() - L.at < 3000, nm = { l: "⬅️", c: "⬆️", r: "➡️" };
+    mid = `<div class="vb-court"><div class="vb-score"><span class="red">🔴 ${T.score[0]}</span> : <span class="blue">${T.score[1]} 🔵</span></div>
+      <div class="vb-half red ${T.att === 0 ? "att" : ""}"><b>🔴 紅隊</b>${T.teams[0].map(n => `<span class="${n === R.att || n === R.def ? "on" : ""}">${escapeHtml(shortName(n))}</span>`).join("")}</div>
+      <div class="vb-net">🏐</div>
+      <div class="vb-half blue ${T.att === 1 ? "att" : ""}"><b>🔵 藍隊</b>${T.teams[1].map(n => `<span class="${n === R.att || n === R.def ? "on" : ""}">${escapeHtml(shortName(n))}</span>`).join("")}</div></div>
+      <p class="dw-note">這一球：<b>${escapeHtml(shortName(R.att))}</b> 進攻、<b>${escapeHtml(shortName(R.def))}</b> 防守 ${fresh ? `｜上一球：${nm[L.a[0]]}${L.a.endsWith("tip") ? "吊球" : "扣殺"} vs 撲${nm[L.d]} ${L.saved ? "🧤 接到了！" : "💥 得分！"}` : ""}</p>`;
+    if (T.phase === "play" && (me === R.att || me === R.def) && !T.picked.includes(me)) btns = me === R.att
+      ? ["l", "c", "r"].map(d => `<button class="dw-btn" onclick="cardsAct({m:'${d}:spike'})">${nm[d]} 扣殺</button>`).join("") + ["l", "c", "r"].map(d => `<button class="dw-btn ghost" onclick="cardsAct({m:'${d}:tip'})">${nm[d]} 吊球</button>`).join("") + `<small class="dw-note" style="width:100%">吊球比較軟：對手撲中間也接得到</small>`
+      : ["l", "c", "r"].map(d => `<button class="dw-btn" onclick="cardsAct({m:'${d}'})">🧤 撲${nm[d]}</button>`).join("");
+    else if (T.phase === "play") btns = `<span class="dw-note">${T.picked.includes(me) ? "選好了，等對方…" : "這一球不是你上場，幫隊友加油！📣"}（剩 ${T.left} 秒）</span>`;
   }
   if (T.phase !== "wait" && T.hand !== undefined) {
     const hand = T.hand || [];
@@ -3971,6 +4129,99 @@ function dwCardsPaint() {
 }
 function dwcUno(c) { if (c[0] === "w" && !/^[SHDC]/.test(c)) { dwc.wild = c; dwCardsPaint(); return; } cardsAct({ a: "play", c }); }
 function dwcSel(c) { const i = dwc.sel.indexOf(c); if (i >= 0) dwc.sel.splice(i, 1); else dwc.sel.push(c); dwCardsPaint(); }
+
+// ── 🏥 生病、受傷和診所 ──
+// 淋雨／下雪太久 → 🤧感冒；熬夜（晚上 9 點後）或一次玩太久 → 🤒發燒；每天一點點機率 → 🤧小感冒；被殭屍打到 → 🩹受傷、被打倒 → 🤕重傷
+// 生病時走路變慢、愛心變少，到 🏥 診所付金幣看病、吃藥、打針就會好；放著不管 24 小時後也會自己好
+const DW_SICK = {
+  cold: { name: "🤧 感冒", spd: 0.8, hp: 1, sev: 1, why: "淋雨、吹風或著涼了" },
+  hurt: { name: "🩹 擦傷", spd: 0.85, hp: 1, sev: 1, why: "被殭屍抓傷了" },
+  fever: { name: "🤒 發燒", spd: 0.65, hp: 2, sev: 2, why: "太晚睡、玩太久，身體累壞了" },
+  injury: { name: "🤕 重傷", spd: 0.6, hp: 3, sev: 3, why: "被殭屍打倒，傷得不輕" }
+};
+const DW_CURE = {   // 診所的項目：[名稱, 價錢, 說明, 治什麼, 多久好（秒，0＝馬上）]
+  checkup: ["🩺 看診", 10, "醫生幫你檢查，告訴你哪裡不舒服、該怎麼治療", null, 0],
+  pill: ["💊 吃藥", 20, "吃藥後休息 1 分鐘就會好", ["cold", "fever"], 60],
+  shot: ["💉 打針", 35, "有一點點痛，但馬上就好！", ["cold", "fever", "injury"], 0],
+  bandage: ["🩹 擦藥包紮", 15, "消毒、貼上 OK 繃，馬上就好", ["hurt", "injury"], 0],
+  heal: ["❤️ 打點滴補體力", 10, "愛心全部補滿", null, 0],
+  vacc: ["🛡️ 預防針", 30, "今天一整天都不會感冒", null, 0]
+};
+const DW_TIPS = ["回家記得先洗手，用肥皂搓 20 秒 🧼", "多喝水、多吃蔬菜水果，身體才會強壯 🥦", "早點睡覺！睡飽了才長得高 😴", "下雨天出門記得帶傘 ☂️", "天氣冷要穿外套，不要著涼 🧥", "打噴嚏要用手肘遮住口鼻 🤧", "玩一陣子要讓眼睛休息，看看遠方 👀"];
+function dwSick() {
+  const k = dw.home && dw.home.sick; if (!k || !k.k || !DW_SICK[k.k]) return null;
+  if (Date.now() - (k.t || 0) > 24 * 3600000) { dw.home.sick = null; return null; }
+  if (k.cureAt && Date.now() >= k.cureAt) { dw.home.sick = null; dwSave(); toast("😊 藥效發揮了，病好了！", 3000); return null; }
+  return k.k;
+}
+function dwVacc() { const v = dw.home && dw.home.vac; return v && v === nowStr().slice(0, 10); }
+function dwGetSick(k, msg) {
+  if (!session || session.user.role !== "student" || !dw.home) return;
+  if (k === "cold" && dwVacc()) return;
+  const cur = dwSick(); if (cur && DW_SICK[cur].sev >= DW_SICK[k].sev) return;
+  dw.home.sick = { k, t: Date.now() }; dwSave(); w3GearMemo = null;
+  toast(`${DW_SICK[k].name}！${msg}　走路變慢、愛心變少了，快去 🏥 診所看醫生吧！`, 6000);
+  if (w3) { w3HpRender(); w3SickTag(); }
+}
+function w3SickTag() {
+  if (!w3) return; const k = dwSick();
+  if (w3.sickS) { w3.player.remove(w3.sickS); w3.sickS = null; }
+  if (k) { const s = new THREE.Sprite(w3Emoji(dw.home.sick.down ? "🛌" : DW_SICK[k].name.split(" ")[0])); s.scale.set(0.42, 0.42, 1); s.position.set(0.5, 2.55, 0); w3.player.add(s); w3.sickS = s; }
+}
+function w3HealthTick(dt, now) {
+  if (session.user.role !== "student" || !dw.home) return;
+  if (!w3.hInit) { w3.hInit = 1; w3.wet = 0; w3.sess0 = Date.now(); w3SickTag();
+    const key = "508_RCOLD_" + session.user.name, d = nowStr().slice(0, 10);
+    if (load(key, "") !== d) { store(key, d); if (Math.random() < 0.04) setTimeout(() => dwGetSick("cold", "哈啾！不小心著涼了。"), 20000); } }
+  if (now - (w3.hT || 0) < 1000) return; const step = (now - (w3.hT || now)) / 1000; w3.hT = now;
+  const wx = rulesNow().worldWeather || "sunny", g = w3Gear(), P = w3.player.position;
+  const outdoor = !w3.room && Math.abs(P.x) < w3.world.S + 5 && !(w3.world.claim && w3.world.claim[Math.round(P.x) + "," + Math.round(P.z)] === "#fac" && Math.abs(P.x - 22) < 6 && Math.abs(P.z + 20) < 5);
+  const wetNow = outdoor && (((wx === "rain" || wx === "storm") && !g.umb) || (wx === "snow" && !g.coat));
+  if (wetNow) { w3.wet += step; if (Math.round(w3.wet) === 90) toast(wx === "snow" ? "🥶 好冷！在雪地待太久會感冒，快進屋或去裝備店買 🧥 外套" : "🌧️ 全身濕透了！淋雨太久會感冒，快進屋或去裝備店買 ☂️ 雨傘", 5000); if (w3.wet >= 180) { w3.wet = 0; dwGetSick("cold", wx === "snow" ? "在雪地裡凍太久了。" : "淋雨太久了。"); } }
+  else w3.wet = Math.max(0, w3.wet - step * 2);
+  const h = Number(nowStr().slice(11, 13)), mins = (Date.now() - w3.sess0) / 60000;
+  if ((h >= 21 || h < 5) && !w3.lateTold) { w3.lateTold = 1; setTimeout(() => dwGetSick("fever", "已經很晚了還在玩，身體累到發燒了，早點睡吧！"), 60000); }
+  if (mins >= 35 && !w3.longTold) { w3.longTold = 1; toast("⏰ 已經玩 35 分鐘了，休息一下、看看遠方，不然會累到發燒喔！", 5000); }
+  if (mins >= 45 && !w3.longSick) { w3.longSick = 1; dwGetSick("fever", "一次玩太久，累壞了。"); }
+  if (w3.sickS && !dwSick()) w3SickTag();
+  // 生病不看醫生：病情越來越重，玩 10 分鐘後就「病倒」，只能待在家裡，要打電話請醫生到家裡看診
+  const sk = dwSick() && dw.home.sick;
+  if (sk && !sk.cureAt && !sk.down) {
+    sk.pl = (sk.pl || 0) + step;
+    if (sk.pl >= 300 && !sk.warn) { sk.warn = 1; toast(`😷 ${DW_SICK[sk.k].name}越來越嚴重了！再不去 🏥 診所看醫生，就會病倒、不能出門喔！`, 6000); }
+    if (sk.pl >= 600) { sk.down = 1; dwSave(); w3SickTag(); toast("🛌 你病倒了！只能躺在家裡休息，不能出門。在家裡走到「📞 叫醫生」那裡，請醫生來家裡看診吧！", 8000); w3.downT = now; w3EnterRoom(dwMe(), dw.home); }
+    else if (Math.round(sk.pl) % 30 === 0) dwSave();
+  }
+  if (sk && sk.down && !w3.room && dwCanEdit() && now - (w3.downT || 0) > 5000) { w3.downT = now; w3EnterRoom(dwMe(), dw.home); }
+}
+function dwDown() { const k = dwSick(); return !!(k && dw.home.sick.down); }
+function w3Clinic(home) {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  w3.houseCall = !!home;
+  const k = dwSick(), sk = k && dw.home.sick, seen = sk && sk.seen, T = dwIsT(), stu = session.user.role === "student";
+  const tip = DW_TIPS[Math.floor(Math.random() * DW_TIPS.length)];
+  const fee = home ? 15 : 0;   // 📞 醫生到家裡看診，每一項多收 15 金幣出診費
+  const btn = id => { const x = DW_CURE[id]; return `<button class="dw-btn" onclick="w3Cure('${id}')">${x[0]}・🪙${x[1] + fee}<small>${x[2]}${fee ? "（含出診費 15）" : ""}</small></button>`; };
+  let body;
+  if (!stu) body = `<p>老師、家長可以參觀診所。學生淋雨下雪太久、熬夜、玩太久或被殭屍打到，就會生病受傷，要來這裡付金幣看病。</p>`;
+  else if (!k) body = `<p>🧑‍⚕️ 王醫生：「你看起來很健康喔！${dwVacc() ? "今天也打過預防針了，" : ""}繼續保持！」</p><div class="clinic-opts">${btn("heal")}${dwVacc() ? "" : btn("vacc")}</div>`;
+  else if (!seen) body = `<p>🧑‍⚕️ 王醫生：「哎呀，你好像不太舒服，先讓我檢查一下吧！」</p><div class="clinic-opts">${btn("checkup")}</div>`;
+  else body = `<p>🧑‍⚕️ 王醫生：「你是 <b>${DW_SICK[k].name}</b>，因為${DW_SICK[k].why}。」${sk.cureAt ? `<br>💊 藥已經吃了，再 ${Math.max(1, Math.ceil((sk.cureAt - Date.now()) / 1000))} 秒就會好，先休息一下。` : ""}</p>
+    <div class="clinic-opts">${sk.cureAt ? "" : Object.keys(DW_CURE).filter(id => DW_CURE[id][3] && DW_CURE[id][3].includes(k)).map(btn).join("")}${btn("heal")}</div>`;
+  p.innerHTML = `<b>${home ? "📞 醫生到家裡看診" : "🏥 508 診所"}</b>${home && sk && sk.down ? `<p style="color:#b91c1c;font-weight:800">🛌 你病倒了，要看完醫生、病好了才能出門。</p>` : ""}${stu ? `<span style="float:right">🪙 ${coinState().wallet}</span>` : ""}<div class="clinic-doc">🧑‍⚕️</div>${body}<p class="clinic-tip">💡 健康小叮嚀：${tip}</p>`;
+  c.hidden = false;
+}
+async function w3Cure(id) {
+  const x = DW_CURE[id], k = dwSick(), fee = w3.houseCall ? 15 : 0;
+  if (coinState().wallet < x[1] + fee) return toast("🪙 錢袋的金幣不夠，先去寶庫領，或多答題賺金幣！", 4000);
+  try { await coinOp("spend", x[1], "診所:" + id); if (fee) await coinOp("spend", fee, "診所:call"); } catch (e) { return toast("⚠️ " + e.message, 4000); }
+  if (id === "checkup" && dw.home.sick) { dw.home.sick.seen = 1; toast("🩺 醫生檢查好了！", 2500); }
+  else if (id === "heal") { w3.hp = w3Gear().max; w3HpRender(); toast("❤️ 打完點滴，體力滿滿！", 2500); }
+  else if (id === "vacc") { dw.home.vac = nowStr().slice(0, 10); toast("🛡️ 打了預防針，今天都不會感冒！", 3000); }
+  else if (x[4]) { dw.home.sick.cureAt = Date.now() + x[4] * 1000; toast("💊 吃藥了，休息 1 分鐘就會好", 3000); }
+  else { dw.home.sick = null; w3GearMemo = null; w3SickTag(); toast(id === "shot" ? "💉 打完針，病全好了！好勇敢！" : "🩹 包紮好了，傷口不痛了！", 3500); w3.hp = w3Gear().max; w3HpRender(); }
+  dwSave(); w3Clinic(w3.houseCall); w3SickTag(); renderDreamStat();
+}
 // ── 🧟 殭屍＋⚔️ 裝備 ──
 // 裝備用金幣買（記在金幣紀錄「裝備:代號」）；藥水喝掉的數量記在 spent["eq:potion"]
 const DW_GEAR = [
@@ -3981,6 +4232,8 @@ const DW_GEAR = [
   { id: "iarmor", k: "armor", name: "鐵甲", emoji: "🛡️", price: 150, v: 4, tip: "多 4 顆愛心" },
   { id: "garmor", k: "armor", name: "黃金甲", emoji: "🏅", price: 350, v: 6, tip: "多 6 顆愛心" },
   { id: "boots", k: "boots", name: "飛毛腿跑鞋", emoji: "👟", price: 80, v: 1.3, tip: "跑得快 30%，殭屍追不上" },
+  { id: "umbrella", k: "umbrella", name: "大雨傘", emoji: "☂️", price: 30, v: 1, tip: "下雨、雷雨天在外面不會淋濕感冒" },
+  { id: "coat", k: "coat", name: "保暖外套", emoji: "🧥", price: 40, v: 1, tip: "下雪天在外面不會凍到感冒" },
   { id: "potion", k: "potion", name: "補血藥水", emoji: "🧪", price: 15, v: 0, tip: "按 H 喝，愛心全部補滿（用完要再買）" }];
 const W3_ZOMBIES = 10, W3_ZHP = 4, W3_SAFE_R = 22;
 function dwGearHave(id) {
@@ -3990,14 +4243,14 @@ function dwGearHave(id) {
 }
 let w3GearMemo = null;
 function w3Gear() {
-  const key = coinRows.length + "|" + ((dw.home && dw.home.spent["eq:potion"]) || 0) + "|" + dwIsT();
+  const key = coinRows.length + "|" + ((dw.home && dw.home.spent["eq:potion"]) || 0) + "|" + dwIsT() + "|" + (dwSick() || "");
   if (w3GearMemo && w3GearMemo.key === key) return w3GearMemo.v;
   const v = w3GearCalc(); w3GearMemo = { key, v }; return v;
 }
 function w3GearCalc() {
   const best = k => DW_GEAR.filter(g => g.k === k && dwGearHave(g.id) > 0).sort((a, b) => b.v - a.v)[0] || null;
-  const sw = best("sword"), ar = best("armor"), bo = best("boots");
-  return { sw, ar, dmg: sw ? sw.v : 1, max: 5 + (ar ? ar.v : 0), spd: bo ? bo.v : 1, pot: dwGearHave("potion") };
+  const sw = best("sword"), ar = best("armor"), bo = best("boots"), sk = DW_SICK[dwSick() || ""] || { spd: 1, hp: 0 };
+  return { sw, ar, dmg: sw ? sw.v : 1, max: Math.max(2, 5 + (ar ? ar.v : 0) - sk.hp), spd: (bo ? bo.v : 1) * sk.spd, pot: dwGearHave("potion"), umb: !!best("umbrella"), coat: !!best("coat") };
 }
 function dwGearHtml() {
   const c = coinState(), g = w3Gear();
@@ -4042,7 +4295,7 @@ function w3ZombieInit() {
 function w3HpRender() {
   if (!w3) return; const el = w3.hud.querySelector("#dw3d-hp"); if (!el) return;
   const g = w3Gear(), hp = Math.max(0, Math.ceil(w3.hp));
-  el.innerHTML = `<span>${"❤️".repeat(Math.min(hp, g.max))}${"🤍".repeat(Math.max(0, g.max - hp))}</span><small>${g.sw ? g.sw.emoji : "👊"}${g.ar ? g.ar.emoji : ""}${g.spd > 1 ? "👟" : ""} 🧪${g.pot}${session.user.role !== "student" ? "・無敵" : ""}</small>`;
+  el.innerHTML = `<span>${"❤️".repeat(Math.min(hp, g.max))}${"🤍".repeat(Math.max(0, g.max - hp))}</span>${dwSick() ? `<b class="sick-chip" onclick="w3Warp('clinic')">${DW_SICK[dwSick()].name}・去診所</b>` : ""}<small>${g.sw ? g.sw.emoji : "👊"}${g.ar ? g.ar.emoji : ""}${g.spd > 1 ? "👟" : ""} 🧪${g.pot}${session.user.role !== "student" ? "・無敵" : ""}</small>`;
 }
 function w3Attack() {
   if (!w3 || !w3.zombies || !w3.zon || w3.room || w3.atkCd > 0) return;
@@ -4074,6 +4327,7 @@ function w3Potion() {
 function w3Hurt(z, now) {
   if (session.user.role !== "student" || now < w3.inv) return;
   const g = w3Gear(); w3.hp -= 1; w3.inv = now + 1200; w3.lastHit = now;
+  if (w3.hp > 0) dwGetSick("hurt", "被殭屍抓傷了。");
   const P = w3.player.position, dx = P.x - z.g.position.x, dz = P.z - z.g.position.z, d = Math.hypot(dx, dz) || 1;
   w3.vel.y = 6; w3.onGround = false; w3.push = [dx / d * 9, dz / d * 9, 0.2];
   const el = w3.hud.querySelector("#dw3d-hurt"); if (el) { el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
@@ -4081,7 +4335,7 @@ function w3Hurt(z, now) {
     const m = dwMats(), have = DW_MATS.filter(x => (m[x.k] || 0) > 0);
     let lost = "";
     if (have.length) { const x = have[Math.floor(Math.random() * have.length)], n = Math.min(m[x.k], 1 + Math.floor(Math.random() * 2)); dw.home.spent[x.k] = (dw.home.spent[x.k] || 0) + n; dwSave(); renderDreamStat(); lost = `掉了 ${x.icon} ${x.name}×${n}，`; }
-    w3.hp = g.max; w3Warp("castle"); w3.inv = now + 3000;
+    w3.hp = g.max; w3Warp("castle"); w3.inv = now + 3000; setTimeout(() => dwGetSick("injury", "被殭屍打倒，受了重傷。"), 1500);
     toast(`😵 被殭屍打倒了！${lost}被送回城堡門口。去 ⚔️ 裝備店買劍和盔甲吧！`, 5000);
   }
   w3HpRender();
