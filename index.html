@@ -963,7 +963,9 @@
   .bridge-kpis .tile-kpi { cursor: pointer; }
   .bridge-kpis .tile-kpi span { font-size: .78rem; }
   .bridge-switch { display: flex; gap: 10px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
-  .bridge-switch input { width: 22px; height: 22px; margin-top: 2px; accent-color: #f5c451; }
+  .bridge-switch input[type=checkbox] { width: 22px; height: 22px; margin-top: 2px; accent-color: #f5c451; }
+  .bridge-switch input.rule-world-day { width: 18px; height: 18px; margin: 0; }
+  .bridge-switch input[type=time] { padding: 4px 8px; border-radius: 10px; border: 1px solid rgba(245,196,81,.5); font: inherit; }
   .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; max-height: 240px; overflow: auto; margin-bottom: 10px; }
   .pick-chip { display: flex; gap: 6px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; font-size: .84rem; cursor: pointer; }
   .grant-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 8px 0; font-size: .88rem; }
@@ -2316,10 +2318,28 @@ function dwGate() {
 function dwTimeKey() { return "508_DREAM_T_" + session.user.name; }
 function dwTimeUsed() { const t = load(dwTimeKey(), null), d = nowStr().slice(0, 10); return t && t.d === d ? t.s : 0; }
 
+// ⏰ 異想世界的開放時段（老師在航海規則設定：星期幾＋幾點到幾點；老師自己不受限制）
+const DW_DAYS = ["日", "一", "二", "三", "四", "五", "六"];
+function dwHours() {
+  const r = rulesNow(), days = Array.isArray(r.worldDays) && r.worldDays.length ? r.worldDays.map(Number) : [0, 1, 2, 3, 4, 5, 6];
+  return { start: r.worldStart || "00:00", end: r.worldEnd || "23:59", days };
+}
+function dwHoursText() {
+  const h = dwHours(), all = h.days.length === 7, d = all ? "每天" : "每週" + h.days.slice().sort().map(x => DW_DAYS[x]).join("、");
+  return h.start === "00:00" && h.end === "23:59" ? `${d}全天` : `${d} ${h.start}～${h.end}`;
+}
+function dwOpenNow() {
+  if (!session || session.user.role !== "student") return true;
+  const h = dwHours(), d = new Date(), t = hmNow();
+  if (h.start <= h.end) return h.days.includes(d.getDay()) && t >= h.start && t <= h.end;
+  // 跨午夜（例如 20:00～01:00）：過了午夜算前一天的時段
+  return (h.days.includes(d.getDay()) && t >= h.start) || (h.days.includes((d.getDay() + 6) % 7) && t <= h.end);
+}
 async function openDream() {
   if (!session) return;
   const R = dwRules();
   if (!R.on && session.user.role !== "teacher") return toast("🌈 異想世界還沒開放，請等老師宣布喔！");
+  if (!dwOpenNow()) return toast(`⏰ 現在不是異想世界的開放時間喔！開放時間：${dwHoursText()}`, 5000);
   const g = dwGate();
   if (!g.ok) return dwGateModal(g);
   if (session.user.role === "student" && !R.free && dwTimeUsed() >= R.min * 60) return toast(`🌙 今天在異想世界已經玩滿 ${R.min} 分鐘了，明天再來吧！`, 4500);
@@ -2335,6 +2355,9 @@ async function openDream() {
   if (session.user.role === "student") dw.timer = setInterval(() => {
     const t = load(dwTimeKey(), null), d = nowStr().slice(0, 10), s = (t && t.d === d ? t.s : 0) + 5;
     store(dwTimeKey(), { d, s });
+    if (!dwOpenNow()) { closeDream(); toast(`⏰ 異想世界的開放時間到了，先回去囉！開放時間：${dwHoursText()}`, 6000); return; }
+    const hEnd = dwHours().end, warn = (() => { const [a, b] = hEnd.split(":").map(Number), n = new Date(); return (a * 60 + b) - (n.getHours() * 60 + n.getMinutes()); })();
+    if (warn === 3 && !dw.warned) { dw.warned = 1; toast(`⏰ 再 3 分鐘異想世界就要關門了（${hEnd}），記得收尾喔！`, 5000); }
     const left = dwRules().min * 60 - s, el2 = document.getElementById("dw-time");
     if (dwRules().free) { if (el2) el2.textContent = "🎈 試玩中・不限時間"; return; }
     if (el2) el2.textContent = `⏳ 今天還能玩 ${Math.max(0, Math.ceil(left / 60))} 分鐘`;
@@ -2351,7 +2374,7 @@ function dwGateModal(g) {
   document.getElementById("quiz-content").innerHTML = `<div style="text-align:center"><div style="font-size:3rem">🌈🔒</div>
     <h2 style="margin:6px 0">508 異想世界還沒解鎖</h2><p>認真學習，就能進入異想世界蓋自己的家！每次進島都會檢查這三個條件：</p>
     <div class="dw-gate">${g.list.map(x => `<div class="${x.ok ? "ok" : ""}"><b>${x.ok ? "✅" : "⬜"} ${escapeHtml(x.label)}</b><span>目前：${escapeHtml(x.have)}</span>${!x.ok && x.go ? `<button class="btn-ghost" onclick="closeModal('quiz-modal'); ${x.go}">去訂正</button>` : ""}</div>`).join("")}</div>
-    <p style="font-size:.85rem; opacity:.8">在異想世界每天最多玩 ${R.min} 分鐘。蓋房子的材料要靠答題換：國語→🪵、數學→🪨、英語→🧵、自然→🌱、社會→🏺、唐詩→📜。</p></div>`;
+    <p style="font-size:.85rem; opacity:.8">⏰ 開放時間：${dwHoursText()}。在異想世界每天最多玩 ${R.min} 分鐘。蓋房子的材料要靠答題換：國語→🪵、數學→🪨、英語→🧵、自然→🌱、社會→🏺、唐詩→📜。</p></div>`;
   openModal("quiz-modal");
 }
 function dwFix(h) {
@@ -7217,7 +7240,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true, worldMusic: "auto" };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true, worldMusic: "auto", worldStart: "00:00", worldEnd: "23:59", worldDays: [0, 1, 2, 3, 4, 5, 6] };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -7834,6 +7857,12 @@ async function renderBridge() {
           <div style="display:flex; gap:8px; align-items:center; margin-top:6px; font-size:.9rem">同一科連續 <input type="number" id="rule-balance-n" min="2" max="10" style="width:60px" value="${r.balanceN || 3}"> 局後換科</div></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-world" ${r.worldOn === true ? "checked" : ""}> <span><b>🌈 508 異想世界</b><br><small>學生要達到下面的條件才能進島蓋家；每次進島都會檢查，錯題沒訂正完就進不去。</small>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; font-size:.9rem">至少完成 <input type="number" id="rule-world-n" min="0" max="50" style="width:56px" value="${r.worldSessions ?? 5}"> 局、正確率 <input type="number" id="rule-world-acc" min="0" max="100" style="width:56px" value="${r.worldAcc ?? 70}"> % 以上、錯題清零；每天最多玩 <input type="number" id="rule-world-min" min="5" max="120" style="width:56px" value="${r.worldMin || 20}"> 分鐘</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; font-size:.9rem">⏰ 開放時段：${DW_DAYS.map((d, i) => `<label style="display:inline-flex; gap:2px; align-items:center"><input type="checkbox" class="rule-world-day" value="${i}" ${(Array.isArray(r.worldDays) && r.worldDays.length ? r.worldDays.map(Number) : [0, 1, 2, 3, 4, 5, 6]).includes(i) ? "checked" : ""}>${d}</label>`).join("")}
+            　<input type="time" id="rule-world-start" value="${r.worldStart || "00:00"}"> 到 <input type="time" id="rule-world-end" value="${r.worldEnd || "23:59"}">
+            <button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.querySelectorAll('.rule-world-day').forEach(c=>c.checked=true); document.getElementById('rule-world-start').value='00:00'; document.getElementById('rule-world-end').value='23:59'">全天開放</button>
+            <button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.querySelectorAll('.rule-world-day').forEach(c=>c.checked=true); document.getElementById('rule-world-start').value='16:00'; document.getElementById('rule-world-end').value='20:00'">放學後 16～20 點</button>
+            <button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.querySelectorAll('.rule-world-day').forEach(c=>c.checked=[0,5,6].includes(+c.value)); document.getElementById('rule-world-start').value='09:00'; document.getElementById('rule-world-end').value='21:00'">只開週五～週日</button></div>
+          <small>學生只能在這個時段進入異想世界，時間到會自動送回寶藏海（關門前 3 分鐘提醒）。老師不受限制。</small>
           <small>🎈 <b>試玩模式</b>：局數和正確率都填 <b>0</b>，就不檢查任何條件（錯題也不用先訂正）、也不限每天時間。<button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.getElementById('rule-world').checked=true; document.getElementById('rule-world-n').value=0; document.getElementById('rule-world-acc').value=0; toast('🎈 已填好試玩設定，記得按下面的「💾 儲存航海規則」')">一鍵填好試玩設定</button></small></span></label>
         <div class="bridge-switch"><span><b>🎵 異想世界的背景音樂</b><br><select id="rule-music" style="margin-top:6px">${Object.entries(W3_MUSIC).map(([k, v]) => `<option value="${k}" ${(r.worldMusic || "auto") === k ? "selected" : ""}>${v}</option>`).join("")}</select><br><small>音樂是即時合成的原創小曲。每個學生可以自己按 🎵 關掉聲音。異想世界的白天、晚霞、夜晚會跟著真實時間變化。</small></span></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-zombie" ${r.zombieOn !== false ? "checked" : ""}> <span><b>🧟 異想世界的殭屍</b><br><small>打開：荒野會有殭屍追人，被碰到會少愛心，愛心用完掉 1～2 個材料。關掉：殭屍全部消失，可以安心逛。在 3D 世界裡也可以直接按右邊的「🧟 殭屍」按鈕切換。</small></span></label>
@@ -7902,7 +7931,10 @@ async function saveRules() {
     sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
     fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)),
     worldOn: document.getElementById("rule-world").checked, worldSessions: Math.max(0, Math.min(50, Number(document.getElementById("rule-world-n").value) || 0)),
-    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked, worldMusic: document.getElementById("rule-music").value };
+    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked, worldMusic: document.getElementById("rule-music").value,
+    worldStart: document.getElementById("rule-world-start").value || "00:00", worldEnd: document.getElementById("rule-world-end").value || "23:59",
+    worldDays: [...document.querySelectorAll(".rule-world-day:checked")].map(c => Number(c.value)) };
+  if (!rules.worldDays.length) return toast("⚠️ 異想世界至少要開放一天（全部不想開，可以直接取消勾選「開放異想世界」）");
   if (rules.openStart >= rules.openEnd) return toast("⚠️ 開放時間的開始要早於結束");
   if (rules.sessionMin > rules.dailyMin) return toast("⚠️ 連續使用時間不能超過每天的上限");
   try {
