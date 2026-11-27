@@ -759,6 +759,12 @@
   .dw3d-joy i { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
   .dw3d-jump { position: absolute; right: 24px; bottom: 34px; width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); background: rgba(255,255,255,.3); font-size: 1.6rem; font-weight: 900; color: #fff; touch-action: none; }
   @media (hover: hover) and (pointer: fine) { .dw3d-joy, .dw3d-jump { display: none; } }
+  @media (pointer: coarse) {
+    .dw3d-joy { left: 28px !important; bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important; }
+    .dw3d-jump { right: 28px !important; bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important; }
+    .dw3d-act { right: 104px !important; bottom: calc(52px + env(safe-area-inset-bottom, 0px)) !important; }
+    .dw3d-help { top: auto !important; bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important; }
+  }
   .dw3d-build { position: absolute; right: 10px; bottom: 16px; width: min(300px, calc(100% - 20px)); background: rgba(255,255,255,.94); border-radius: 16px; padding: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.25); color: #1e293b; }
   .dw3d-build-head { display: flex; align-items: center; gap: 8px; } .dw3d-build-head span { color: #64748b; font-size: .8rem; flex: 1; }
   .dw3d-build-head button, .dw3d-build-mode button { border: 0; border-radius: 10px; background: #e2e8f0; font: inherit; font-weight: 800; font-size: .8rem; padding: 4px 10px; cursor: pointer; }
@@ -3148,6 +3154,8 @@ function w3Controls() {
     if (e.code === "Enter") { const i = document.querySelector("#dw3d-chat input"); if (i) { i.focus(); e.preventDefault(); } } if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault(); });
   window.addEventListener("keyup", e => { if (w3) w3.keys[e.code] = false; });
   window.addEventListener("resize", () => w3 && w3.running && w3Resize());
+  window.addEventListener("orientationchange", () => setTimeout(() => w3 && w3.running && w3Resize(), 400));
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", () => w3 && w3.running && w3Resize());
   const joy = w3.hud.querySelector("#dw3d-joy"), knob = joy.querySelector("i"); let jid = null, jc = null;
   joy.addEventListener("pointerdown", e => { jid = e.pointerId; const r = joy.getBoundingClientRect(); jc = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; joy.setPointerCapture(jid); e.stopPropagation(); });
   joy.addEventListener("pointermove", e => { if (e.pointerId !== jid) return; let dx = e.clientX - jc.x, dy = e.clientY - jc.y; const d = Math.hypot(dx, dy), mx = 40; if (d > mx) { dx *= mx / d; dy *= mx / d; } knob.style.transform = `translate(${dx}px,${dy}px)`; w3.joy = { x: dx / mx, y: dy / mx }; });
@@ -3163,7 +3171,12 @@ function w3Jump() {
   if (w3.onGround) { w3.vel.y = 10.5; w3.onGround = false; w3.air = 1; }
   else if (w3.air > 0) { w3.vel.y = 9.5; w3.air--; }
 }
-function w3Resize() { const host = document.getElementById("dw3d"); if (!host || !w3) return; const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
+function w3Resize() {
+  const host = document.getElementById("dw3d"); if (!host || !w3) return;
+  // 平板／手機瀏覽器的 100vh 會把下方工具列也算進去，3D 畫面底部（搖桿）會被切掉：改用「實際看得到的高度」
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight, top = host.getBoundingClientRect().top;
+  if (top >= 0 && top < vh - 200) host.style.height = Math.round(vh - top) + "px";
+  const w = host.clientWidth, h = host.clientHeight; w3.renderer.setSize(w, h); w3.camera.aspect = w / h; w3.camera.updateProjectionMatrix(); }
 function w3Warp(where) {
   if (!w3) return;
   if (w3.room && where !== "room") w3RoomClear();
