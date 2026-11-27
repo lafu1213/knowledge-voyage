@@ -832,6 +832,15 @@
   .dw3d-card-x { position: absolute; right: 8px; top: 8px; border: 0; background: #f1f5f9; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
   @media (max-width: 640px) { .dw3d-card { bottom: 150px; } }
   /* 📱 手機、小平板：上方列收成一排可以左右滑；3D 畫面撐滿 */
+  .notice-bar { overflow: hidden; background: linear-gradient(90deg, #f59e0b, #ef4444); color: #fff; font-weight: 900; font-size: .95rem; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.2); position: relative; z-index: 5; }
+  .notice-bar.dw { font-size: .85rem; }
+  .notice-track { display: inline-flex; gap: 120px; padding: 6px 0; padding-left: 100%; animation: noticeRun 22s linear infinite; }
+  .notice-bar:hover .notice-track { animation-play-state: paused; }
+  @keyframes noticeRun { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+  @media (prefers-reduced-motion: reduce) { .notice-track { animation: none; padding-left: 12px; } .notice-track span + span { display: none; } }
+  .qd { display: inline-block; font-size: .72rem; padding: 0 6px; border-radius: 8px; background: rgba(148,163,184,.25); margin: 0 4px; white-space: nowrap; }
+  .qd1 { background: rgba(34,197,94,.2); } .qd2 { background: rgba(234,179,8,.25); } .qd3 { background: rgba(239,68,68,.22); }
+  .peer-pick { display: flex; flex-direction: column; gap: 6px; } .peer-pick select { padding: 5px 8px; border-radius: 10px; font: inherit; font-size: .85rem; }
   .tq-stu { display: flex; flex-direction: column; gap: 6px; }
   .tq-stu-row { border: 1px solid var(--line, #e2e8f0); border-radius: 12px; overflow: hidden; }
   .tq-stu-head { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border: 0; background: rgba(255,255,255,.06); color: inherit; font: inherit; cursor: pointer; text-align: left; }
@@ -1251,6 +1260,7 @@
       <button class="btn-ghost" onclick="logout()">登出</button>
     </div>
   </header>
+  <div class="notice-bar" id="notice-bar" hidden></div>
   <div id="trial-banner" class="banner info" hidden></div>
   <div id="lock-banner" class="banner warn" hidden></div>
 
@@ -2405,7 +2415,9 @@ function renderDream() {
       <div class="dw-tabs">${tabs.map(([k, l]) => `<button class="${dw.tab === k && !dw.view ? "on" : ""}" onclick="dwTab('${k}')">${l}</button>`).join("")}</div>
       <div class="dw-stat">${me === "student" ? `${DW_MATS.map(x => `<span title="${x.name}（${x.from}）">${x.icon}${mats[x.k]}</span>`).join("")}<span title="錢袋">🪙${c.wallet}</span><span id="dw-time">${dwRules().free ? "🎈 試玩中・不限時間" : `⏳ 今天還能玩 ${Math.max(0, Math.ceil((dwRules().min * 60 - dwTimeUsed()) / 60))} 分鐘`}</span>` : `<span>👀 ${me === "teacher" ? "老師" : "家長"}參觀模式</span>`}</div>
       <button class="dw-help-btn" onclick="dwGuide()">❓ 怎麼玩</button><button class="dw-close" onclick="closeDream()">✕ 回到寶藏海</button></div>
+    <div class="notice-bar dw" id="dw-notice" hidden></div>
     <div class="dw-body ${dw.tab === "world" && !dw.view ? "world" : ""}" id="dw-body">${dwBody()}</div>`;
+  noticeRender();
   if (dw.tab === "world" && !dw.view) { dwSyncMine(); w3Mount(); }
 }
 function dwGuide() {
@@ -3055,12 +3067,12 @@ function w3Create() {
     <div class="dw3d-hp" id="dw3d-hp"></div><div class="dw3d-hurt" id="dw3d-hurt"></div>
     <div class="dw3d-act"><button id="dw3d-hit" title="攻擊（F）">⚔️</button><button id="dw3d-pot" title="喝補血藥水（H）">🧪</button></div>
     <div class="dw3d-joy" id="dw3d-joy"><i></i></div><button class="dw3d-jump" id="dw3d-jump">⤒</button>
-    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
+    <div class="dw3d-mini ${w3Small() ? "fold" : ""}" id="dw3d-mini"><button class="dw3d-fold" onclick="this.parentNode.classList.toggle('fold')">☰ 選單</button><button onclick="w3Warp('castle')">🏰 傳送到城堡門口</button><button onclick="w3Warp('inside')">✨ 傳送進城堡大廳</button>${dwCanEdit() ? `<button onclick="w3Warp('home')">🏠 傳送回我家</button>` : ""}<button id="dw3d-out" onclick="w3LeaveRoom()" hidden>🚪 走出房子</button>${dwCanEdit() ? `<button onclick="w3BuildToggle()">🧱 蓋方塊</button>` : ""}${dwIsT() ? `<button id="dw3d-zsw" onclick="w3ZombieSwitch()">🧟 殭屍</button><button onclick="w3WeatherMenu()">🌦️ 天氣和地形</button>` : ""}<button onclick="dwTab('cards')">🃏 遊戲桌</button><button id="dw3d-env" onclick="w3MusicMenu()">🎵</button><button onclick="dwTab('list')">🏘️ 村莊名冊</button></div>`;
   w3 = { renderer, scene, camera, world, player, myTag, animals, clouds, chests, labels, hud, fish, keys: {}, yaw: 0, pitch: 0.32, dist: 8, vel: new THREE.Vector3(), onGround: false, joy: { x: 0, y: 0 }, near: null, running: false };
   w3Controls();
   w3.peers = {}; w3.bubbles = []; w3.lastMsg = (net.messages.length ? net.messages[net.messages.length - 1].id : 0);
   w3ChatSync(true);
-  w3.hemi = hemi; w3.sunL = sun;
+  w3.hemi = hemi; w3.sunL = sun; w3.M = M; w3.fogBase = [40, 95];
   if (w3Touch() && window.innerHeight > window.innerWidth) setTimeout(() => toast("📱 把手機轉成橫的，畫面更大更好玩！", 4500), 800);
   w3OutBuild();
   w3ZombieInit();
@@ -3264,6 +3276,7 @@ function w3Loop(now) {
   w3ZombieTick(dt, now);
   w3PeerSync(dt, now);
   w3Env(now);
+  w3WeatherTick(dt, now);
   w3.clouds.position.x = (now / 1000 * 0.6) % 60;
   w3.renderer.render(w3.scene, w3.camera);
   requestAnimationFrame(w3Loop);
@@ -3289,9 +3302,9 @@ const W3_BLOCKS = [["plank", "木板", "wood"], ["log", "原木", "wood"], ["sto
 const W3_BIG = { bed: 1, couch: 1, piano: 1, bath: 1, fountain: 1, sakura: 1, whale: 1, dragon: 1, unicorn: 1, rocket: 1, xmas: 1, ufo: 1, tv: 1, shower: 1, tree: 1, palm: 1, castle: 1 };
 const W3_BK_MAX = 500;
 function w3Mat(t) {
-  w3.M = w3.M || w3Materials();
-  if (!w3.M[t] && /^w#[0-9a-fA-F]{6}$/.test(t)) w3.M[t] = new THREE.MeshLambertMaterial({ map: w3Tex((g, R) => w3Noise(g, R, t.slice(1), [t.slice(1), "rgba(0,0,0,.06)", "rgba(255,255,255,.1)"], 50)) });
-  return w3.M[t] || w3.M.stone;
+  w3.MB = w3.MB || w3Materials();   // 同學蓋的方塊用自己的一組材質：老師換地形風格時不會跟著變
+  if (!w3.MB[t] && /^w#[0-9a-fA-F]{6}$/.test(t)) w3.MB[t] = new THREE.MeshLambertMaterial({ map: w3Tex((g, R) => w3Noise(g, R, t.slice(1), [t.slice(1), "rgba(0,0,0,.06)", "rgba(255,255,255,.1)"], 50)) });
+  return w3.MB[t] || w3.MB.stone;
 }
 function w3Emoji(e) {
   w3.emo = w3.emo || {};
@@ -3490,6 +3503,74 @@ function w3OutClick(e, rightBtn) {
 }
 
 
+
+// ── 🌦️ 天氣＋🗺️ 地形風格（老師決定；只換大自然的顏色和天氣，同學的房子、院子、蓋的方塊都不會變） ──
+const W3_WEATHER = { sunny: "☀️ 晴天", cloudy: "☁️ 多雲", rain: "🌧️ 下雨", storm: "⛈️ 雷雨", snow: "❄️ 下雪", fog: "🌫️ 起霧", sakura: "🌸 櫻花飄落", leaves: "🍂 落葉紛飛" };
+const W3_THEMES = {
+  meadow: { name: "🌳 綠草原", g: ["#5cb83a", ["#4ea52f", "#6ccb45", "#58b236", "#7bd655"]], l: ["#2f8f2f", ["#257a25", "#3fa63f", "#1e6b1e", "#49b049"]], s: ["#f2dc9b", ["#e8cf88", "#f8e7b2", "#dcc27a"]], w: 0x3b82f6 },
+  winter: { name: "❄️ 冰雪世界", g: ["#f1f5f9", ["#e2e8f0", "#ffffff", "#dbeafe", "#f8fafc"]], l: ["#e0f2fe", ["#bae6fd", "#ffffff", "#7dd3fc", "#f0f9ff"]], s: ["#e0f2fe", ["#f0f9ff", "#bae6fd"]], w: 0x93c5fd },
+  desert: { name: "🏜️ 沙漠綠洲", g: ["#e9c46a", ["#d4a64a", "#f2d48b", "#c99a3c", "#f4e1a6"]], l: ["#6b8e23", ["#556b2f", "#7da13a", "#8fbc5a"]], s: ["#f4d58d", ["#e9c46a", "#f8e3b0"]], w: 0x0ea5e9 },
+  autumn: { name: "🍁 楓紅秋天", g: ["#b9893f", ["#a8772f", "#c99a4f", "#9c6a28", "#d4a85a"]], l: ["#e8590c", ["#d9480f", "#f76707", "#c92a2a", "#fab005", "#e03131"]], s: ["#e9d3a3", ["#dcc48e", "#f2e2bd"]], w: 0x3b82f6 },
+  sakura: { name: "🌸 櫻花季", g: ["#7bc96f", ["#6ab85e", "#8ed682", "#f9c6dd"]], l: ["#f9a8d4", ["#f472b6", "#fbcfe8", "#fce7f3", "#ec4899"]], s: ["#f2dc9b", ["#e8cf88", "#f8e7b2"]], w: 0x60a5fa },
+  candy: { name: "🍭 糖果王國", g: ["#f9a8d4", ["#f472b6", "#fbcfe8", "#ec4899", "#fdf2f8"]], l: ["#a7f3d0", ["#6ee7b7", "#c4b5fd", "#fde68a", "#99f6e4"]], s: ["#fde68a", ["#fcd34d", "#fef3c7", "#fbcfe8"]], w: 0xc084fc }
+};
+function w3ApplyTheme(k) {
+  const T = W3_THEMES[k] || W3_THEMES.meadow, M = w3.M; if (!M) return;
+  const tex = (base, vary, n) => w3Tex((g, R) => w3Noise(g, R, base, vary, n));
+  const top = tex(T.g[0], T.g[1], 120), dirtC = ["#8b5a2b", ["#7a4e25", "#9c6a37", "#6e4420"]];
+  const side = w3Tex((g, R) => { w3Noise(g, R, dirtC[0], dirtC[1], 110); g.fillStyle = T.g[0]; g.fillRect(0, 0, 16, 4); for (let x = 0; x < 16; x++) if (R() < .5) g.fillRect(x, 4, 1, 1 + ((R() * 2) | 0)); });
+  M.grass.forEach((m, i) => { if (i === 3) return; m.map = i === 2 ? top : side; m.needsUpdate = true; });
+  M.leaves.map = tex(T.l[0], T.l[1], 160); M.leaves.needsUpdate = true;
+  M.sand.map = tex(T.s[0], T.s[1], 90); M.sand.needsUpdate = true;
+  M.water.color.setHex(T.w); M.water.opacity = k === "winter" ? 0.9 : 0.72;
+  w3.themeNow = k;
+}
+function w3ApplyWeather(k) {
+  if (w3.wx) { w3.scene.remove(w3.wx.obj); w3.wx = null; }
+  w3.weatherNow = k;
+  const spec = { rain: [1400, 0x9cc8ff, 26, 0], storm: [2200, 0xb4c6e7, 34, 0], snow: [1600, 0xffffff, 2.2, 1.2], sakura: [700, 0xf9a8d4, 1.6, 1.6], leaves: [600, 0xf08c00, 2.0, 1.8] }[k];
+  w3.scene.fog.near = k === "fog" ? 4 : k === "snow" || k === "storm" ? 25 : w3.fogBase[0];
+  w3.scene.fog.far = k === "fog" ? 36 : k === "snow" || k === "storm" ? 75 : w3.fogBase[1];
+  if (!spec) return;
+  const [n, col, spd, sway] = spec, streak = k === "rain" || k === "storm", P = w3.player.position, pos = new Float32Array(n * (streak ? 6 : 3)), seed = [];
+  for (let i = 0; i < n; i++) { const x = P.x + (Math.random() - .5) * 70, y = P.y + Math.random() * 40 - 5, z = P.z + (Math.random() - .5) * 70; seed.push([x, y, z, Math.random() * 6.28]);
+    if (streak) pos.set([x, y, z, x + 0.05, y + 0.7, z], i * 6); else pos.set([x, y, z], i * 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const obj = streak ? new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: k === "storm" ? 0x8fa6c8 : 0x7fa8d8, transparent: true, opacity: 0.85, fog: true }))
+    : new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: k === "snow" ? 0.28 : 0.34, transparent: true, opacity: 0.9, depthWrite: false }));
+  obj.frustumCulled = false; w3.scene.add(obj);
+  w3.wx = { obj, seed, spd, sway, streak, n, flash: 0, next: performance.now() + 4000 };
+}
+function w3WeatherTick(dt, now) {
+  const r = rulesNow();
+  if (w3.themeNow !== (r.worldTheme || "meadow")) w3ApplyTheme(r.worldTheme || "meadow");
+  if (w3.weatherNow !== (r.worldWeather || "sunny")) w3ApplyWeather(r.worldWeather || "sunny");
+  const W = w3.wx; if (!W) return;
+  const P = w3.player.position, a = W.obj.geometry.attributes.position, arr = a.array;
+  for (let i = 0; i < W.n; i++) {
+    const s = W.seed[i]; s[1] -= W.spd * dt; if (W.sway) { s[0] += Math.sin(now / 900 + s[3]) * W.sway * dt; s[2] += Math.cos(now / 1100 + s[3]) * W.sway * dt * 0.6; }
+    if (s[1] < P.y - 8 || Math.abs(s[0] - P.x) > 36 || Math.abs(s[2] - P.z) > 36) { s[0] = P.x + (Math.random() - .5) * 70; s[2] = P.z + (Math.random() - .5) * 70; s[1] = P.y + 25 + Math.random() * 12; }
+    if (W.streak) { arr[i * 6] = s[0]; arr[i * 6 + 1] = s[1]; arr[i * 6 + 2] = s[2]; arr[i * 6 + 3] = s[0] + 0.05; arr[i * 6 + 4] = s[1] + 0.7; arr[i * 6 + 5] = s[2]; }
+    else { arr[i * 3] = s[0]; arr[i * 3 + 1] = s[1]; arr[i * 3 + 2] = s[2]; }
+  }
+  a.needsUpdate = true;
+  if (w3.weatherNow === "storm") {   // ⚡ 閃電
+    if (now > W.next) { W.flash = 0.25; W.next = now + 5000 + Math.random() * 8000; }
+    if (W.flash > 0) { W.flash -= dt; w3.hemi.intensity = W.flash > 0.12 || (W.flash > 0 && W.flash < 0.05) ? 1.6 : w3.hemiBase || 0.5; }
+  }
+}
+function w3WeatherMenu() {
+  const c = document.getElementById("dw3d-card"), p = document.getElementById("dw-castle-panel"); if (!c || !p) return;
+  const r = rulesNow(), wx = r.worldWeather || "sunny", th = r.worldTheme || "meadow";
+  p.innerHTML = `<b>🌦️ 天氣和地形（老師決定）</b>
+    <p style="margin:6px 0;font-size:.85rem">只換天氣和大自然（草地、樹葉、沙灘、湖水）的樣子，同學的房子、院子、蓋好的方塊都不會變。學生的畫面約 5 秒內跟著變。</p>
+    <div style="margin:8px 0"><b>天氣</b><div class="dw-row" style="margin-top:6px; flex-wrap:wrap">${Object.entries(W3_WEATHER).map(([k, v]) => `<button class="dw-btn ${k === wx ? "on" : ""}" onclick="w3EnvSet({worldWeather:'${k}'})">${v}</button>`).join("")}</div></div>
+    <div style="margin:8px 0"><b>地形風格</b><div class="dw-row" style="margin-top:6px; flex-wrap:wrap">${Object.entries(W3_THEMES).map(([k, v]) => `<button class="dw-btn ${k === th ? "on" : ""}" onclick="w3EnvSet({worldTheme:'${k}'})">${v.name}</button>`).join("")}</div></div>`;
+  c.hidden = false;
+}
+async function w3EnvSet(x) {
+  try { bridgeState.rules = (await bridgeCall("setRules", { rules: x })).rules; toast(x.worldWeather ? "🌦️ 天氣換成 " + W3_WEATHER[x.worldWeather] : "🗺️ 地形換成 " + W3_THEMES[x.worldTheme].name); w3WeatherMenu(); } catch (e) { toast("⚠️ " + e.message); }
+}
 // ── 🌗 日夜（跟著真實時間）＋🎵 背景音樂 ──
 const W3_MUSIC = { auto: "🌗 自動（白天村莊、晚上星空）", village: "🌼 村莊小調", star: "🌙 星空搖籃曲", adventure: "⚔️ 冒險進行曲", party: "🎉 節慶派對", piano: "🎹 安靜鋼琴", off: "🔇 不放音樂" };
 function w3Clock() { const t = nowStr().slice(11, 16).split(":").map(Number); return t[0] + t[1] / 60; }
@@ -3499,8 +3580,10 @@ function w3Env(now) {
   const dusk = Math.max(0, 1 - Math.abs(alt - 0.03) / 0.22);
   const C = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
   const sky = C(0x0b1433, 0x9fdcff, day).lerp(new THREE.Color(0xff9a62), dusk * 0.55), fog = C(0x101a3a, 0xbfe6ff, day).lerp(new THREE.Color(0xffb37a), dusk * 0.45);
+  const wx = rulesNow().worldWeather || "sunny", gray = { cloudy: 0.35, rain: 0.5, storm: 0.7, snow: 0.3, fog: 0.55 }[wx] || 0;
+  if (gray) { sky.lerp(new THREE.Color(day > 0.3 ? 0x9aa5b4 : 0x1e2433), gray); fog.lerp(new THREE.Color(day > 0.3 ? 0xb8c0cc : 0x2a3142), gray); }
   w3.scene.background = sky; w3.scene.fog.color = fog;
-  w3.hemi.intensity = 0.28 + 0.5 * day; w3.sunL.intensity = 0.12 + 0.65 * day; w3.sunL.color = C(0x8fa8ff, 0xfff4d6, day).lerp(new THREE.Color(0xffb37a), dusk * 0.6);
+  w3.hemiBase = (0.28 + 0.5 * day) * (1 - gray * 0.35); w3.hemi.intensity = w3.hemiBase; w3.sunL.intensity = (0.12 + 0.65 * day) * (1 - gray * 0.6); w3.sunL.color = C(0x8fa8ff, 0xfff4d6, day).lerp(new THREE.Color(0xffb37a), dusk * 0.6);
   const ang = (h - 6) / 12 * Math.PI, P = w3.player.position;
   w3.sunL.position.set(P.x + Math.cos(ang) * 60, Math.max(8, Math.sin(ang) * 70), P.z + 20);
   if (!w3.stars) {
@@ -3511,7 +3594,8 @@ function w3Env(now) {
     w3.sunS = disc("#fff7c2", "rgba(255,220,120,0)"); w3.moonS = disc("#f1f5f9", "rgba(200,210,255,0)"); w3.moonS.scale.set(14, 14, 1);
   }
   w3.stars.position.set(P.x, 0, P.z); w3.stars.material.opacity = Math.max(0, 1 - day * 1.6);
-  w3.sunS.position.set(P.x + Math.cos(ang) * 140, Math.sin(ang) * 110, P.z - 40); w3.sunS.visible = alt > -0.1;
+  w3.sunS.position.set(P.x + Math.cos(ang) * 140, Math.sin(ang) * 110, P.z - 40); w3.sunS.visible = alt > -0.1 && gray < 0.45;
+  if (gray >= 0.45) w3.stars.material.opacity = 0;
   w3.moonS.position.set(P.x - Math.cos(ang) * 140, -Math.sin(ang) * 110, P.z - 40); w3.moonS.visible = alt < 0.1;
   const b = w3.hud.querySelector("#dw3d-env"); if (b) b.textContent = `${day > 0.6 ? "☀️" : dusk > 0.3 ? "🌇" : "🌙"} ${nowStr().slice(11, 16)}　${w3MusicMuted() ? "🔇" : "🎵"}`;
   w3MusicTick(day > 0.35);
@@ -5858,7 +5942,7 @@ async function backToWorld() {
 // =========================================================
 function renderAll() {
   if (!session) return;
-  renderPills();
+  renderPills(); noticeRender();
   renderSide();
   renderCrumbs();
   renderMap();
@@ -7253,7 +7337,7 @@ const bridgeState = { rules: null, unread: 0, tab: "overview", season: "final", 
   reportsN: 0, reports: null, repBank: {}, repFilter: "待處理", repGroups: [], repEdit: "" };
 const BRIDGE_TABS_ALL = [["overview", "🧭 總覽"], ["reports", "🚩 題目回報"], ["islands", "🏝️ 島嶼開關"], ["rules", "🏴‍☠️ 航海規則"], ["coins", "🪙 發金幣"], ["dm", "📩 私訊"], ["pace", "⛓️ 亂答紀錄"], ["conduct", "🛡️ 使用規範"], ["mistakes", "📚 分科錯題"], ["exam", "📝 出考卷"]];
 const BRIDGE_TABS = FINAL ? BRIDGE_TABS_ALL : BRIDGE_TABS_ALL.filter(t => t[0] === "islands" || t[0] === "reports");
-const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true, worldMusic: "auto", worldStart: "00:00", worldEnd: "23:59", worldDays: [0, 1, 2, 3, 4, 5, 6] };
+const DEFAULT_RULES = { pirateOn: true, afterSchoolOnly: false, schoolStart: "07:40", schoolEnd: "16:00", eventsOn: true, closed: [], openStart: "06:30", openEnd: "22:00", sessionMin: 60, dailyMin: 120, restMin: 10, fastOn: true, balanceOn: true, balanceN: 3, worldOn: false, worldSessions: 5, worldAcc: 70, worldMin: 20, zombieOn: true, worldMusic: "auto", worldWeather: "sunny", worldTheme: "meadow", worldStart: "00:00", worldEnd: "23:59", worldDays: [0, 1, 2, 3, 4, 5, 6] };
 // ── 系統開放時間：學生只能在每天 openStart～openEnd 進入；關閉前 5 分鐘提醒，時間到自動登出 ──
 const RULES_KEY = "508_RULES_LAST";
 function openRules() { const r = bridgeState.rules || load(RULES_KEY, {}) || {}; return { openStart: r.openStart || DEFAULT_RULES.openStart, openEnd: r.openEnd || DEFAULT_RULES.openEnd }; }
@@ -7295,11 +7379,51 @@ function forceClose() {
   setStatus(msg);
 }
 
+// ── 題目難度：看全班（含其他學校）答這題的答對率：≥80% 簡單、50～80% 中等、<50% 困難；作答不到 3 次的算「還不知道」（篩選時歸在中等） ──
+const QDIFF = { s: null, t: 0, loading: null };
+const DIFF_LV = { 1: "🟢 簡單", 2: "🟡 中等", 3: "🔴 困難" };
+async function loadQStats(force) {
+  if (QDIFF.s && !force && Date.now() - QDIFF.t < 10 * 60000) return QDIFF.s;
+  if (!QDIFF.loading) QDIFF.loading = bridgeCall("qStats").then(r => { QDIFF.s = r.s || {}; QDIFF.t = Date.now(); return QDIFF.s; }).catch(() => (QDIFF.s = QDIFF.s || {})).finally(() => { QDIFF.loading = null; });
+  return QDIFF.loading;
+}
+function qRate(id) { const x = QDIFF.s && QDIFF.s[id]; return x && x[0] >= 3 ? x[1] / x[0] : null; }
+function qLevel(id) { const r = qRate(id); return r == null ? 0 : r >= 0.8 ? 1 : r >= 0.5 ? 2 : 3; }
+function qDiffOk(id, want) { if (!want || want === "any" || want === "mix") return true; const lv = qLevel(id) || 2; return String(lv) === String(want); }
+function qDiffTag(id) { const lv = qLevel(id), r = qRate(id); return lv ? `<span class="qd qd${lv}">${DIFF_LV[lv]} ${Math.round(r * 100)}%</span>` : `<span class="qd">⚪ 還沒人作答</span>`; }
 function bridgeCall(op, data = {}) { return DEMO ? Promise.resolve(demoBridge(op, data)) : api("bridge", Object.assign({ op }, data)); }
 async function loadBridgeRules() {
   try { bridgeState.rules = (await bridgeCall("rules")).rules; } catch (e) { /* 舊版後端沒有艦橋，就照預設 */ }
 }
 function rulesNow() { return Object.assign({}, DEFAULT_RULES, bridgeState.rules || {}); }
+// ── 📢 跑馬燈：老師臨時公告（例如「今晚異想世界開放 9～10 點」），學生一進系統就看到，異想世界裡也看得到 ──
+function noticeNow() { const n = rulesNow().notice; return n && n.text && (!n.until || Date.now() < n.until) ? n : null; }
+function noticeRender() {
+  const n = noticeNow(), bars = [document.getElementById("notice-bar"), document.getElementById("dw-notice")].filter(Boolean);
+  const html = n ? `<div class="notice-track"><span>📢 老師公告：${escapeHtml(n.text)}</span><span aria-hidden="true">📢 老師公告：${escapeHtml(n.text)}</span></div>` : "";
+  bars.forEach(b => { if (b.dataset.sig !== html) { b.dataset.sig = html; b.innerHTML = html; } b.hidden = !n || !session; });
+  if (n && session && session.user.role !== "teacher") {
+    const k = "508_NOTICE_SEEN_" + session.user.name;
+    const nid = String(n.id || n.text + n.until); if (load(k, "") !== nid) { store(k, nid); toast(`📢 老師公告：${n.text}`, 7000); }
+  }
+}
+setInterval(() => { try { noticeRender(); } catch (e) {} }, 30000);
+async function noticeSave(clear) {
+  const text = clear ? "" : (document.getElementById("notice-text").value || "").trim();
+  if (!clear && !text) return toast("請先輸入公告內容");
+  const hrs = Number(document.getElementById("notice-hrs") ? document.getElementById("notice-hrs").value : 0);
+  const until = clear ? 0 : hrs > 0 ? Date.now() + hrs * 3600000 : hrs === -1 ? new Date(nowStr().slice(0, 10) + "T23:59:59").getTime() : 0;
+  try { bridgeState.rules = (await bridgeCall("setRules", { rules: { notice: clear ? null : { text, until } } })).rules; noticeRender(); toast(clear ? "📢 公告已撤下" : "📢 公告發布了！學生畫面上方約 5 秒內就會出現"); renderBridge(); }
+  catch (e) { toast("⚠️ " + e.message); }
+}
+function noticeEditorHtml() {
+  const n = noticeNow();
+  return `<div class="bridge-switch" style="border-color:#f59e0b"><span style="width:100%"><b>📢 跑馬燈公告</b>${n ? `<span style="margin-left:8px; color:#16a34a; font-weight:800">公告中${n.until ? `（到 ${new Date(n.until).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}）` : "（直到撤下）"}</span>` : ""}<br>
+    <small>臨時調整或想提醒全班的事，例如「今晚異想世界開放時間是 9 點到 10 點」。學生一進系統就會跳出提醒，畫面上方和異想世界裡也會一直跑著。</small>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px"><input id="notice-text" maxlength="80" style="flex:1; min-width:220px; padding:6px 10px; border-radius:10px; border:1px solid rgba(245,196,81,.5); font:inherit" placeholder="輸入公告（最多 80 字）" value="${n ? escapeHtml(n.text) : ""}">
+      <select id="notice-hrs"><option value="1">顯示 1 小時</option><option value="3">3 小時</option><option value="-1" selected>到今天結束</option><option value="72">3 天</option><option value="168">一週</option><option value="0">直到我撤下</option></select>
+      <button class="btn-accent" style="padding:6px 14px" onclick="noticeSave(false)">📢 發布</button>${n ? `<button class="btn-ghost" style="padding:6px 14px" onclick="noticeSave(true)">撤下</button>` : ""}</div></span></div>`;
+}
 /** 上課時間：週一到週五、老師設定的上下課時間之間 */
 function inSchoolHours(r) {
   const s = nowStr(), day = new Date(s.slice(0, 10) + "T12:00:00").getDay(), hm = s.slice(11, 16);
@@ -7332,6 +7456,7 @@ function applyBridgePulse(p) {
     try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {}
     try { renderAll(); } catch (e) {}
   }
+  if (p.rules) setTimeout(noticeRender, 0);
   if (p.rules) {
     const before = JSON.stringify(closedList()), namesBefore = JSON.stringify((bridgeState.rules && bridgeState.rules.groupNames) || {});
     bridgeState.rules = p.rules;
@@ -7395,7 +7520,7 @@ function studentsList() { return rosterList.filter(a => a.role === "student" && 
 
 // =========================================================
 // ===== 📝 老師出考卷：從全班常錯題或題庫隨機挑題 → A4／B4 列印（PDF）、Word、派成線上測驗 =====
-const examState = { subject: "", units: new Set(), source: "mix", n: 20, list: [], title: "", paper: "A4", cols: 1, key: true, exp: false, listen: false,
+const examState = { subject: "", units: new Set(), source: "mix", diff: "any", n: 20, list: [], title: "", paper: "A4", cols: 1, key: true, exp: false, listen: false,
   mk: null, view: "build", tqs: null, res: null, assign: false };
 const EXAM_SRC = { mistake: "🔥 全班常錯題", random: "🎲 系統隨機", mix: "🔀 常錯題＋隨機各半" };
 function examSubjects() { return WORLD.filter(s => s.units.length).map(s => s.key); }
@@ -7414,8 +7539,9 @@ function examFromMistake(m) {
 function examPools() {
   const used = new Set(examState.list.map(q => q.id));
   const okType = q => examState.listen ? !q.dict : examPrintable(q);
-  const rand = shuffle(BANK.filter(q => examUnitOk(q) && okType(q) && !used.has(q.id))).map(q => prepareQuestion(q));
-  const mist = (examState.mk || []).filter(m => examUnitOk(m) && !used.has(m.qId) && m.wrong > 0)
+  const dOk = id => qDiffOk(id, examState.diff);
+  const rand = shuffle(BANK.filter(q => examUnitOk(q) && okType(q) && !used.has(q.id) && dOk(q.id))).map(q => prepareQuestion(q));
+  const mist = (examState.mk || []).filter(m => examUnitOk(m) && !used.has(m.qId) && m.wrong > 0 && dOk(m.qId))
     .sort((a, b) => b.wrong - a.wrong || b.wrong / b.n - a.wrong / a.n).map(examFromMistake).filter(q => q && okType(q));
   return { rand, mist };
 }
@@ -7433,8 +7559,14 @@ function buildExam() {
   if (examState.source === "mistake") pick = mist.slice(0, n);
   else if (examState.source === "mix") pick = mist.slice(0, Math.ceil(n / 2));
   const ids = new Set(pick.map(q => q.id));
+  if (examState.diff === "mix") {   // 🌈 難易混合：簡單 30%、中等 50%、困難 20%
+    const want = { 1: Math.round(n * 0.3), 3: Math.round(n * 0.2) }; want[2] = n - want[1] - want[3];
+    const have = { 1: 0, 2: 0, 3: 0 }; pick.forEach(q => have[qLevel(q.id) || 2]++);
+    [3, 1, 2].forEach(lv => rand.forEach(q => { if (pick.length < n && !ids.has(q.id) && (qLevel(q.id) || 2) === lv && have[lv] < want[lv]) { pick.push(q); ids.add(q.id); have[lv]++; } }));
+  }
   rand.forEach(q => { if (pick.length < n && !ids.has(q.id)) { pick.push(q); ids.add(q.id); } });
-  if (!pick.length) return toast("這個範圍沒有可以出的題目");
+  if (!pick.length) return toast(examState.diff !== "any" ? "這個範圍、這個難度沒有可以出的題目，試試別的難度" : "這個範圍沒有可以出的題目");
+  if (pick.length < n) toast(`這個範圍${examState.diff !== "any" ? "、這個難度" : ""}只找到 ${pick.length} 題`, 4000);
   examState.list = examSort(pick);
   if (!examState.title) examState.title = `${examState.subject}${examState.units.size === 1 ? " " + [...examState.units][0] : ""} 測驗卷`;
   if (examState.source !== "random" && mist.length < Math.ceil(n / (examState.source === "mix" ? 2 : 1)))
@@ -7466,6 +7598,8 @@ function examHtml() {
     ${examState.subject ? `<div class="exam-step"><b>② 範圍</b>（不勾＝全部單元）
       <div class="exam-units">${units.map(u => `<label class="pick-chip"><input type="checkbox" ${examState.units.has(u.unit) ? "checked" : ""} onchange='examState.units[this.checked ? "add" : "delete"](${escapeHtml(JSON.stringify(u.unit))})'> ${escapeHtml(u.unit)} <small style="opacity:.6">${u.questions.length}</small></label>`).join("")}</div></div>
     <div class="exam-step"><b>③ 題目來源</b><div class="mk-bar">${Object.keys(EXAM_SRC).map(k => chip(examState.source === k, EXAM_SRC[k], `examState.source='${k}'; renderBridge()`)).join("")}</div>
+      <div class="mk-bar" style="align-items:center">難度 ${[["any", "不限"], ["1", "🟢 簡單"], ["2", "🟡 中等"], ["3", "🔴 困難"], ["mix", "🌈 難易混合（3:5:2）"]].map(([k, l]) => chip(examState.diff === k, l, `examState.diff='${k}'; renderBridge()`)).join("")}</div>
+      <small style="opacity:.75">${QDIFF.s ? "難度是看全班答這題的答對率：80% 以上簡單、50～80% 中等、50% 以下困難；還沒人作答的題目算中等。" : "讀取題目難度中…"}</small>
       <div class="mk-bar" style="align-items:center">題數 ${[10, 15, 20, 25, 30, 40].map(n => chip(examState.n === n, n + " 題", `examState.n=${n}; renderBridge()`)).join("")}
         <label style="font-size:.84rem; margin-left:8px"><input type="checkbox" ${examState.listen ? "checked" : ""} onchange="examState.listen=this.checked"> 包含英聽題（只適合線上測驗）</label></div>
       ${examState.mk ? `<small style="opacity:.75">全班期末有人答錯的題目：這個範圍共 ${(examState.mk || []).filter(m => examUnitOk(m)).length} 題</small>` : `<small style="opacity:.75">讀取全班錯題中…</small>`}
@@ -7473,7 +7607,7 @@ function examHtml() {
     <button class="btn-accent" style="padding:10px 18px" onclick="buildExam()">🎲 ${L.length ? "重新出題" : "產生考卷"}</button>` : ""}
     ${L.length ? `<div class="exam-step" style="margin-top:14px"><b>④ 檢查題目</b>（共 ${L.length} 題；🔄 換一題、✕ 刪掉）
       <div class="exam-list">${L.map((q, i) => `<div class="exam-q"><span class="eq-n">${i + 1}.</span>
-        <div class="eq-body"><div class="eq-meta">${escapeHtml(q.unit)}${q._wrong ? `<span class="eq-hot">🔥 錯 ${q._wrong} 人次</span>` : `<span class="eq-rand">🎲 隨機</span>`}${q.passage ? " 📖 有文章" : ""}${questionImageUrl(q) ? " 🖼️ 有圖" : ""}${hasListen(q) ? " 🎧 英聽" : ""}${q._snap ? " ⚠️ 系統出的題（只能紙本）" : ""}</div>
+        <div class="eq-body"><div class="eq-meta">${escapeHtml(q.unit)} ${qDiffTag(q.id)}${q._wrong ? `<span class="eq-hot">🔥 錯 ${q._wrong} 人次</span>` : `<span class="eq-rand">🎲 隨機</span>`}${q.passage ? " 📖 有文章" : ""}${questionImageUrl(q) ? " 🖼️ 有圖" : ""}${hasListen(q) ? " 🎧 英聽" : ""}${q._snap ? " ⚠️ 系統出的題（只能紙本）" : ""}</div>
           <div class="eq-q">${mathHtml(q.q, q.subject, q.unit)}</div>
           <div class="eq-o">${q.opts.map((o, k) => `<span class="${k === q.ans ? "ok" : ""}">${CIRCLED[k]}${mathHtml(stripNum(o), q.subject, q.unit)}</span>`).join("")}</div></div>
         <span class="eq-act"><button class="btn-ghost" title="換一題" onclick="examSwap(${i})">🔄</button><button class="btn-ghost" title="刪掉" onclick="examRemove(${i})">✕</button></span></div>`).join("")}</div>
@@ -7853,10 +7987,11 @@ async function renderBridge() {
     } else if (t === "exam") {
       if (!examState.subject) examState.subject = examSubjects()[0] || "";
       set(examHtml());
+      if (!QDIFF.s && !QDIFF.loading) loadQStats().then(() => { if (bridgeState.tab === "exam") renderBridge(); });
       if (!examState.mk) { examState.mk = []; bridgeCall("mistakes", { season: "final" }).then(r => { examState.mk = r.mistakes || []; if (bridgeState.tab === "exam") renderBridge(); }).catch(() => {}); }
     } else if (t === "rules") {
       const r = rulesNow();
-      set(`<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
+      set(`${noticeEditorHtml()}<div class="lore-box">現在：<b>${escapeHtml(pirateStatusText(r))}</b></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-pirate" ${r.pirateOn ? "checked" : ""}> <span><b>🏴‍☠️ 海盜出沒</b><br><small>關掉後，所有學生都不會再遇到海盜（考前、上課專心時可以先關）。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-events" ${r.eventsOn !== false ? "checked" : ""}> <span><b>🌊 航行突發事件</b><br><small>前往小島的路上可能遇到風浪、危險或同學出的謎題，要答對生活常識或新聞議題題才能登島（一次答對 +8、答錯只扣一次 −3、錯後答對 +4）。</small></span></label>
         <label class="bridge-switch"><input type="checkbox" id="rule-after" ${r.afterSchoolOnly ? "checked" : ""}> <span><b>🏫 只在放學後出現</b><br><small>週一到週五的上課時間，海盜不會出現；週末不限。</small></span></label>
@@ -7878,6 +8013,10 @@ async function renderBridge() {
           <small>學生只能在這個時段進入異想世界，時間到會自動送回寶藏海（關門前 3 分鐘提醒）。老師不受限制。</small>
           <small>🎈 <b>試玩模式</b>：局數和正確率都填 <b>0</b>，就不檢查任何條件（錯題也不用先訂正）、也不限每天時間。<button type="button" class="btn-ghost" style="padding:2px 10px; font-size:.8rem" onclick="document.getElementById('rule-world').checked=true; document.getElementById('rule-world-n').value=0; document.getElementById('rule-world-acc').value=0; toast('🎈 已填好試玩設定，記得按下面的「💾 儲存航海規則」')">一鍵填好試玩設定</button></small></span></label>
         <div class="bridge-switch"><span><b>🎵 異想世界的背景音樂</b><br><select id="rule-music" style="margin-top:6px">${Object.entries(W3_MUSIC).map(([k, v]) => `<option value="${k}" ${(r.worldMusic || "auto") === k ? "selected" : ""}>${v}</option>`).join("")}</select><br><small>音樂是即時合成的原創小曲。每個學生可以自己按 🎵 關掉聲音。異想世界的白天、晚霞、夜晚會跟著真實時間變化。</small></span></div>
+        <div class="bridge-switch"><span><b>🌦️ 異想世界的天氣和地形</b><br>
+          天氣 <select id="rule-weather">${Object.entries(W3_WEATHER).map(([k, v]) => `<option value="${k}" ${(r.worldWeather || "sunny") === k ? "selected" : ""}>${v}</option>`).join("")}</select>
+          　地形 <select id="rule-theme">${Object.entries(W3_THEMES).map(([k, v]) => `<option value="${k}" ${(r.worldTheme || "meadow") === k ? "selected" : ""}>${v.name}</option>`).join("")}</select><br>
+          <small>只換天氣和草地、樹葉、沙灘、湖水的樣子；同學的房子、院子和蓋好的方塊都不會改變。在 3D 世界裡按右邊「🌦️ 天氣和地形」也能直接換。</small></span></div>
         <label class="bridge-switch"><input type="checkbox" id="rule-zombie" ${r.zombieOn !== false ? "checked" : ""}> <span><b>🧟 異想世界的殭屍</b><br><small>打開：荒野會有殭屍追人，被碰到會少愛心，愛心用完掉 1～2 個材料。關掉：殭屍全部消失，可以安心逛。在 3D 世界裡也可以直接按右邊的「🧟 殭屍」按鈕切換。</small></span></label>
         <button class="btn-accent" style="padding:10px 18px" onclick="saveRules()">💾 儲存航海規則</button>
         <p style="font-size:.8rem; opacity:.75">儲存後，學生的畫面約 5 秒內就會跟著改變。</p>`);
@@ -7944,7 +8083,7 @@ async function saveRules() {
     sessionMin: Number(document.getElementById("rule-session").value) || 60, restMin: Number(document.getElementById("rule-rest").value) || 10, dailyMin: Number(document.getElementById("rule-daily").value) || 120,
     fastOn: document.getElementById("rule-fast").checked, balanceOn: document.getElementById("rule-balance").checked, balanceN: Math.max(2, Math.min(10, Number(document.getElementById("rule-balance-n").value) || 3)),
     worldOn: document.getElementById("rule-world").checked, worldSessions: Math.max(0, Math.min(50, Number(document.getElementById("rule-world-n").value) || 0)),
-    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked, worldMusic: document.getElementById("rule-music").value,
+    worldAcc: Math.max(0, Math.min(100, Number(document.getElementById("rule-world-acc").value) || 0)), worldMin: Math.max(5, Math.min(120, Number(document.getElementById("rule-world-min").value) || 20)), zombieOn: document.getElementById("rule-zombie").checked, worldMusic: document.getElementById("rule-music").value, worldWeather: document.getElementById("rule-weather").value, worldTheme: document.getElementById("rule-theme").value,
     worldStart: document.getElementById("rule-world-start").value || "00:00", worldEnd: document.getElementById("rule-world-end").value || "23:59",
     worldDays: [...document.querySelectorAll(".rule-world-day:checked")].map(c => Number(c.value)) };
   if (!rules.worldDays.length) return toast("⚠️ 異想世界至少要開放一天（全部不想開，可以直接取消勾選「開放異想世界」）");
@@ -8591,6 +8730,11 @@ function demoBridge(op, d) {
   if (op === "tqList") return { list: db.tq.filter(t => isAdmin() || t.by === session.user.name || t.cls.includes(teacherCls())) };
   if (op === "tqDelete") { db.tq = db.tq.filter(t => t.id !== d.id); save(); return { ok: true }; }
   if (op === "tqTake") { const t = db.tq.find(x => x.id === d.id); if (!t) throw new Error("這份考卷已經被老師收回了"); return { tq: t }; }
+  if (op === "qStats") {
+    const st = {};
+    studentsList().forEach(s => (load("508_DEMO_DATA_" + s.name, { answers: [] }).answers || []).forEach(r => { const x = st[r.qId] || (st[r.qId] = [0, 0]); x[0]++; if (r.ok) x[1]++; }));
+    return { s: st };
+  }
   if (op === "tqResults") {
     const tq = db.tq.find(x => x.id === d.id); if (!tq) throw new Error("找不到這份考卷");
     const tag = tqTag(tq.id), people = [], perQ = {}, qs = {};
@@ -9252,9 +9396,14 @@ function openPeerMenu(o, el) {
     ${session.user.role === "teacher" && o.pv ? `<button class="btn-ghost" style="width:100%; margin-bottom:6px" onclick='clearPhoto(${JSON.stringify(o.name)})'>🗑️ 移除他的照片頭像</button>` : ""}
     ${!canChallenge(o) ? (session.user.role === "student" && o.battleOn === false ? `<div class="peer-note">🛡️ ${escapeHtml(shortName(o.name))} 正在專心練習，暫時不接受挑戰。</div>` : "")
       : `<div class="peer-note">⚔️ 選一科來挑戰${session.user.role === "parent" ? "孩子" : "他"}：</div>
-         <div class="peer-subjects">${WORLD.filter(s => s.units.length).map(s => `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '${escapeHtml(s.key)}')">${s.icon} ${escapeHtml(s.key)}</button>`).join("")}
-         <button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '')">🎲 不限</button></div>
-         <div class="peer-note">${session.user.role === "student" ? "系統會先從你答錯過的題目出題" : "系統會先從他答錯過的題目出題"}；沒有的話就隨機出題。</div>`}
+         ${session.user.role === "teacher" ? `<div class="peer-pick">
+           <select id="pk-sub" onchange="peerPickUnits()"><option value="">🎲 科目不限</option>${WORLD.filter(s => s.units.length).map(s => `<option value="${escapeHtml(s.key)}">${s.icon} ${escapeHtml(s.key)}</option>`).join("")}</select>
+           <select id="pk-unit" disabled><option value="">單元不限</option></select>
+           <select id="pk-diff"><option value="">難度不限</option><option value="1">🟢 簡單</option><option value="2">🟡 中等</option><option value="3">🔴 困難</option></select>
+           <button class="btn-accent" onclick='challengePeer(${JSON.stringify(o.name)}, document.getElementById("pk-sub").value, document.getElementById("pk-unit").value, document.getElementById("pk-diff").value)'>⚔️ 出題挑戰</button></div>`
+         : `<div class="peer-subjects">${WORLD.filter(s => s.units.length).map(s => `<button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '${escapeHtml(s.key)}')">${s.icon} ${escapeHtml(s.key)}</button>`).join("")}
+         <button class="btn-accent" onclick="challengePeer('${escapeHtml(o.name)}', '')">🎲 不限</button></div>`}
+         <div class="peer-note">${session.user.role === "student" ? "系統會先從你答錯過的題目出題；沒有的話就隨機出題。" : session.user.role === "teacher" ? "選了單元或難度，就從那裡出題（還是會優先挑他答錯過的）；難度看全班答對率。" : "系統會先從他答錯過的題目出題；沒有的話就隨機出題。"}</div>`}
     ${session.user.role !== "parent" ? `<button class="btn-primary" onclick="sendChat('@${escapeHtml(shortName(o.name))} 嗨！'); closePeerMenu();">💬 打招呼</button>` : ""}
     ${sameIsland || !canChallenge(o) ? "" : `<div style="font-size:.72rem; color:var(--ink-soft)">他在別的島上，也可以邀請喔</div>`}
     <button class="btn-ghost" onclick="closePeerMenu()">關閉</button>`;
@@ -9265,6 +9414,7 @@ function openPeerMenu(o, el) {
   setTimeout(() => document.addEventListener("click", closePeerMenuOutside), 0);
 }
 function closePeerMenuOutside(e) { if (!e.target.closest("#peer-menu")) closePeerMenu(); }
+document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest(".peer-pick") && session && session.user.role === "teacher" && !QDIFF.s) loadQStats(); });
 function closePeerMenu() { const m = document.getElementById("peer-menu"); if (m) m.remove(); document.removeEventListener("click", closePeerMenuOutside); }
 
 /** 誰可以挑戰誰：學生↔開啟挑戰的同學；老師→任何學生；家長→自己的孩子 */
@@ -9274,11 +9424,15 @@ function canChallenge(o) {
   if (u.role === "parent") return o.name === u.child;
   return u.role === "student" && o.battleOn !== false;
 }
-async function challengePeer(name, subject) {
+function peerPickUnits() {
+  const sub = document.getElementById("pk-sub").value, sel = document.getElementById("pk-unit"), s = WORLD.find(x => x.key === sub);
+  sel.disabled = !s; sel.innerHTML = `<option value="">單元不限</option>` + (s ? s.units.slice().sort(unitCmp).map(u => `<option value="${escapeHtml(u.unit)}">${escapeHtml(u.unit)}</option>`).join("") : "");
+}
+async function challengePeer(name, subject, unit, diff) {
   closePeerMenu();
   if (guardLocked()) return;
   if (net.battle && ["pending", "active"].includes(net.battle.status)) { toast("你已經在一場比賽裡了！"); return; }
-  try { await net.battleOp("challenge", { to: name, subject: subject || "", emoji: myEmoji(), color: myColor() }); toast(`已經邀請 ${shortName(name)} 比${subject ? "「" + subject + "」" : "賽"}，等他回應…`); }
+  try { await net.battleOp("challenge", { to: name, subject: subject || "", unit: unit || "", diff: diff || "", emoji: myEmoji(), color: myColor() }); toast(`已經邀請 ${shortName(name)} 比${unit ? "「" + unit + "」" : subject ? "「" + subject + "」" : "賽"}${diff ? `（${DIFF_LV[diff]}）` : ""}，等他回應…`); }
   catch (e) { toast("⚠️ " + e.message); }
 }
 
@@ -9401,7 +9555,11 @@ const demo = (() => {
     ["a", "b"].forEach(k => { const c = b.ans[b[k]]; const ok = c === b.q.ans; res[k] = { choice: c == null ? null : c, ok, pts: ok ? R.battleOk : R.battleWrong }; });
     b.result = res; b.status = "done";
   }
-  function pickQuestion(subject, challenger) {
+  function pickQuestion(subject, challenger, unit, diff) {
+    if (unit || diff) {
+      const pool = BANK.filter(q => (!subject || q.subject === subject) && (!unit || q.unit === unit) && !q.passage && !q.diagram && !q.dict && qDiffOk(q.id, diff));
+      if (pool.length) { const q = prepareQuestion(pickRandom(pool)); return { id: q.id, subject: q.subject, unit: q.unit, q: q.q, opts: q.opts.map(stripNum), ans: q.ans, exp: q.exp, fromMistake: false }; }
+    }
     // 第一優先：挑戰者曾經答錯的題目（示範模式只知道自己的紀錄）
     if (challenger === session.user.name) {
       const ok = q => q && q.src !== "gen" && !q.dict && (!subject || q.subject === subject) && !q.passage && !q.diagram;
@@ -9450,7 +9608,7 @@ const demo = (() => {
       if (bot) setTimeout(() => botSay(bot, text.includes("@" + shortName(bot.name)) ? "嗨嗨！👋" : pickRandom(LINES)), 1800);
       return snapshot(since, dsince);
     },
-    battle({ op, to, id, accept, choice, since, subject }) {
+    battle({ op, to, id, accept, choice, since, subject, unit, diff }) {
       const me = session.user.name;
       if (op === "challenge") {
         const bot = bots().find(b => b.name === to);
@@ -9460,7 +9618,7 @@ const demo = (() => {
         const b = st.battle = { id: uid(), a: me, b: to, status: "pending", until: Date.now() + 20000, ans: {}, subject: subject || "", ar: session.user.role, ae: myEmoji(), ac: myColor() };
         setTimeout(() => {
           if (st.battle !== b || b.status !== "pending") return;
-          if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject, me); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
+          if (Math.random() < 0.9) { b.status = "active"; b.q = pickQuestion(subject, me, unit, diff); b.until = Date.now() + 25000; botAnswerLater(b, bot); }
           else b.status = "declined";
         }, 1500);
       } else if (op === "respond" && st.battle && st.battle.id === id) {
